@@ -153,4 +153,5 @@ cython_debug/
 
 #Mes trucs
 .env
-game_data/*.png
+game_data/bully_images/*/*.png
+shop/*.png

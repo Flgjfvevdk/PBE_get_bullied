@@ -1,0 +1,48 @@
+test_supaire#4729 is now running !
+associated number  2
+Matthew Antonopoulos's seed : [0.23501271 0.17090535 0.36918411 0.22489783]
+ici4
+ici4
+Luka Bergström Fait des fourberies !
+ 
+stat_j2 : [2, 1, 2, 3]
+ici4
+Luka Bergström Fait des fourberies !
+ 
+stat_j2 : [2, 1, 2, 3]
+ici4
+Matthew Antonopoulos Fait des fourberies !
+ 
+stat_j1 : [1, 1, 2, 4]
+Luka Bergström Fait des fourberies !
+ 
+stat_j2 : [2, 1, 2, 3]
+ici4
+Luka Bergström Fait des fourberies !
+ 
+stat_j2 : [2, 1, 2, 3]
+ici4
+Luka Bergström Fait des fourberies !
+ 
+stat_j2 : [2, 1, 2, 3]
+ici4
+Luka Bergström Fait des fourberies !
+ 
+stat_j2 : [2, 1, 2, 3]
+ici4
+Luka Bergström Fait des fourberies !
+ 
+stat_j2 : [2, 1, 2, 3]
+ici4
+Luka Bergström Fait des fourberies !
+ 
+stat_j2 : [2, 1, 2, 3]
+ici4
+on est a cette endroit
+level up : 3
+Viciousness +1
+Saving file
+j'essaie de save' :  Luka Bergström
+puis la
+je me tue :  Matthew Antonopoulos
+enfin ici

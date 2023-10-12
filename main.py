@@ -17,7 +17,6 @@ import asyncio
 from discord.ext import commands
 
 #Les 2 lignes en dessous permettent de lire le token qui est noté dans .env
-#Pas nécessaire si on donnait juste TOKEN = "???"
 from dotenv import load_dotenv
 load_dotenv()
 

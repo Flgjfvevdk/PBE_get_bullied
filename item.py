@@ -122,3 +122,31 @@ def mise_en_forme_str(text):
     new_text = "```" + text + "```"
     return new_text
 
+
+"""
+Ici on va mettre quelques exemples d'items par niveau de puissance, comme ça on garde une idéée pour l'équilibrage.
+Le niveau de l'item en référence correspond à un item qui pourrait être trouvé dans une ruine de ce lvl. PS : on peut imaginer que la récompense de l'item de boss soit un niveau au dessus.
+
+/!\ Il vaut mieux donner des buff_self_start_multiplicatif_lvl plutot que buff_self_start, car les +3 en force est beaucoup plus puissant pour les bully low-level. 
+Et donc si tu obtient un item très puissant qui fait +10 force, alors ça rend les bully lvl 1 beaucoup trop puissant. 
+Il vaut mieux qu'un item ultra puissant soit par exemple +2*LVL Force, du coup ça donne +2 Force pour un lvl 1, et +10 pour un lvl 5, c'est très puissant.
+
+1 PV <-> 0.2*lvl Stat ???
+
+Niveau 1 : 
++1 Stat
++1 PV
+
+Niveau 5 : 
++1 Stat + 0.2*lvl Stat
++1 PV ?
+
+Niveau 10 : 
++2 Stat + 0.4*lvl Stat
++3 PV 
+
+Niveau 50 : 
++1 Stat + 2*Lvl Stat
++7 PV
+"""
+

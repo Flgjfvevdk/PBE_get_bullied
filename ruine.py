@@ -16,9 +16,9 @@ from discord.ext.commands import Context
 
 import utils
 
-delaie_timeout_ruin = 30
-delaie_delete_thread_fin = 90
-delaie_changement_fighter = 20
+RUIN_CHOICE_TIMEOUT = 30
+THREAD_DELETE_AFTER = 90
+FIGHTER_CHOICE_TIMEOUT = 20
 
 def generate_ruine(lvl, index_rarity = None):
     nb_salle_enemy = 4
@@ -70,7 +70,7 @@ async def enter_the_ruin(ctx: Context, user, lvl, bot):
 
     #On initialise les pv des bullies
     pv_team_joueur = [] #pv du bully n°index. Si bully n°index n'existe pas alors -1
-    for k in range(interract_game.number_bully_max):
+    for k in range(interract_game.BULLY_NUMBER_MAX):
         file_bully = player_brute_path / f"{k}.pkl"
         if os.path.exists(file_bully):
             try :
@@ -100,7 +100,7 @@ async def enter_the_ruin(ctx: Context, user, lvl, bot):
             except Exception as e:
                 #On quitte les ruines en cas d'exception
                 print(e)
-                await exit_ruin(ctx, thread, delaie_delete_thread_fin)
+                await exit_ruin(ctx, thread, THREAD_DELETE_AFTER)
                 return
         
         elif (isinstance(current_room, tuple) and isinstance(current_room[0], Bully)) :
@@ -116,13 +116,13 @@ async def enter_the_ruin(ctx: Context, user, lvl, bot):
             except Exception as e:
                 #On quitte les ruines en cas d'exception
                 print(e)
-                await exit_ruin(ctx, thread, delaie_delete_thread_fin)
+                await exit_ruin(ctx, thread, THREAD_DELETE_AFTER)
                 return
 
             if (is_success):
                 await interract_game.add_item_to_player(ctx= ctx, user_id= user.id, item=item_boss, channel_cible= thread)
     await thread.send(f"Congratulation {user}, you beat the boss!") 
-    await exit_ruin(ctx, thread, delaie_delete_thread_fin)
+    await exit_ruin(ctx, thread, THREAD_DELETE_AFTER)
 
     return
 
@@ -134,7 +134,7 @@ async def fight_manage_ruin(ctx: Context, user, bot, current_enemy, pv_team_joue
 
     #Le player choisit son bully
     try :
-        bully_joueur, num_bully_j = await interract_game.player_choose_bully(ctx, user= user, bot= bot, channel_cible= channel_cible, delaie_timeout= delaie_timeout_ruin)
+        bully_joueur, num_bully_j = await interract_game.player_choose_bully(ctx, user=user, bot=bot, channel_cible=channel_cible, timeout=RUIN_CHOICE_TIMEOUT)
     except TimeoutError as e:
         await channel_cible.send(f"Your team left the ruin. Choose faster next time {user}") 
         raise e #On propage l'exception
@@ -172,7 +172,7 @@ async def fight_manage_ruin(ctx: Context, user, bot, current_enemy, pv_team_joue
             print(erreur)
             fin_combat = False
             try :
-                new_bully_joueur, new_num_bully_j = await interract_game.player_choose_bully(ctx, user= user, bot= bot, channel_cible= channel_cible, delaie_timeout= delaie_changement_fighter)
+                new_bully_joueur, new_num_bully_j = await interract_game.player_choose_bully(ctx, user= user, bot= bot, channel_cible= channel_cible, timeout= FIGHTER_CHOICE_TIMEOUT)
                 
             except TimeoutError as e:
                 await channel_cible.send(f"Too slow, {bully_joueur.name} stays in fight.")
@@ -277,8 +277,8 @@ def generate_trap(lvl, index_rarity):
 
 class Trap :
     def __init__(self, level, index_rarity, stat_index = None, damage = 3):
-        init_R = bully.nb_points_init_rarity[index_rarity]
-        coef_R = bully.nb_points_lvl_rarity[index_rarity]
+        init_R = bully.BULLY_RARITY_POINTS[index_rarity]
+        coef_R = bully.BULLY_RARITY_LEVEL[index_rarity]
 
         self.difficulty = round((init_R + coef_R *level) /4) + 1
         if(stat_index == None):

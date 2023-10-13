@@ -17,8 +17,8 @@ ID_joueur_en_donjon = []
 enemies_possibles_names=["Thyr O'Flan", "Grobrah Le Musclé", "Plu Didié", "Wè wè", "XxX_BOSS_XxX", "Crapcrap", "Fou Fur", "Eric", "le gars qu'on choisit en dernier en sport et qui se venge" ]
 size_dungeon = 5
 
-delaie_timeout_dungeon = 30
-delaie_delete_thread_fin = 90
+DUNGEON_CHOICE_TIMEOUT = 30
+THREAD_DELETE_AFTER = 90
 coef_xp_win = 0.3
 
 minimum_pv = 4
@@ -32,8 +32,8 @@ def generate_donjon_team(level: int, size:int):
 
         e = Bully(enemies_possibles_names[k], "", [1,1,1,1], rarity=rarity, must_load_image=False)
 
-        point_init = bully.nb_points_init_rarity[rarity.value]
-        coef_point_lvl_up = bully.nb_points_lvl_rarity[rarity.value]
+        point_init = bully.BULLY_RARITY_POINTS[rarity.value]
+        coef_point_lvl_up = bully.BULLY_RARITY_LEVEL[rarity.value]
         
         if(k < size - 1):
             preterme1 = (size - k - 1)/size
@@ -74,7 +74,7 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot):
     #On initialise les pv et xp gagné par les bullies
     pv_team_joueur = [] #pv du bully n°index. Si bully n°index n'existe pas alors -1
     xp_earned_bullies = [] #L'xp gagné par chaque bully
-    for k in range(interract_game.number_bully_max):
+    for k in range(interract_game.BULLY_NUMBER_MAX):
         file_bully = player_brute_path / f"{k}.pkl"
         if file_bully.exists():
             try :
@@ -107,11 +107,11 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot):
 
         #Le player choisit son bully
         try :
-            bully_joueur, num_bully_j = await interract_game.player_choose_bully(ctx, user= user, bot= bot, channel_cible= thread, delaie_timeout= delaie_timeout_dungeon)
+            bully_joueur, num_bully_j = await interract_game.player_choose_bully(ctx, user= user, bot= bot, channel_cible= thread, timeout= DUNGEON_CHOICE_TIMEOUT)
         except TimeoutError as e:
             await thread.send(f"Your team left the dungeon. Choose faster next time {user}") 
             print (e)
-            await exit_dungeon(ctx= ctx, thread= thread, time_bfr_close=delaie_delete_thread_fin)
+            await exit_dungeon(ctx= ctx, thread= thread, time_bfr_close=THREAD_DELETE_AFTER)
             return 
         except IndexError as e:
             print(e)
@@ -119,7 +119,7 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot):
                 f"[{user}] -> you don't have a bully n°{num_bully_j}\n" #TODO: fix with ui
                 "Your team left the dungeon"
             ) 
-            await exit_dungeon(ctx= ctx, thread= thread, time_bfr_close=delaie_delete_thread_fin)
+            await exit_dungeon(ctx= ctx, thread= thread, time_bfr_close=THREAD_DELETE_AFTER)
             return
         except Exception as e:
             print(e)
@@ -210,7 +210,7 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot):
         file.close()
 
     #On quitte le donjon
-    await exit_dungeon(ctx= ctx, thread= thread, time_bfr_close=delaie_delete_thread_fin)
+    await exit_dungeon(ctx= ctx, thread= thread, time_bfr_close=THREAD_DELETE_AFTER)
     return
 
 

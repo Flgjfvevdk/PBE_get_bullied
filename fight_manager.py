@@ -12,7 +12,7 @@ from discord.ext.commands import Context
 from typing import Optional
 
 
-delaie_timeout = 20
+CHOICE_TIMEOUT = 20
 fight_msg_time_update = 1
 
 async def proposition_fight(ctx: Context, user_1, user_2, bot, for_fun = False):
@@ -27,7 +27,7 @@ async def manager_start_fight(ctx: Context, user_1, user_2, bot, for_fun = False
     await message.add_reaction("✅")
     await message.add_reaction("❌")
     try :
-        reaction, msg = await bot.wait_for("reaction_add", check=check_reaction_yes_no(user_2, message), timeout=delaie_timeout)
+        reaction, msg = await bot.wait_for("reaction_add", check=check_reaction_yes_no(user_2, message), timeout=CHOICE_TIMEOUT)
         if str(reaction.emoji) == "✅" :
             #await ctx.channel.send("Challenge accepted!")
             await message.reply("Challenge accepted!")
@@ -44,66 +44,8 @@ async def manager_start_fight(ctx: Context, user_1, user_2, bot, for_fun = False
     return
 
 async def start_fight(ctx: Context, user_1, user_2, bot, for_fun = False):
-    # path_players_data = "game_data/player_data"
-    # player_brute_path_1 = path_players_data + "/" + str(user_1.id) + "/brutes"
-    # player_brute_path_2 = path_players_data + "/" + str(user_2.id) + "/brutes"
-
-    # # User 1 choisit son combattant ---
-    # message_choose_fighter = await ctx.channel.send(f"{user_1.mention} choose your fighter : ")
-    # await interract_game.print_bullies(ctx, path_players_data + "/" + str(user_1.id), compact_print = True)
-
-    # #On ajoute une réaction par combattant possible
-    # for k in range(interract_game.number_bully_max):
-    #     if os.path.exists(player_brute_path_1 + "/" + str(k) + ".pkl"):
-    #         await message_choose_fighter.add_reaction(from_number_to_emote(k))
-
-    # #On check si le joueur clique sur une réaction
-    # try : 
-    #     reaction, msg = await bot.wait_for("reaction_add", check=check_reaction_number(user_1, message_choose_fighter), timeout=delaie_timeout)
-    #     num_bully_j1 = from_emote_to_number(reaction.emoji)
-    # except Exception as e:
-    #     await message_choose_fighter.reply(f"Challenge dropped. Choose faster next time {user_1}")
-    #     print (e)
-    #     return
-
-    # # User 2 choisit son combattant ---
-    # message_choose_fighter = await ctx.channel.send(f"{user_2.mention} choose your fighter : ")
-    # await interract_game.print_bullies(ctx, path_players_data + "/" + str(user_2.id), compact_print = True)
-    # #On ajoute une réaction par combattant possible
-    # for k in range(interract_game.number_bully_max):
-    #     if os.path.exists(player_brute_path_2 + "/" + str(k) + ".pkl"):
-    #         await message_choose_fighter.add_reaction(from_number_to_emote(k))
-    # #On check si le joueur clique sur une réaction
-    # try : 
-    #     reaction, msg = await bot.wait_for("reaction_add", check=check_reaction_number(user_2, message_choose_fighter), timeout=delaie_timeout)
-    #     num_bully_j2 = from_emote_to_number(reaction.emoji)
-    # except Exception as e:
-    #     await message_choose_fighter.reply(f"Challenge dropped. Choose faster next time {user_2}")
-    #     print (e)
-    #     return
-
-    # #On load les bully
-    # file_path1 = player_brute_path_1 + "/" + str(num_bully_j1) + ".pkl"
-    # file_path2 = player_brute_path_2 + "/" + str(num_bully_j2) + ".pkl"
-    # try :
-    #     with open(file_path1, 'rb') as pickle_file:
-    #         bully_1 = pickle.load(pickle_file)
-    #     await ctx.channel.send(f"{user_1} sends {bully_1.name} to fight")
-    # except Exception as e:
-    #     await ctx.channel.send(f"[{user_1}] -> you don't have a bully n°{num_bully_j1}\nThe fight is cancelled")
-    #     print (e)
-    #     return
-    # try :
-    #     with open(file_path2, 'rb') as pickle_file:
-    #         bully_2 = pickle.load(pickle_file)
-    #     await ctx.channel.send(f"{user_2} sends {bully_2.name} to fight")
-    # except Exception as e:
-    #     await ctx.channel.send(f"[{user_2}] -> you don't have a bully n°{num_bully_j2}\nThe fight is cancelled")
-    #     print (e)
-    #     return
-
-    bully_1, _ = await interract_game.player_choose_bully(ctx= ctx, user = user_1, bot= bot, delaie_timeout = delaie_timeout)
-    bully_2, _ = await interract_game.player_choose_bully(ctx= ctx, user = user_2, bot= bot, delaie_timeout = delaie_timeout)
+    bully_1, _ = await interract_game.player_choose_bully(ctx= ctx, user = user_1, bot= bot, timeout = CHOICE_TIMEOUT)
+    bully_2, _ = await interract_game.player_choose_bully(ctx= ctx, user = user_2, bot= bot, timeout = CHOICE_TIMEOUT)
     
     item_1, item_2 = await manager_equip_item(ctx=ctx, user_1=user_1, user_2=user_2, bot=bot)
     await fight(ctx, user_1, user_2, bot, bully_1, bully_2, for_fun, item_1=item_1, item_2=item_2)
@@ -114,8 +56,8 @@ async def manager_equip_item(ctx: Context, user_1, user_2, bot):
     item_1 = None
     item_2 = None
 
-    item_1 = await interract_game.player_choose_item(ctx= ctx, user= user_1, bot= bot, delaie_timeout=delaie_timeout)
-    item_2 = await interract_game.player_choose_item(ctx= ctx, user= user_2, bot= bot, delaie_timeout=delaie_timeout)
+    item_1 = await interract_game.player_choose_item(ctx= ctx, user= user_1, bot= bot, timeout=CHOICE_TIMEOUT)
+    item_2 = await interract_game.player_choose_item(ctx= ctx, user= user_2, bot= bot, timeout=CHOICE_TIMEOUT)
     return item_1, item_2
 
 

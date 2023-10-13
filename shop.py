@@ -13,23 +13,23 @@ import asyncio
 import discord
 from discord.ext.commands import Context
 
-rarity_drop = [0, 50, 35, 14, 1]
-rarity_price = [30, 80, 200, 600, 1000]
+RARITY_DROP_CHANCES = [0, 50, 35, 14, 1]
+RARITY_PRICES = [30, 80, 200, 600, 1000]
 
-max_bully_in_shop = 5
+SHOP_MAX_BULLY = 5
 #Le temps pendant lequel le shop reste actif
-temps_actif_shop = 30 
+SHOP_TIMEOUT = 30 
 #Le temps entre chaque restock
-delaie_new_shop = 10 * 60
+SHOP_RESTOCK_TIMEOUT = 10 * 60
 #Le temps pendant lequel le shop est fermé pendant le restockage. Les achats sont possibles mais on ne peut pas afficher un nouveau shop 
 #(permet d'éviter que quelqu'un affiche le shop alors qu'il change bientot)
-temps_shop_close_restocknew_shop = 30 #doit être > à temps_actif_shop (sinon quelqu'un pourrait acheter un truc qu'il veut pas)
+SHOP_CLOSE_WAIT_TIME = 30 #doit être > à SHOP_TIMEOUT (sinon quelqu'un pourrait acheter un truc qu'il veut pas)
 #Si c'est à True, alors la commande shop n'affiche pas le shop mais un message qui demande d'attendre.
 is_shop_restocking = False
 
 async def restock_shop():
     empty_bullies_shop()
-    for k in range(max_bully_in_shop):
+    for k in range(SHOP_MAX_BULLY):
         try:
             b = new_bully_shop(k)
             file_path = Path(f"shop/{k}.pkl")
@@ -64,7 +64,7 @@ async def print_shop(ctx: Context, bot):
     purchased_bullies = []
 
     def check(reaction, user):
-        return (str(reaction.emoji) in [str(i) + "️⃣" for i in range(max_bully_in_shop)] 
+        return (str(reaction.emoji) in [str(i) + "️⃣" for i in range(SHOP_MAX_BULLY)] 
                 and reaction.message.id == shop_msg.id
                 and user.id != bot.user.id)
 
@@ -74,7 +74,7 @@ async def print_shop(ctx: Context, bot):
                 await shop_msg.edit(content=restock_message())
                 return
             
-            reaction, user = await bot.wait_for('reaction_add', timeout=temps_actif_shop, check=check)
+            reaction, user = await bot.wait_for('reaction_add', timeout=SHOP_TIMEOUT, check=check)
 
             # Get the index of the selected item
             item_index = int(str(reaction.emoji)[0])
@@ -97,8 +97,8 @@ async def print_shop(ctx: Context, bot):
             if(money.get_money_user(user.id) >= cout_bully(b)):
                 if(ctx.author.id in donjon.ID_joueur_en_donjon):
                     await ctx.channel.send("You can't, you are in a dungeon")
-                elif(interract_game.nb_bully_in_team(user_id=user.id) >= interract_game.number_bully_max):
-                    await ctx.channel.send(f"You can't have more than {interract_game.number_bully_max} bullies at the same time")
+                elif(interract_game.nb_bully_in_team(user_id=user.id) >= interract_game.BULLY_NUMBER_MAX):
+                    await ctx.channel.send(f"You can't have more than {interract_game.BULLY_NUMBER_MAX} bullies at the same time")
                 else :
                     #La transaction s'effectue. A FAIRE : Créer une fonction buy_bully qui fait ça en bas comme ça c'est plus clair
                     money.give_money(user.id, - cout_bully(b))
@@ -122,7 +122,7 @@ async def print_shop(ctx: Context, bot):
         #print("time out")
 
 def new_bully_shop(nb):
-    rarity = random.choices(list(bully.Rarity), weights=rarity_drop)[0]
+    rarity = random.choices(list(bully.Rarity), weights=RARITY_DROP_CHANCES)[0]
     name = interract_game.generate_name()
     b = Bully(name[0] + " " + name[1], f"shop/{nb}.pkl", rarity=rarity)
     return b
@@ -130,7 +130,7 @@ def new_bully_shop(nb):
 def load_bullies_shop():
     bullies_in_shop = []
     folder_path = Path("shop/")
-    for k in range(max_bully_in_shop):
+    for k in range(SHOP_MAX_BULLY):
         file_path = folder_path / f"{k}.pkl"
         if file_path.exists() and file_path.is_file():
             with file_path.open("rb") as file:
@@ -179,20 +179,20 @@ def bullies_in_shop_to_images(Bullies_in_shop):
 
 def cout_bully(b):
     r = b.rarity
-    return rarity_price[r.value]
+    return RARITY_PRICES[r.value]
 
 async def restock_shop_automatic():
     global is_shop_restocking
     print("on commence")
     while(True):    
-        await asyncio.sleep(delaie_new_shop)
+        await asyncio.sleep(SHOP_RESTOCK_TIMEOUT)
         print("on restock le shop !")
         is_shop_restocking = True
-        await asyncio.sleep(temps_shop_close_restocknew_shop)
+        await asyncio.sleep(SHOP_CLOSE_WAIT_TIME)
         is_shop_restocking = False
         await restock_shop()
 
 
 def restock_message():
-    return (f"```The shop is restocking. Please wait <{temps_shop_close_restocknew_shop} seconds```")
+    return (f"```The shop is restocking. Please wait <{SHOP_CLOSE_WAIT_TIME} seconds```")
 

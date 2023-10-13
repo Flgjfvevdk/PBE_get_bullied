@@ -166,3 +166,4 @@ game_data/bully_images/*/*.png
 shop/*.png
 **/*.png
 config
+test/

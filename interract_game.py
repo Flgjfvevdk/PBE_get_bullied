@@ -16,10 +16,10 @@ import utils
 import discord
 from discord.ext.commands import Context
 
-number_bully_max = 5
-delaie_timeout = 20
+BULLY_NUMBER_MAX = 5
+CHOICE_TIMEOUT = 20
 
-async def join_game(ctx: Context, user_player_path: Path, channel_cible: Optional[discord.abc.MessageableChannel]=None):
+async def join_game(ctx: Context, user_player_path: Path, channel_cible: Optional[discord.abc.Messageable]=None):
 
     #Par défaut, le channel d'envoie est le channel du contexte
     if(channel_cible==None):
@@ -63,12 +63,12 @@ async def add_bully_to_player(ctx: Context, user_id:int , bully: Bully, channel_
     player_path = utils.get_player_path(user_id)
     player_brute_path = player_path / "brutes"
 
-    for ind in range(number_bully_max):
+    for ind in range(BULLY_NUMBER_MAX):
         file_path = player_brute_path / f"{str(ind)}.pkl"
         if (not file_path.exists()):
             break
     else: #Dans le cas où tous les bullies sont créés
-        await channel_cible.send(f"You can't have more than {number_bully_max} bullies at the same time")
+        await channel_cible.send(f"You can't have more than {BULLY_NUMBER_MAX} bullies at the same time")
         return
     
     # Open the file in write mode (creates the file if it doesn't exist)
@@ -166,7 +166,7 @@ async def print_items(ctx: Context, player_path: Path, compact_print=False, chan
 
     return
 
-async def player_choose_bully(ctx: Context, user, bot, channel_cible=None, delaie_timeout = delaie_timeout):
+async def player_choose_bully(ctx: Context, user, bot, channel_cible=None, timeout = CHOICE_TIMEOUT):
     '''Il faut try catch cette méthode car elle peut raise une exception en cas de timeout !!!
     '''
     if(channel_cible == None):
@@ -177,13 +177,13 @@ async def player_choose_bully(ctx: Context, user, bot, channel_cible=None, delai
     #Demande au joueur de choisir son combattant
     message_choose_fighter = await channel_cible.send(f"{user} choose your fighter : ") 
     await print_bullies(ctx, utils.get_player_path(user.id), compact_print = True, channel_cible= channel_cible)
-    for k in range(number_bully_max):
+    for k in range(BULLY_NUMBER_MAX):
         if os.path.exists(player_brute_path / f"{str(k)}.pkl"):
             await message_choose_fighter.add_reaction(fight_manager.from_number_to_emote(k))
 
     #On attend le choix du joueur
     try : 
-        reaction, msg = await bot.wait_for("reaction_add", check= fight_manager.check_reaction_number(user, message_choose_fighter), timeout= delaie_timeout)
+        reaction, msg = await bot.wait_for("reaction_add", check=fight_manager.check_reaction_number(user, message_choose_fighter), timeout=timeout)
         bully_number = fight_manager.from_emote_to_number(reaction.emoji)
     except Exception as e:
         raise TimeoutError("Timeout choose bully delay")
@@ -199,7 +199,7 @@ async def player_choose_bully(ctx: Context, user, bot, channel_cible=None, delai
     
     return bully_selected, bully_number
 
-async def player_choose_item(ctx: Context, user, bot, channel_cible=None, delaie_timeout = delaie_timeout):
+async def player_choose_item(ctx: Context, user, bot, channel_cible=None, timeout = CHOICE_TIMEOUT):
     if(channel_cible==None):
         channel_cible = ctx.channel
     item = None
@@ -209,7 +209,7 @@ async def player_choose_item(ctx: Context, user, bot, channel_cible=None, delaie
     await message.add_reaction("✅")
     await message.add_reaction("❌")
     try :
-        reaction, msg = await bot.wait_for("reaction_add", check=fight_manager.check_reaction_yes_no(user, message), timeout=delaie_timeout)
+        reaction, msg = await bot.wait_for("reaction_add", check=fight_manager.check_reaction_yes_no(user, message), timeout=timeout)
         if str(reaction.emoji) == "✅" :
             await message.edit(content=f"{user.mention}, Choose an item to equip")
             item = await select_item_to_equip(ctx = ctx, user=user, bot=bot)
@@ -262,7 +262,7 @@ async def select_item_to_equip(ctx: Context, user, bot):
 
     #On check si le joueur clique sur une réaction
     try : 
-        reaction, msg = await bot.wait_for("reaction_add", check=fight_manager.check_reaction_number(user, message_item_choix), timeout=delaie_timeout)
+        reaction, msg = await bot.wait_for("reaction_add", check=fight_manager.check_reaction_number(user, message_item_choix), timeout=CHOICE_TIMEOUT)
         num_item_equipped = fight_manager.from_emote_to_number(reaction.emoji)
         selected_item = Liste_items[num_item_equipped]
         print(f"{user.name} a choisit l'item : {selected_item.name}")
@@ -346,7 +346,7 @@ def nb_bully_in_team(user_id):
     player_path = utils.get_player_path(user_id)
     player_brute_path = player_path / "brutes"
     ind = 0
-    for k in range(number_bully_max):
+    for k in range(BULLY_NUMBER_MAX):
         if os.path.exists(player_brute_path / f"{k}.pkl"):
             ind += 1
 

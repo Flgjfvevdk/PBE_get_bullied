@@ -7,36 +7,37 @@ import bully
 from item import Item
 import item
 
+from pathlib import Path
+from typing import Optional, List, Dict
+
 import fight_manager # ##$$$
+import utils
 
 import discord
+from discord.ext.commands import Context
 
 number_bully_max = 5
 delaie_timeout = 20
 
-path_player_data = "game_data/player_data"
-
-async def join_game(ctx, user_player_path, channel_cible=None):
+async def join_game(ctx: Context, user_player_path: Path, channel_cible: Optional[discord.abc.MessageableChannel]=None):
 
     #Par défaut, le channel d'envoie est le channel du contexte
     if(channel_cible==None):
         channel_cible = ctx.channel
 
-    folder_exist =  os.path.exists(user_player_path)
-    if(folder_exist):
+    if(user_player_path.exists()):
         await channel_cible.send("You already joined")
         return 
     else :
         try:
-            os.makedirs(user_player_path, exist_ok=False)
-            os.makedirs(user_player_path + "/brutes", exist_ok=True)
-            os.makedirs(user_player_path + "/items", exist_ok=True)
-            file = open(user_player_path + "/playerMoney.txt", "w")
-            file.write(str(money.money_join_value))
-            file.close()
+            user_player_path.mkdir(parents=True)
+            user_player_path.joinpath("brutes").mkdir(exist_ok=True)
+            user_player_path.joinpath("items").mkdir(exist_ok=True)
+
+            with user_player_path.joinpath("playerMoney.txt").open("w") as file:
+                file.write(str(money.MONEY_JOIN_VALUE))
             
-            file = open(user_player_path + "/playerMaxDungeon.txt", "w")
-            file.close()
+            user_player_path.joinpath("playerMaxDungeon.txt").touch()
 
         except FileExistsError:
             print("Folder already exists! ERROR")
@@ -46,107 +47,72 @@ async def join_game(ctx, user_player_path, channel_cible=None):
         await channel_cible.send("Welcome to the adventure !")
         return 
 
-async def add_random_bully_to_player(ctx, user_id, name_brute, channel_cible=None):
+async def add_random_bully_to_player(ctx: Context, user_id, name_brute, channel_cible=None):
+
+    name_bully = f"{name_brute[0]} {name_brute[1]}"
+    new_bully = Bully(name_bully, "tmp_val")
     
+    await add_bully_to_player(ctx, user_id, new_bully, channel_cible)
+
+
+async def add_bully_to_player(ctx: Context, user_id:int , bully: Bully, channel_cible=None):
     #Par défaut, le channel d'envoie est le channel du contexte
     if(channel_cible==None):
         channel_cible = ctx.channel
 
-    player_path = "game_data/player_data/" + str(user_id)
-    player_brute_path = player_path + "/brutes"
-    ind = 0
-    while os.path.exists(player_brute_path + "/" + str(ind) + ".pkl"):
-        ind += 1
+    player_path = utils.get_player_path(user_id)
+    player_brute_path = player_path / "brutes"
 
-    if(ind > number_bully_max - 1) :
+    for ind in range(number_bully_max):
+        file_path = player_brute_path / f"{str(ind)}.pkl"
+        if (not file_path.exists()):
+            break
+    else: #Dans le cas où tous les bullies sont créés
         await channel_cible.send(f"You can't have more than {number_bully_max} bullies at the same time")
         return
     
-    id_brute = str(ind)
-
-    file_path = player_brute_path + "/" + id_brute + ".pkl"
-    
     # Open the file in write mode (creates the file if it doesn't exist)
-    file = open(file_path, "wb")
-    name_bully = name_brute[0] + " " + name_brute[1]
-    new_bully = Bully(name_bully, file_path)
-    try :
-        pickle.dump(new_bully, file)
-    except Exception as e :
-        print(e)
+    bully.set_file_path(file_path)
+    with file_path.open("wb") as file:
+        try :
+            pickle.dump(bully, file)
+        except Exception as e :
+            print(e)
 
-    await channel_cible.send("You have a new bully : " + name_bully)
-    # Close the file
-    file.close()
+    await channel_cible.send("You have a new bully : " + bully.name)
+    
 
-async def add_bully_to_player(ctx, user_id, b, channel_cible=None):
+async def add_item_to_player(ctx: Context, user_id, item: Item, channel_cible=None):
     #Par défaut, le channel d'envoie est le channel du contexte
     if(channel_cible==None):
         channel_cible = ctx.channel
 
-    player_path = "game_data/player_data/" + str(user_id)
-    player_brute_path = player_path + "/brutes"
+    player_path = Path("game_data") / "player_data" / str(user_id)
+    player_item_path = player_path / "items"
+
     ind = 0
-    
-    while os.path.exists(player_brute_path + "/" + str(ind) + ".pkl"):
-        ind += 1
-
-    if(ind > number_bully_max - 1) :
-        await channel_cible.send(f"You can't have more than {number_bully_max} bullies at the same time")
-        return
-    
-    id_brute = str(ind)
-
-    file_path = player_brute_path + "/" + id_brute + ".pkl"
-    
-    # Open the file in write mode (creates the file if it doesn't exist)
-    file = open(file_path, "wb")
-    new_bully = b
-    new_bully.set_file_path(file_path)
-    try :
-        pickle.dump(new_bully, file)
-    except Exception as e :
-        print(e)
-
-    await channel_cible.send("You have a new bully : " + b.name)
-    # Close the file
-    file.close()
-
-async def add_item_to_player(ctx, user_id, i, channel_cible=None):
-    #Par défaut, le channel d'envoie est le channel du contexte
-    if(channel_cible==None):
-        channel_cible = ctx.channel
-
-    player_path = "game_data/player_data/" + str(user_id)
-    player_item_path = player_path + "/items"
-    ind = 0
-    
-    while os.path.exists(player_item_path + "/" + str(ind) + ".pkl"):
+    while True:
+        file_path = player_item_path.joinpath(f"{str(ind)}.pkl")
+        if (not file_path.exists()):
+            break
         ind += 1
     
-    id_item = str(ind)
-
-    file_path = player_item_path + "/" + id_item + ".pkl"
-    
     # Open the file in write mode (creates the file if it doesn't exist)
-    file = open(file_path, "wb")
-    new_item = i
-    new_item.set_file_path(file_path)
-    try :
-        pickle.dump(new_item, file)
-    except Exception as e :
-        print(e)
+    with file_path.open("wb") as file:
+        item.set_file_path(file_path)
+        try :
+            pickle.dump(item, file)
+        except Exception as e :
+            print(e)
 
-    await channel_cible.send("You have a new item : " + i.name)
-    # Close the file
-    file.close()
+    await channel_cible.send("You have a new item : " + item.name)
 
-async def print_bullies(ctx, player_path, compact_print=False, print_images=False, channel_cible=None):
+async def print_bullies(ctx: Context, player_path: Path, compact_print=False, print_images=False, channel_cible=None):
     #Par défaut, le channel d'envoie est le channel du contexte
     if(channel_cible==None):
         channel_cible = ctx.channel
 
-    player_brute_path = player_path + "/brutes"
+    player_brute_path = player_path / "brutes"
     text = "Your bullies:"
     images = []
 
@@ -178,12 +144,12 @@ async def print_bullies(ctx, player_path, compact_print=False, print_images=Fals
         await channel_cible.send(text)
     return
 
-async def print_items(ctx, player_path, compact_print=False, channel_cible=None):
+async def print_items(ctx: Context, player_path: Path, compact_print=False, channel_cible=None):
     #Par défaut, le channel d'envoie est le channel du contexte
     if(channel_cible==None):
         channel_cible = ctx.channel
 
-    player_item_path = player_path + "/items"
+    player_item_path = player_path / "items"
     text = "Your items:"
 
     for f in sorted(os.listdir(player_item_path)):
@@ -200,20 +166,19 @@ async def print_items(ctx, player_path, compact_print=False, channel_cible=None)
 
     return
 
-async def player_choose_bully(ctx, user, bot, channel_cible=None, delaie_timeout = delaie_timeout):
+async def player_choose_bully(ctx: Context, user, bot, channel_cible=None, delaie_timeout = delaie_timeout):
     '''Il faut try catch cette méthode car elle peut raise une exception en cas de timeout !!!
     '''
     if(channel_cible == None):
         channel_cible = ctx.channel
 
-    path_players_data = "game_data/player_data"
-    player_brute_path = path_players_data + "/" + str(user.id) + "/brutes"
+    player_brute_path = utils.get_player_path(user.id) / "brutes"
 
     #Demande au joueur de choisir son combattant
     message_choose_fighter = await channel_cible.send(f"{user} choose your fighter : ") 
-    await print_bullies(ctx, path_players_data + "/" + str(user.id), compact_print = True, channel_cible= channel_cible)
+    await print_bullies(ctx, utils.get_player_path(user.id), compact_print = True, channel_cible= channel_cible)
     for k in range(number_bully_max):
-        if os.path.exists(player_brute_path + "/" + str(k) + ".pkl"):
+        if os.path.exists(player_brute_path / f"{str(k)}.pkl"):
             await message_choose_fighter.add_reaction(fight_manager.from_number_to_emote(k))
 
     #On attend le choix du joueur
@@ -224,7 +189,7 @@ async def player_choose_bully(ctx, user, bot, channel_cible=None, delaie_timeout
         raise TimeoutError("Timeout choose bully delay")
     
     #On a récup le bully associé au choix du joueur
-    file_path = player_brute_path + "/" + str(bully_number) + ".pkl"
+    file_path = player_brute_path / f"{str(bully_number)}.pkl"
     try :
         with open(file_path, 'rb') as pickle_file:
             bully_selected = pickle.load(pickle_file)
@@ -234,7 +199,7 @@ async def player_choose_bully(ctx, user, bot, channel_cible=None, delaie_timeout
     
     return bully_selected, bully_number
 
-async def player_choose_item(ctx, user, bot, channel_cible=None, delaie_timeout = delaie_timeout):
+async def player_choose_item(ctx: Context, user, bot, channel_cible=None, delaie_timeout = delaie_timeout):
     if(channel_cible==None):
         channel_cible = ctx.channel
     item = None
@@ -255,12 +220,11 @@ async def player_choose_item(ctx, user, bot, channel_cible=None, delaie_timeout 
 
     return item
 
-async def select_item_to_equip(ctx, user, bot):
+async def select_item_to_equip(ctx: Context, user, bot):
     selected_item = None
 
     #Lien vers le dossier des items
-    path_players_data = "game_data/player_data"
-    player_path_items = path_players_data + "/" + str(user.id) + "/items"
+    player_path_items = utils.get_player_path(user.id) / "items"
 
     #On récup la liste des items dispos.
     Liste_items = []
@@ -268,7 +232,7 @@ async def select_item_to_equip(ctx, user, bot):
         for file in (os.listdir(player_path_items)):
             if file.endswith(".pkl"):
                 try :
-                    with open(player_path_items + "/" + file, 'rb') as pickle_file:
+                    with open(player_path_items / file, 'rb') as pickle_file:
                         item = pickle.load(pickle_file)
                     Liste_items.append(item)
                 except Exception as e:
@@ -301,10 +265,10 @@ async def select_item_to_equip(ctx, user, bot):
         reaction, msg = await bot.wait_for("reaction_add", check=fight_manager.check_reaction_number(user, message_item_choix), timeout=delaie_timeout)
         num_item_equipped = fight_manager.from_emote_to_number(reaction.emoji)
         selected_item = Liste_items[num_item_equipped]
+        print(f"{user.name} a choisit l'item : {selected_item.name}")
     except Exception as e:
         await ctx.channel.send(content=f"[{user.mention}] - No item equipped")
 
-    print(f"{user.name} a choisit l'item : {selected_item.name}")
     return selected_item
 
 
@@ -324,15 +288,15 @@ def generate_name():
     return [prenom, nom]
 
 #A SUPPRIMER
-async def add_bully_custom(ctx, player_path, name_brute, stats, rarity, channel_cible=None):
+async def add_bully_custom(ctx: Context, player_path: Path, name_brute, stats, rarity, channel_cible=None):
     
     #Par défaut, le channel d'envoie est le channel du contexte
     if(channel_cible==None):
         channel_cible = ctx.channel
     
-    player_brute_path = player_path + "/brutes"
+    player_brute_path = player_path / "brutes"
     ind = 0
-    while os.path.exists(player_brute_path + "/" + str(ind) + ".pkl"):
+    while os.path.exists(player_brute_path / f"{ind}.pkl"):
         ind += 1
 
     if(ind > 4) :
@@ -341,7 +305,7 @@ async def add_bully_custom(ctx, player_path, name_brute, stats, rarity, channel_
     
     id_brute = str(ind)
 
-    file_path = player_brute_path + "/" + id_brute + ".pkl"
+    file_path = player_brute_path / f"{id_brute}.pkl"
     
     # Open the file in write mode (creates the file if it doesn't exist)
     file = open(file_path, "wb")
@@ -356,13 +320,13 @@ async def add_bully_custom(ctx, player_path, name_brute, stats, rarity, channel_
     # Close the file
     file.close()
 
-async def increase_all_lvl(ctx, player_path, channel_cible=None):
+async def increase_all_lvl(ctx: Context, player_path: Path, channel_cible=None):
 
     #Par défaut, le channel d'envoie est le channel du contexte
     if(channel_cible==None):
         channel_cible = ctx.channel
 
-    player_brute_path = player_path + "/brutes"
+    player_brute_path = player_path / "brutes"
     print("yep")
     try :
         for f in sorted(os.listdir(player_brute_path)) :
@@ -379,23 +343,23 @@ async def increase_all_lvl(ctx, player_path, channel_cible=None):
     await channel_cible.send("done")
 
 def nb_bully_in_team(user_id):
-    player_path = "game_data/player_data/" + str(user_id)
-    player_brute_path = player_path + "/brutes"
+    player_path = utils.get_player_path(user_id)
+    player_brute_path = player_path / "brutes"
     ind = 0
     for k in range(number_bully_max):
-        if os.path.exists(player_brute_path + "/" + str(k) + ".pkl"):
+        if os.path.exists(player_brute_path / f"{k}.pkl"):
             ind += 1
 
     return ind
 
 
-def correct_missing_folder(user_path):
+def correct_missing_folder(user_path: Path):
     if(not os.path.exists(user_path)):
         raise Exception("Le joueur n'existe pas dans la bdd, il doit join")
     else : 
-        if (not os.path.exists(user_path + "/brutes")):
-            os.makedirs(user_path + "/brutes", exist_ok=True)
-        if (not os.path.exists(user_path + "/items")):
-            os.makedirs(user_path + "/items", exist_ok=True)
+        if (not os.path.exists(user_path / "brutes")):
+            os.makedirs(user_path / "brutes", exist_ok=True)
+        if (not os.path.exists(user_path / "items")):
+            os.makedirs(user_path / "items", exist_ok=True)
 
     

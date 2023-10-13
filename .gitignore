@@ -120,6 +120,15 @@ ENV/
 env.bak/
 venv.bak/
 
+# Python venv
+Lib/
+Scripts/
+Include/
+pyvenv.cfg
+
+# VSCode
+.vscode
+
 # Spyder project settings
 .spyderproject
 .spyproject
@@ -155,3 +164,5 @@ cython_debug/
 .env
 game_data/bully_images/*/*.png
 shop/*.png
+**/*.png
+config

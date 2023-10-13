@@ -8,14 +8,18 @@ import money
 import asyncio
 import math
 
+from discord.ext.commands import Context
+from typing import Optional
+
+
 delaie_timeout = 20
 fight_msg_time_update = 1
 
-async def proposition_fight(ctx, user_1, user_2, bot, for_fun = False):
+async def proposition_fight(ctx: Context, user_1, user_2, bot, for_fun = False):
     await manager_start_fight(ctx, user_1, user_2, bot, for_fun)
     return
 
-async def manager_start_fight(ctx, user_1, user_2, bot, for_fun = False):
+async def manager_start_fight(ctx: Context, user_1, user_2, bot, for_fun = False):
     text_challenge = f"{user_1.mention} challenge {user_2.mention} !"
     if for_fun :
         text_challenge = f"{user_1.mention} challenge {user_2.mention} to a fun fight (no death, no xp)!"
@@ -39,7 +43,7 @@ async def manager_start_fight(ctx, user_1, user_2, bot, for_fun = False):
     await start_fight(ctx, user_1, user_2, bot, for_fun)
     return
 
-async def start_fight(ctx, user_1, user_2, bot, for_fun = False):
+async def start_fight(ctx: Context, user_1, user_2, bot, for_fun = False):
     # path_players_data = "game_data/player_data"
     # player_brute_path_1 = path_players_data + "/" + str(user_1.id) + "/brutes"
     # player_brute_path_2 = path_players_data + "/" + str(user_2.id) + "/brutes"
@@ -106,7 +110,7 @@ async def start_fight(ctx, user_1, user_2, bot, for_fun = False):
 
     return
 
-async def manager_equip_item(ctx, user_1, user_2, bot):
+async def manager_equip_item(ctx: Context, user_1, user_2, bot):
     item_1 = None
     item_2 = None
 
@@ -115,7 +119,7 @@ async def manager_equip_item(ctx, user_1, user_2, bot):
     return item_1, item_2
 
 
-async def fight(ctx, user_1, user_2, bot, bully_1:Bully, bully_2:Bully, for_fun = False, item_1:Item = None, item_2:Item = None):
+async def fight(ctx: Context, user_1, user_2, bot, bully_1:Bully, bully_2:Bully, for_fun = False, item_1:Optional[Item] = None, item_2:Optional[Item] = None):
     #On initialise les variables pour le combat :
     max_pv_1 = bully_1.max_pv
     max_pv_2 = bully_2.max_pv
@@ -135,6 +139,9 @@ async def fight(ctx, user_1, user_2, bot, bully_1:Bully, bully_2:Bully, for_fun 
     if(pv_2 <= 0):
         bully_gagnant = bully_1
         bully_perdant = bully_2
+    else:
+        print("WTF")
+        return
     
     if(for_fun) :
         await ctx.channel.send(f"{bully_gagnant.name} won this fun fight!")
@@ -147,14 +154,14 @@ async def fight(ctx, user_1, user_2, bot, bully_1:Bully, bully_2:Bully, for_fun 
         if (gold_earned > 0):
             user_gagnant = user_1 if bully_gagnant == bully_1 else user_2
             money.give_money(user_id=user_gagnant.id, montant=gold_earned)
-            pretext += f"{user_gagnant.name} earned {gold_earned}{money.icon_money}\n"
+            pretext += f"{user_gagnant.name} earned {gold_earned}{money.MONEY_ICON}\n"
         bully_perdant.kill()
         await ctx.channel.send(f"{pretext}{bully_perdant.name} died in terrible agony")
 
     return
 
 
-def value_to_bar_str(v, max_value=10):
+def value_to_bar_str(v:int, max_value=10):
     v = max(0,v) #Pour éviter des valeurs négatives
     t = ""
     for k in range(v):
@@ -168,7 +175,7 @@ def value_to_bar_str(v, max_value=10):
 async def fight_simulation(ctx, bot, stat_base_1, stat_base_2, name_1, name_2, max_pv_1 = 10, max_pv_2 = 10,
                             lvl_1 = 1, lvl_2 = 1,
                             user_1 = None, user_2 = None, is_switch_possible = False, 
-                            item_1:Item = None, item_2:Item = None, channel_cible = None):
+                            item_1:Optional[Item] = None, item_2:Optional[Item] = None, channel_cible = None):
     """
     return : (pv_restant_joueur_1, pv_restant_joueur_2)
     """

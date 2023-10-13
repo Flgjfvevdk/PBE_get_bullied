@@ -1,3 +1,4 @@
+from pathlib import Path
 from bully import Bully
 import bully
 import interract_game
@@ -10,6 +11,7 @@ import pickle
 import asyncio
 
 import discord
+from discord.ext.commands import Context
 
 rarity_drop = [0, 50, 35, 14, 1]
 rarity_price = [30, 80, 200, 600, 1000]
@@ -30,18 +32,17 @@ async def restock_shop():
     for k in range(max_bully_in_shop):
         try:
             b = new_bully_shop(k)
-            file_path = f"shop/{k}.pkl"
+            file_path = Path(f"shop/{k}.pkl")
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            file = open(file_path, "wb")
-            pickle.dump(b, file)
+            with open(file_path, "wb") as file:
+                pickle.dump(b, file)
         except Exception as e:
             print(e)
-            file.close()
             return
         
         file.close()
 
-async def print_shop(ctx, bot):
+async def print_shop(ctx: Context, bot):
     if(is_shop_restocking) :
         await ctx.channel.send(restock_message())
         return
@@ -113,7 +114,7 @@ async def print_shop(ctx, bot):
                     await shop_msg.edit(content=text)
                     await ctx.send(f"{user.mention} has purchased {b.name} for {cout_bully(b)}🩹!")
             else :
-                await ctx.send(f"You don't have enough {money.icon_money} {user} for {b.name} [cost: {cout_bully(b)}{money.icon_money}]")
+                await ctx.send(f"You don't have enough {money.MONEY_ICON} {user} for {b.name} [cost: {cout_bully(b)}{money.MONEY_ICON}]")
 
     except Exception as e:
         #print(e)
@@ -121,36 +122,31 @@ async def print_shop(ctx, bot):
         #print("time out")
 
 def new_bully_shop(nb):
-    indices = range(len(rarity_drop))
-    selected_index = random.choices(indices, weights=rarity_drop)[0]
-    for rar in bully.Rarity:
-        if rar.value == selected_index:
-            rarity= rar
-    
+    rarity = random.choices(list(bully.Rarity), weights=rarity_drop)[0]
     name = interract_game.generate_name()
     b = Bully(name[0] + " " + name[1], f"shop/{nb}.pkl", rarity=rarity)
     return b
 
 def load_bullies_shop():
-    Bullies_in_shop = []
-    folder_path = "shop/"
+    bullies_in_shop = []
+    folder_path = Path("shop/")
     for k in range(max_bully_in_shop):
-        file_path = folder_path + f"{k}.pkl"
-        if os.path.isfile(file_path):
-            with open(file_path, "rb") as file:
+        file_path = folder_path / f"{k}.pkl"
+        if file_path.exists() and file_path.is_file():
+            with file_path.open("rb") as file:
                 obj = pickle.load(file)
-                Bullies_in_shop.append(obj)
+                bullies_in_shop.append(obj)
         else :
-            Bullies_in_shop.append(None)
+            bullies_in_shop.append(None)
     """
     for filename in sorted(os.listdir(folder_path)):
         if filename.endswith(".pkl"):
             file_path = os.path.join(folder_path, filename)
             with open(file_path, "rb") as file:
                 obj = pickle.load(file)
-                Bullies_in_shop.append(obj)
+                bullies_in_shop.append(obj)
     """
-    return Bullies_in_shop
+    return bullies_in_shop
 
 def empty_bullies_shop():
     Bullies_in_shop = load_bullies_shop()

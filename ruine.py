@@ -1,5 +1,6 @@
 import os
 import random
+from typing import Optional
 from bully import Bully #ne pas confondre avec bully (le fichier)
 import bully #ne pas confondre avec Bully (la class)
 from item import Item
@@ -10,6 +11,10 @@ import pickle
 import asyncio
 
 from enum import Enum
+
+from discord.ext.commands import Context
+
+import utils
 
 delaie_timeout_ruin = 30
 delaie_delete_thread_fin = 90
@@ -52,22 +57,21 @@ def generate_ruine(lvl, index_rarity = None):
     random.shuffle(Salles_ruine)
     return Salles_ruine
 
-async def enter_the_ruin(ctx, user, lvl, bot):
+async def enter_the_ruin(ctx: Context, user, lvl, bot):
     message = await ctx.channel.send(f"{user.mention} enters a mysterious ruin [lvl : {lvl}]")
     try :
-        thread = await ctx.channel.create_thread(name=f"Ruin - Level {lvl}", message= message)
+        thread = await ctx.channel.create_thread(name=f"Ruin - Level {lvl}", message= message) #type: ignore
     except Exception as e:
         print(e)
         return
 
     #On met les chemins vers les dossiers du joueur
-    path_players_data = "game_data/player_data"
-    player_brute_path = path_players_data + "/" + str(user.id) + "/brutes"
+    player_brute_path = utils.get_player_path(user.id) / "brutes"
 
     #On initialise les pv des bullies
     pv_team_joueur = [] #pv du bully n°index. Si bully n°index n'existe pas alors -1
     for k in range(interract_game.number_bully_max):
-        file_bully = player_brute_path + "/" + str(k) + ".pkl"
+        file_bully = player_brute_path / f"{k}.pkl"
         if os.path.exists(file_bully):
             try :
                 with open(file_bully, 'rb') as pickle_file:
@@ -116,14 +120,14 @@ async def enter_the_ruin(ctx, user, lvl, bot):
                 return
 
             if (is_success):
-                await interract_game.add_item_to_player(ctx= ctx, user_id= user.id, i= item_boss, channel_cible= thread)
+                await interract_game.add_item_to_player(ctx= ctx, user_id= user.id, item=item_boss, channel_cible= thread)
     await thread.send(f"Congratulation {user}, you beat the boss!") 
     await exit_ruin(ctx, thread, delaie_delete_thread_fin)
 
     return
 
 
-async def fight_manage_ruin(ctx, user, bot, current_enemy, pv_team_joueur, channel_cible, is_switch_possible = False, item_enemy:Item=None):
+async def fight_manage_ruin(ctx: Context, user, bot, current_enemy, pv_team_joueur, channel_cible, is_switch_possible = False, item_enemy:Optional[Item]=None):
     #channel_cible = thread, current_enemy = current_room
     text_enemy_coming = f"An enemy is coming! {current_enemy.get_print(compact_print=True)}"
     await channel_cible.send(f"{bully.mise_en_forme_str(text_enemy_coming)}") 
@@ -135,7 +139,9 @@ async def fight_manage_ruin(ctx, user, bot, current_enemy, pv_team_joueur, chann
         await channel_cible.send(f"Your team left the ruin. Choose faster next time {user}") 
         raise e #On propage l'exception
     except IndexError as e:
-        await channel_cible.send(f"[{user}] -> you don't have a bully n°{num_bully_j}\nYour team left the ruin") 
+        await channel_cible.send(
+            f"[{user}] -> you don't have a bully n°{e.args[0]}\n"
+            "Your team left the ruin") 
         raise e #On propage l'exception
     except Exception as e:
         raise e #On propage l'exception
@@ -169,11 +175,11 @@ async def fight_manage_ruin(ctx, user, bot, current_enemy, pv_team_joueur, chann
                 new_bully_joueur, new_num_bully_j = await interract_game.player_choose_bully(ctx, user= user, bot= bot, channel_cible= channel_cible, delaie_timeout= delaie_changement_fighter)
                 
             except TimeoutError as e:
-                await channel_cible.send(f"Too slow, {bully_joueur.name} stay in fight")
+                await channel_cible.send(f"Too slow, {bully_joueur.name} stays in fight.")
                 new_bully_joueur = bully_joueur
                 new_num_bully_j = num_bully_j
             except IndexError as e:
-                await channel_cible.send(f"Erreur, {bully_joueur.name} reste en combat") 
+                await channel_cible.send(f"Erreur, {bully_joueur.name} reste en combat.") 
                 new_bully_joueur = bully_joueur
                 new_num_bully_j = num_bully_j
             
@@ -201,7 +207,7 @@ async def fight_manage_ruin(ctx, user, bot, current_enemy, pv_team_joueur, chann
         if (gold_earned > 0):
             user_gagnant = user
             money.give_money(user_id=user_gagnant.id, montant=gold_earned)
-            pretext += f"{user.name} earned {gold_earned}{money.icon_money}\n"
+            pretext += f"{user.name} earned {gold_earned}{money.MONEY_ICON}\n"
 
         #On envoie le message de succès et on progress dans le dungeon
         await channel_cible.send(f"{pretext}{current_enemy.name} is dead! You progress in the ruin.")
@@ -221,7 +227,7 @@ async def fight_manage_ruin(ctx, user, bot, current_enemy, pv_team_joueur, chann
     return is_success, pv_team_joueur
 
 
-async def exit_ruin(ctx, thread, time_bfr_close_thread):
+async def exit_ruin(ctx: Context, thread, time_bfr_close_thread):
     #ID_joueur_en_donjon.remove(ctx.author.id)
     try :
         await asyncio.sleep(time_bfr_close_thread)

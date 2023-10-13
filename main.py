@@ -1,5 +1,6 @@
 # bot.py
 import os
+from typing import Optional
 import discord
 
 import interract_game
@@ -10,21 +11,25 @@ import money
 import shop
 import bully
 import item
-
+import utils
+from pathlib import Path
 
 import asyncio
 
-from discord.ext import commands
+from discord.ext.commands import Bot, Context, CommandNotFound
 
 #Les 2 lignes en dessous permettent de lire le token qui est noté dans .env
 from dotenv import load_dotenv
 load_dotenv()
-
 TOKEN = os.getenv('DISCORD_TOKEN')
+if TOKEN is None:
+    print("ENV variable DISCORD_TOKEN is not set !")
+    exit(-1)
+
 intents = discord.Intents.default()
 intents.message_content = True
 
-bot = commands.Bot(command_prefix = "!!", intents=intents)
+bot = Bot(command_prefix = "!!", intents=intents)
 
 @bot.event
 async def on_ready():
@@ -33,21 +38,19 @@ async def on_ready():
     print("on est bien là")
 
 @bot.event
-async def on_command_error(ctx, error):
-    if isinstance(error, commands.CommandNotFound):
+async def on_command_error(ctx: Context, error):
+    if isinstance(error, CommandNotFound):
         return
 
 
 # Command général ____________________________________________________________________________________
 @bot.command()
-async def join(ctx):
-    path_player_data = "game_data/player_data"
-    id = ctx.author.id
-    user_player_path = path_player_data + "/" + str(id)
+async def join(ctx: Context):
+    user_player_path = utils.get_player_path(ctx.author.id)
     await interract_game.join_game(ctx, user_player_path)
 
 @bot.command(aliases=['py', 'pay'])
-async def payday(ctx):
+async def payday(ctx: Context):
     # Vérifier si l'utilisateur a déjà fait la commande récemment
     cooldown_restant = await money.cooldown_restant_pay(ctx.author.id)
     if cooldown_restant > 0:
@@ -55,44 +58,62 @@ async def payday(ctx):
         return
 
     # Donner de l'argent à l'utilisateur
-    money.give_money(ctx.author.id, montant= money.payday_value)
-    await ctx.send(f"Vous avez reçu des {money.icon_money} ! (+{money.payday_value}{money.icon_money})\nVous avez {money.get_money_user(ctx.author.id)} {money.icon_money}")
+    money.give_money(ctx.author.id, montant=money.PAYDAY_VALUE)
+    await ctx.send(
+        f"Vous avez reçu des {money.MONEY_ICON} ! (+{money.PAYDAY_VALUE}{money.MONEY_ICON})\n"
+        f"Vous avez {money.get_money_user(ctx.author.id)} {money.MONEY_ICON}"
+    )
 
     # Enregistrer l'heure actuelle comme dernière utilisation de la commande
     money.enregistrer_cooldown_pay(ctx.author.id)
 
 @bot.command(aliases=['money'])
-async def bank(ctx):
-    await ctx.send(f"Vous avez {money.get_money_user(ctx.author.id)} {money.icon_money}")
+async def bank(ctx: Context):
+    await ctx.send(f"Vous avez {money.get_money_user(ctx.author.id)} {money.MONEY_ICON}")
 
 @bot.command(aliases=['patch', 'update'])
-async def patchnote(ctx):
-    await ctx.channel.send("```\n- leaderbord for dungeon ! Become the greatest coach by conquering the most powerful dungeons\n- Fun fight are live ! ($$fun_challenge @username)\n- new command : $$infos_dungeon ```")
+async def patchnote(ctx: Context):
+    await ctx.channel.send(
+        "```\n"
+        "- leaderbord for dungeon ! Become the greatest coach by conquering the most powerful dungeons\n"
+        "- Fun fight are live ! ($$fun_challenge @username)\n"
+        "- new command : $$infos_dungeon\n"
+        "```"
+    )
 
 @bot.command(aliases=['lb', 'leader'])
-async def leaderboard(ctx):
+async def leaderboard(ctx: Context):
     await ctx.channel.send(await donjon.str_leaderboard_donjon(ctx, bot))
     
 @bot.command(aliases=['infdung'])
-async def infos_dungeon(ctx):
-    await ctx.channel.send("```\nYour bullies do not heal between fights\n- The first player to defeat the lvl 10 dungeon will receive a permanent trophy!\n- Dungeons give more xp ! (if you complete them)\n- After each season, the leaderboard is reset and the first one receives a permanent trophy```")
+async def infos_dungeon(ctx: Context):
+    await ctx.channel.send(
+        "```\n"
+        "Your bullies do not heal between fights\n"
+        "- The first player to defeat the lvl 10 dungeon will receive a permanent trophy!\n"
+        "- Dungeons give more xp ! (if you complete them)\n"
+        "- After each season, the leaderboard is reset and the first one receives a permanent trophy\n"
+        "```"
+    )
 
 @bot.command()
-async def commands_list(ctx):
+async def commands_list(ctx: Context):
     command_list = ""
     for command in bot.commands:
-        if not command.name.startswith("admin_"):
-            aliases = ", ".join(command.aliases) if command.aliases else "No aliases"
-            command_list += f"**{command.name}**: {aliases}\n"
+        if utils.is_admin in command.checks:
+        #if command.name.startswith("admin_"):
+            continue
+        aliases = ", ".join(command.aliases) if command.aliases else "No aliases"
+        command_list += f"**{command.name}**: {aliases}\n"
     await ctx.send(f"Available commands:\n{command_list}")
 
 @bot.command(aliases=['shop', 'ps'])
-async def print_shop(ctx):
+async def print_shop(ctx: Context):
     await shop.print_shop(ctx, bot)
 
 @bot.command(aliases=['ty', 'sayty', 'credits'])
-async def say_thanks(ctx):
-    await ctx.send("Thanks to everyone who take part in my creation!")
+async def say_thanks(ctx: Context):
+    await ctx.send("Thanks to everyone who takes part in my creation!")
 
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -102,7 +123,7 @@ async def say_thanks(ctx):
 
 #Les combats : ___________________________________________________________
 @bot.command(aliases=['ch'])
-async def challenge(ctx, user:discord.Member):
+async def challenge(ctx: Context, user:discord.Member):
     user_1 = ctx.author
     if(ctx.author.id in donjon.ID_joueur_en_donjon):
         await ctx.channel.send("You can't, you are in a dungeon")
@@ -111,7 +132,7 @@ async def challenge(ctx, user:discord.Member):
     return
 
 @bot.command(aliases=['fch'])
-async def fun_challenge(ctx, user:discord.Member):
+async def fun_challenge(ctx: Context, user:discord.Member):
     user_1 = ctx.author
     if(ctx.author.id in donjon.ID_joueur_en_donjon):
         await ctx.channel.send("You can't, you are in a dungeon")
@@ -120,7 +141,7 @@ async def fun_challenge(ctx, user:discord.Member):
     return
 
 @bot.command(aliases=['dungeon', 'donjon'])
-async def explore_dungeon(ctx, level:int):
+async def explore_dungeon(ctx: Context, level:int):
     user = ctx.author
     if(ctx.author.id in donjon.ID_joueur_en_donjon):
         await ctx.channel.send("You can't, you are in a dungeon")
@@ -135,7 +156,7 @@ async def explore_dungeon(ctx, level:int):
     return
 
 @bot.command(aliases=['ruin', 'ruine'])
-async def explore_ruin(ctx, level:int):
+async def explore_ruin(ctx: Context, level:int):
     user = ctx.author
     if(ctx.author.id in donjon.ID_joueur_en_donjon):
         await ctx.channel.send("You can't, you are in a dungeon")
@@ -155,13 +176,11 @@ async def explore_ruin(ctx, level:int):
 
 # Par rapport au club ____________________________
 @bot.command(aliases=['print', 'pr'])
-async def club(ctx, user:discord.Member = None):
+async def club(ctx: Context, user:Optional[discord.abc.User] = None):
     if(user is None):
         user = ctx.author
-    path_player_data = "game_data/player_data"
-    id = user.id
-    user_player_path = path_player_data + "/" + str(id)
-    if(not os.path.exists(user_player_path)):
+    user_player_path = utils.get_player_path(ctx.author.id)
+    if(not user_player_path.exists()):
         await ctx.channel.send("You can't use any commands until you have joined")
         return
     try:
@@ -170,26 +189,22 @@ async def club(ctx, user:discord.Member = None):
         print(e)
 
 @bot.command(aliases=['h'])
-async def hire(ctx):
+async def hire(ctx: Context):
     if(ctx.author.id in donjon.ID_joueur_en_donjon):
         await ctx.channel.send("You can't, you are in a dungeon")
         return
-    path_player_data = "game_data/player_data"
-    id = ctx.author.id
-    user_player_path = path_player_data + "/" + str(id)
-    if(not os.path.exists(user_player_path)):
+    user_player_path = utils.get_player_path(ctx.author.id)
+    if(not user_player_path.exists()):
         await ctx.channel.send("You can't use any commands until you have joined")
         return
     await interract_game.add_random_bully_to_player(ctx, id, interract_game.generate_name())
 
 @bot.command(aliases=['item', 'items'])
-async def show_item(ctx, user:discord.Member = None):
+async def show_item(ctx: Context, user:Optional[discord.abc.User] = None):
     if(user is None):
         user = ctx.author
-    path_player_data = "game_data/player_data"
-    id = user.id
-    user_player_path = path_player_data + "/" + str(id)
-    if(not os.path.exists(user_player_path)):
+    user_player_path = utils.get_player_path(user.id)
+    if(not user_player_path.exists()):
         await ctx.channel.send("You can't use any commands until you have joined")
         return
     try:
@@ -202,56 +217,48 @@ async def show_item(ctx, user:discord.Member = None):
 
 #Command d'admin _____________________________________________________________________________________________________
 @bot.command()
-async def admin_give(ctx):
-    if(ctx.author.id == ***REMOVED***):
-        path_player_data = "game_data/player_data"
-        id = ***REMOVED*** #Mon id
-        #id = 1113183903319068692 #id du bot
-        user_player_path = path_player_data + "/" + str(id)
-        if(not os.path.exists(user_player_path)):
-            await ctx.channel.send("You can't use any commands if the target doesn't have an account")
-            return
-        await interract_game.add_bully_custom(ctx, user_player_path, ["Balez", "EZ"], [99,99,99,99], bully.Rarity.DEVASTATOR)
+@utils.is_admin()
+async def admin_give(ctx: Context):
+    user_player_path = utils.get_player_path(ctx.author.id)
+    if(not os.path.exists(user_player_path)):
+        await ctx.channel.send("You can't use any commands if the target doesn't have an account")
+        return
+    await interract_game.add_bully_custom(ctx, user_player_path, ["Balez", "EZ"], [99,99,99,99], bully.Rarity.DEVASTATOR)
 
 @bot.command()
-async def admin_bot_join(ctx):
-    if(ctx.author.id == ***REMOVED***):
-        path_player_data = "game_data/player_data"
-        id = 1113183903319068692 #id du bot
-        user_player_path = path_player_data + "/" + str(id)
-        await interract_game.join_game(ctx, user_player_path)
-        
+@utils.is_admin()
+async def admin_bot_join(ctx:Context):
+    user_player_path = utils.get_player_path(ctx.me.id) #id du bot
+    await interract_game.join_game(ctx, user_player_path)        
 
 @bot.command(aliases=['new_shop', 'ns'])
-async def admin_new_shop(ctx):
-    if(ctx.author.id == ***REMOVED***):
+@utils.is_admin()
+async def admin_new_shop(ctx: Context):
+    try:
         await shop.restock_shop()
-        try:
-            await shop.print_shop(ctx, bot)
-        except Exception as e:
-            print(e)
-    return
+        await shop.print_shop(ctx, bot)
+    except Exception as e:
+        print(e)
 
 
 @bot.command()
-async def get_item(ctx):
-    if(ctx.author.id == ***REMOVED***):
-        try :
-            new_item = item.Item(name="Str - x0.5", is_bfr_fight= True, buff_self_start=[4,1,0,0,0], buff_self_start_multiplicatif_lvl=[0.5, 0, 0, 0])
-            await interract_game.add_item_to_player(ctx= ctx, user_id= ctx.author.id, i= new_item)
-        except Exception as e:
-            print("on est la en fait")
-            print(e)
+@utils.is_admin()
+async def get_item(ctx: Context):
+    try:
+        new_item = item.Item(name="Str - x0.5", is_bfr_fight=True, buff_self_start=[4,1,0,0,0], buff_self_start_multiplicatif_lvl=[0.5, 0, 0, 0])
+        await interract_game.add_item_to_player(ctx=ctx, user_id=ctx.author.id, item=new_item)
+    except Exception as e:
+        print("on est la en fait")
+        print(e)
 
 
 # JUSTE POUR LE PBE JUSTE POUR LE PBE
 @bot.command()
-async def give_lvl(ctx):
+async def give_lvl(ctx: Context):
     if(TOKEN != ***REMOVED***):
         return
     else :
-        path_player_data = "game_data/player_data"
-        user_player_path = path_player_data + "/" + str(ctx.author.id)
+        user_player_path = utils.get_player_path(ctx.author.id)
         print("ici")
         await interract_game.increase_all_lvl(ctx, player_path=user_player_path)
 #

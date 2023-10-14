@@ -3,6 +3,7 @@ import random
 from bully import Bully #ne pas confondre avec bully (le fichier)
 import bully #ne pas confondre avec Bully (la class)
 import interact_game
+from fight_manager import fightingBully
 import fight_manager
 import money
 import pickle
@@ -107,7 +108,8 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot):
 
         #Le player choisit son bully
         try :
-            bully_joueur, num_bully_j = await interact_game.player_choose_bully(ctx, user= user, bot= bot, channel_cible= thread, timeout= DUNGEON_CHOICE_TIMEOUT)
+            #bully_joueur, num_bully_j = await interact_game.player_choose_bully(ctx, user= user, bot= bot, channel_cible= thread, timeout= DUNGEON_CHOICE_TIMEOUT)
+            fighting_bully_joueur, num_bully_j = await interact_game.player_choose_bully(ctx, user= user, bot= bot, channel_cible= thread, timeout= DUNGEON_CHOICE_TIMEOUT)
         except TimeoutError as e:
             await thread.send(f"Your team left the dungeon. Choose faster next time {user}") 
             print (e)
@@ -126,15 +128,19 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot):
             return
         
         #On fait le combat et on récup les pv restants des combattants
-        stat_joueur = [bully_joueur.strength, bully_joueur.agility, bully_joueur.lethality, bully_joueur.viciousness]
+        #stat_joueur = [bully_joueur.strength, bully_joueur.agility, bully_joueur.lethality, bully_joueur.viciousness]
         stat_enemy = [current_enemy.strength, current_enemy.agility, current_enemy.lethality, current_enemy.viciousness]
-        pv_restant_joueur, pv_restant_enemy = await fight_manager.fight_simulation(ctx, bot= bot, 
-                                                                    stat_base_1= stat_joueur, stat_base_2= stat_enemy, 
-                                                                    name_1= bully_joueur.name, name_2= current_enemy.name, 
-                                                                    max_pv_1= pv_team_joueur[num_bully_j], max_pv_2= Enemies_pv[current_floor], 
-                                                                    lvl_1= bully_joueur.lvl, lvl_2= current_enemy.lvl,
-                                                                    channel_cible=thread)
-        
+        fighting_bully_enemy = fightingBully(combattant=current_enemy, name=current_enemy.name, lvl=current_enemy.lvl, pv=Enemies_pv[current_floor], base_stat=stat_enemy, stat=stat_enemy)
+        # pv_restant_joueur, pv_restant_enemy = await fight_manager.fight_simulation(ctx, bot= bot, 
+        #                                                             stat_base_1= stat_joueur, stat_base_2= stat_enemy, 
+        #                                                             name_1= bully_joueur.name, name_2= current_enemy.name, 
+        #                                                             max_pv_1= pv_team_joueur[num_bully_j], max_pv_2= Enemies_pv[current_floor], 
+        #                                                             lvl_1= bully_joueur.lvl, lvl_2= current_enemy.lvl,
+        #                                                             channel_cible=thread)
+        await fight_manager.fight_simulation(ctx, bot= bot, 
+                                                fighting_bully_1= fighting_bully_joueur, fighting_bully_2= fighting_bully_enemy,
+                                                channel_cible=thread)
+        pv_restant_joueur = fighting_bully_joueur.pv
         #On regarde qui a perdu (le joueur ou l'ennemi)
         if(pv_restant_joueur > 0) :
             #Le joueur a gagné
@@ -164,7 +170,7 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot):
 
             #On maj les pv des combattants
             pv_team_joueur[num_bully_j] = 0
-            Enemies_pv[current_floor] = pv_restant_enemy
+            Enemies_pv[current_floor] = fighting_bully_enemy.pv
 
             #On tue le bully qui est ded
             await thread.send(f"{bully_joueur.name} died in terrible agony")
@@ -213,50 +219,6 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot):
     await exit_dungeon(ctx= ctx, thread= thread, time_bfr_close=THREAD_DELETE_AFTER)
     return
 
-
-# async def fight_enemy_dungeon(ctx: Context, bot, bully_joueur, bully_enemy, pv_joueur, pv_enemy, channel_cible=None):
-#     """
-#     return : (pv_restant_joueur, pv_restant_bully)
-#     """
-
-#     if(channel_cible == None):
-#         channel_cible = ctx.channel
-
-#     barre_pv_joueur = fight_manager.value_to_bar_str(pv_joueur)
-#     barre_pv_enemy = fight_manager.value_to_bar_str(pv_enemy)
-
-#     text_pv_combat = "\t\tBully 1 : " + bully_joueur.name + "\nhp : " + barre_pv_joueur + "\n\n\t\t\t\tVS\n\n\t\tBully 2 : " + bully_enemy.name + "\nhp : " + barre_pv_enemy
-#     action_combat = "Let's get ready to rumble!"
-#     text_combat = "```" + text_pv_combat + "\n\n" + action_combat + "```"
-    
-#     message = await channel_cible.send(text_combat)
-#     await asyncio.sleep(fight_manager.fight_msg_time_update)
-
-#     emoji_recap_j1 = ""
-#     emoji_recap_j2 = ""
-#     tour = random.randint(0,1)
-#     while pv_joueur > 0 and pv_enemy > 0 :
-#         #On l'action
-#         (text_action, pv_perdu_1, pv_perdu_2,  emoji_j1, emoji_j2, tour) = fight_manager.nouvelle_action(bully_joueur, bully_enemy, tour)
-
-#         #On save les emoji pour la frise chronologique
-#         emoji_recap_j1+= emoji_j1
-#         emoji_recap_j2+= emoji_j2
-
-#         #on maj les parametres des pv 
-#         pv_joueur -= pv_perdu_1
-#         pv_enemy -= pv_perdu_2
-#         barre_pv_joueur = fight_manager.value_to_bar_str(pv_joueur)
-#         barre_pv_enemy = fight_manager.value_to_bar_str(pv_enemy)
-
-#         #On fait visuellement la modif de pv : 
-#         text_pv_combat = "\t\tBully 1 : " + bully_joueur.name + "\nhp : " + barre_pv_joueur + "\n\t\t\t\t\t" + emoji_recap_j1 + "\n\t\t\t\tVS\n\t\t\t\t\t" + emoji_recap_j2 + "\n\t\tBully 2 : " + bully_enemy.name + "\nhp : " + barre_pv_enemy
-#         action_combat = text_action
-#         text_combat = "```" + text_pv_combat + "\n\n" + action_combat + "```"
-#         await message.edit(content = text_combat)
-#         await asyncio.sleep(fight_manager.fight_msg_time_update)
-
-#     return pv_joueur, pv_enemy
 
 
 async def exit_dungeon(ctx: Context, thread, time_bfr_close):

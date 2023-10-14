@@ -200,7 +200,8 @@ async def player_choose_bully(ctx: Context, user, bot, channel_cible=None, timeo
     base_stat = [bully_selected.strength, bully_selected.agility, bully_selected.lethality, bully_selected.viciousness]
     fighting_bully = fight_manager.fightingBully(pv = bully_selected.max_pv, base_stat= base_stat.copy(), stat= base_stat.copy())
     
-    return bully_selected, bully_number #ICI ON CHANGE POUR FIGHTING BULLY
+    return fighting_bully, bully_number
+    return bully_selected, bully_number
 
 async def player_choose_item(ctx: Context, user, bot, channel_cible=None, timeout = CHOICE_TIMEOUT):
     if(channel_cible==None):

@@ -1,4 +1,5 @@
 import os
+from fight_manager import fightingBully
 
 class Item :
 
@@ -53,26 +54,33 @@ class Item :
             #Faire un truc 
             pass
 
-    def effect_before_fight(self, pv_self, stat_self, pv_adv, stat_adv, lvl_self=1, lvl_adv=1):
+    #def effect_before_fight(self, pv_self, stat_self, pv_adv, stat_adv, lvl_self=1, lvl_adv=1):
+    def effect_before_fight(self, fighting_bully_self:fightingBully, fighting_bully_adv:fightingBully):
         if(self.is_bfr_fight) :
-            pv_self += self.buff_start_self_pv
-            buff_self_str = self.buff_start_self_strength + round(lvl_self * self.buff_start_self_mult_lvl_strength)
-            buff_self_agi = self.buff_start_self_agility + round(lvl_self * self.buff_start_self_mult_lvl_agility)
-            buff_self_leth = self.buff_start_self_lethality + round(lvl_self * self.buff_start_self_mult_lvl_lethality)
-            buff_self_vicious = self.buff_start_self_viciousness + round(lvl_self * self.buff_start_self_mult_lvl_viciousness)
+            fighting_bully_self.pv += self.buff_start_self_pv
+            buff_self_str = self.buff_start_self_strength + round(fighting_bully_self.lvl * self.buff_start_self_mult_lvl_strength)
+            buff_self_agi = self.buff_start_self_agility + round(fighting_bully_self.lvl * self.buff_start_self_mult_lvl_agility)
+            buff_self_leth = self.buff_start_self_lethality + round(fighting_bully_self.lvl * self.buff_start_self_mult_lvl_lethality)
+            buff_self_vicious = self.buff_start_self_viciousness + round(fighting_bully_self.lvl * self.buff_start_self_mult_lvl_viciousness)
             #stat_self = [stat_self[0] + self.buff_start_self_strength, stat_self[1] + self.buff_start_self_agility, stat_self[2] + self.buff_start_self_lethality, stat_self[3] + self.buff_start_self_viciousness]
             stat_self = [stat_self[0] + buff_self_str, stat_self[1] + buff_self_agi, stat_self[2] + buff_self_leth, stat_self[3] + buff_self_vicious]
             
-            pv_adv += self.buff_start_adv_pv
-            buff_adv_str = self.buff_start_adv_strength + round(lvl_adv * self.buff_start_adv_mult_lvl_strength)
-            buff_adv_agi = self.buff_start_adv_agility + round(lvl_adv * self.buff_start_adv_mult_lvl_agility)
-            buff_adv_leth = self.buff_start_adv_lethality + round(lvl_adv * self.buff_start_adv_mult_lvl_lethality)
-            buff_adv_vicious = self.buff_start_adv_viciousness + round(lvl_adv * self.buff_start_adv_mult_lvl_viciousness)
+            fighting_bully_self.base_stat = stat_self
+            fighting_bully_self.stat = stat_self
+
+            fighting_bully_adv.pv += self.buff_start_adv_pv
+            buff_adv_str = self.buff_start_adv_strength + round(fighting_bully_adv.lvl * self.buff_start_adv_mult_lvl_strength)
+            buff_adv_agi = self.buff_start_adv_agility + round(fighting_bully_adv.lvl * self.buff_start_adv_mult_lvl_agility)
+            buff_adv_leth = self.buff_start_adv_lethality + round(fighting_bully_adv.lvl * self.buff_start_adv_mult_lvl_lethality)
+            buff_adv_vicious = self.buff_start_adv_viciousness + round(fighting_bully_adv.lvl * self.buff_start_adv_mult_lvl_viciousness)
             #stat_adv = [stat_adv[0] + self.buff_start_adv_strength, stat_adv[1] + self.buff_start_adv_agility, stat_adv[2] + self.buff_start_adv_lethality, stat_adv[3] + self.buff_start_adv_viciousness]
             stat_adv = [stat_adv[0] + buff_adv_str, stat_adv[1] + buff_adv_agi, stat_adv[2] + buff_adv_leth, stat_adv[3] + buff_adv_vicious]
+            
+            fighting_bully_adv.base_stat = stat_adv
+            fighting_bully_adv.stat = stat_adv
 
-        
-        return (pv_self, stat_self, pv_adv, stat_adv)
+        #return (pv_self, stat_self, pv_adv, stat_adv)
+        return
 
     def effect_end_round(self, pv_self, stat_self, pv_adv, stat_adv, my_turn:bool = False, hit_success:bool = False, letha_sucess:bool = False, agi_success:bool = False, vicious_succes:bool = False, vicious_victim:bool = False):
         #Modification

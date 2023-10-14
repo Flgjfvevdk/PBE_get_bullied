@@ -2,7 +2,7 @@ import os
 import random
 from bully import Bully #ne pas confondre avec bully (le fichier)
 import bully #ne pas confondre avec Bully (la class)
-import interract_game
+import interact_game
 import fight_manager
 import money
 import pickle
@@ -74,7 +74,7 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot):
     #On initialise les pv et xp gagné par les bullies
     pv_team_joueur = [] #pv du bully n°index. Si bully n°index n'existe pas alors -1
     xp_earned_bullies = [] #L'xp gagné par chaque bully
-    for k in range(interract_game.BULLY_NUMBER_MAX):
+    for k in range(interact_game.BULLY_NUMBER_MAX):
         file_bully = player_brute_path / f"{k}.pkl"
         if file_bully.exists():
             try :
@@ -107,7 +107,7 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot):
 
         #Le player choisit son bully
         try :
-            bully_joueur, num_bully_j = await interract_game.player_choose_bully(ctx, user= user, bot= bot, channel_cible= thread, timeout= DUNGEON_CHOICE_TIMEOUT)
+            bully_joueur, num_bully_j = await interact_game.player_choose_bully(ctx, user= user, bot= bot, channel_cible= thread, timeout= DUNGEON_CHOICE_TIMEOUT)
         except TimeoutError as e:
             await thread.send(f"Your team left the dungeon. Choose faster next time {user}") 
             print (e)

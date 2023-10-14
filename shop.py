@@ -1,7 +1,7 @@
 from pathlib import Path
 from bully import Bully
 import bully
-import interract_game
+import interact_game
 import money
 import donjon
 
@@ -97,8 +97,8 @@ async def print_shop(ctx: Context, bot):
             if(money.get_money_user(user.id) >= cout_bully(b)):
                 if(ctx.author.id in donjon.ID_joueur_en_donjon):
                     await ctx.channel.send("You can't, you are in a dungeon")
-                elif(interract_game.nb_bully_in_team(user_id=user.id) >= interract_game.BULLY_NUMBER_MAX):
-                    await ctx.channel.send(f"You can't have more than {interract_game.BULLY_NUMBER_MAX} bullies at the same time")
+                elif(interact_game.nb_bully_in_team(user_id=user.id) >= interact_game.BULLY_NUMBER_MAX):
+                    await ctx.channel.send(f"You can't have more than {interact_game.BULLY_NUMBER_MAX} bullies at the same time")
                 else :
                     #La transaction s'effectue. A FAIRE : Créer une fonction buy_bully qui fait ça en bas comme ça c'est plus clair
                     money.give_money(user.id, - cout_bully(b))
@@ -107,7 +107,7 @@ async def print_shop(ctx: Context, bot):
 
                     b.kill()#On retire l'ancien fichier qui était dans le shop (pour le retirer de la boutique)
                     Bullies_in_shop[item_index] = None
-                    await interract_game.add_bully_to_player(ctx, user.id ,b)
+                    await interact_game.add_bully_to_player(ctx, user.id ,b)
                     b.set_image_with_name(image_name)
                     purchased_bullies.append(item_index)
                     text = bullies_in_shop_to_text(Bullies_in_shop)
@@ -123,7 +123,7 @@ async def print_shop(ctx: Context, bot):
 
 def new_bully_shop(nb):
     rarity = random.choices(list(bully.Rarity), weights=RARITY_DROP_CHANCES)[0]
-    name = interract_game.generate_name()
+    name = interact_game.generate_name()
     b = Bully(name[0] + " " + name[1], f"shop/{nb}.pkl", rarity=rarity)
     return b
 

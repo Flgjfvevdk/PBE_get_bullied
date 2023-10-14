@@ -3,7 +3,7 @@ import os
 from typing import Optional
 import discord
 
-import interract_game
+import interact_game
 import fight_manager
 import donjon
 import ruine
@@ -47,7 +47,7 @@ async def on_command_error(ctx: Context, error):
 @bot.command()
 async def join(ctx: Context):
     user_player_path = utils.get_player_path(ctx.author.id)
-    await interract_game.join_game(ctx, user_player_path)
+    await interact_game.join_game(ctx, user_player_path)
 
 @bot.command(aliases=['py', 'pay'])
 async def payday(ctx: Context):
@@ -184,7 +184,7 @@ async def club(ctx: Context, user:Optional[discord.abc.User] = None):
         await ctx.channel.send("You can't use any commands until you have joined")
         return
     try:
-        await interract_game.print_bullies(ctx, user_player_path, print_images = True)
+        await interact_game.print_bullies(ctx, user_player_path, print_images = True)
     except Exception as e:
         print(e)
 
@@ -197,7 +197,7 @@ async def hire(ctx: Context):
     if(not user_player_path.exists()):
         await ctx.channel.send("You can't use any commands until you have joined")
         return
-    await interract_game.add_random_bully_to_player(ctx, id, interract_game.generate_name())
+    await interact_game.add_random_bully_to_player(ctx, id, interact_game.generate_name())
 
 @bot.command(aliases=['item', 'items'])
 async def show_item(ctx: Context, user:Optional[discord.abc.User] = None):
@@ -208,7 +208,7 @@ async def show_item(ctx: Context, user:Optional[discord.abc.User] = None):
         await ctx.channel.send("You can't use any commands until you have joined")
         return
     try:
-        await interract_game.print_items(ctx, user_player_path)
+        await interact_game.print_items(ctx, user_player_path)
     except Exception as e:
         print(e)
 
@@ -223,13 +223,13 @@ async def admin_give(ctx: Context):
     if(not os.path.exists(user_player_path)):
         await ctx.channel.send("You can't use any commands if the target doesn't have an account")
         return
-    await interract_game.add_bully_custom(ctx, user_player_path, ["Balez", "EZ"], [99,99,99,99], bully.Rarity.DEVASTATOR)
+    await interact_game.add_bully_custom(ctx, user_player_path, ["Balez", "EZ"], [99,99,99,99], bully.Rarity.DEVASTATOR)
 
 @bot.command()
 @utils.is_admin()
 async def admin_bot_join(ctx:Context):
     user_player_path = utils.get_player_path(ctx.me.id) #id du bot
-    await interract_game.join_game(ctx, user_player_path)        
+    await interact_game.join_game(ctx, user_player_path)        
 
 @bot.command(aliases=['new_shop', 'ns'])
 @utils.is_admin()
@@ -246,7 +246,7 @@ async def admin_new_shop(ctx: Context):
 async def get_item(ctx: Context):
     try:
         new_item = item.Item(name="Str - x0.5", is_bfr_fight=True, buff_self_start=[4,1,0,0,0], buff_self_start_multiplicatif_lvl=[0.5, 0, 0, 0])
-        await interract_game.add_item_to_player(ctx=ctx, user_id=ctx.author.id, item=new_item)
+        await interact_game.add_item_to_player(ctx=ctx, user_id=ctx.author.id, item=new_item)
     except Exception as e:
         print("on est la en fait")
         print(e)
@@ -260,7 +260,7 @@ async def give_lvl(ctx: Context):
     else :
         user_player_path = utils.get_player_path(ctx.author.id)
         print("ici")
-        await interract_game.increase_all_lvl(ctx, player_path=user_player_path)
+        await interact_game.increase_all_lvl(ctx, player_path=user_player_path)
 #
 
 

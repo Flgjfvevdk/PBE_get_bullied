@@ -3,7 +3,7 @@ import random
 from bully import Bully
 from item import Item
 import pickle
-import interract_game
+import interact_game
 import money
 import asyncio
 import math
@@ -44,8 +44,8 @@ async def manager_start_fight(ctx: Context, user_1, user_2, bot, for_fun = False
     return
 
 async def start_fight(ctx: Context, user_1, user_2, bot, for_fun = False):
-    bully_1, _ = await interract_game.player_choose_bully(ctx= ctx, user = user_1, bot= bot, timeout = CHOICE_TIMEOUT)
-    bully_2, _ = await interract_game.player_choose_bully(ctx= ctx, user = user_2, bot= bot, timeout = CHOICE_TIMEOUT)
+    bully_1, _ = await interact_game.player_choose_bully(ctx= ctx, user = user_1, bot= bot, timeout = CHOICE_TIMEOUT)
+    bully_2, _ = await interact_game.player_choose_bully(ctx= ctx, user = user_2, bot= bot, timeout = CHOICE_TIMEOUT)
     
     item_1, item_2 = await manager_equip_item(ctx=ctx, user_1=user_1, user_2=user_2, bot=bot)
     await fight(ctx, user_1, user_2, bot, bully_1, bully_2, for_fun, item_1=item_1, item_2=item_2)
@@ -56,8 +56,8 @@ async def manager_equip_item(ctx: Context, user_1, user_2, bot):
     item_1 = None
     item_2 = None
 
-    item_1 = await interract_game.player_choose_item(ctx= ctx, user= user_1, bot= bot, timeout=CHOICE_TIMEOUT)
-    item_2 = await interract_game.player_choose_item(ctx= ctx, user= user_2, bot= bot, timeout=CHOICE_TIMEOUT)
+    item_1 = await interact_game.player_choose_item(ctx= ctx, user= user_1, bot= bot, timeout=CHOICE_TIMEOUT)
+    item_2 = await interact_game.player_choose_item(ctx= ctx, user= user_2, bot= bot, timeout=CHOICE_TIMEOUT)
     return item_1, item_2
 
 

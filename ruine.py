@@ -4,7 +4,7 @@ from typing import Optional
 from bully import Bully #ne pas confondre avec bully (le fichier)
 import bully #ne pas confondre avec Bully (la class)
 from item import Item
-import interract_game
+import interact_game
 import fight_manager
 import money
 import pickle
@@ -70,7 +70,7 @@ async def enter_the_ruin(ctx: Context, user, lvl, bot):
 
     #On initialise les pv des bullies
     pv_team_joueur = [] #pv du bully n°index. Si bully n°index n'existe pas alors -1
-    for k in range(interract_game.BULLY_NUMBER_MAX):
+    for k in range(interact_game.BULLY_NUMBER_MAX):
         file_bully = player_brute_path / f"{k}.pkl"
         if os.path.exists(file_bully):
             try :
@@ -120,7 +120,7 @@ async def enter_the_ruin(ctx: Context, user, lvl, bot):
                 return
 
             if (is_success):
-                await interract_game.add_item_to_player(ctx= ctx, user_id= user.id, item=item_boss, channel_cible= thread)
+                await interact_game.add_item_to_player(ctx= ctx, user_id= user.id, item=item_boss, channel_cible= thread)
     await thread.send(f"Congratulation {user}, you beat the boss!") 
     await exit_ruin(ctx, thread, THREAD_DELETE_AFTER)
 
@@ -134,7 +134,7 @@ async def fight_manage_ruin(ctx: Context, user, bot, current_enemy, pv_team_joue
 
     #Le player choisit son bully
     try :
-        bully_joueur, num_bully_j = await interract_game.player_choose_bully(ctx, user=user, bot=bot, channel_cible=channel_cible, timeout=RUIN_CHOICE_TIMEOUT)
+        bully_joueur, num_bully_j = await interact_game.player_choose_bully(ctx, user=user, bot=bot, channel_cible=channel_cible, timeout=RUIN_CHOICE_TIMEOUT)
     except TimeoutError as e:
         await channel_cible.send(f"Your team left the ruin. Choose faster next time {user}") 
         raise e #On propage l'exception
@@ -172,7 +172,7 @@ async def fight_manage_ruin(ctx: Context, user, bot, current_enemy, pv_team_joue
             print(erreur)
             fin_combat = False
             try :
-                new_bully_joueur, new_num_bully_j = await interract_game.player_choose_bully(ctx, user= user, bot= bot, channel_cible= channel_cible, timeout= FIGHTER_CHOICE_TIMEOUT)
+                new_bully_joueur, new_num_bully_j = await interact_game.player_choose_bully(ctx, user= user, bot= bot, channel_cible= channel_cible, timeout= FIGHTER_CHOICE_TIMEOUT)
                 
             except TimeoutError as e:
                 await channel_cible.send(f"Too slow, {bully_joueur.name} stays in fight.")

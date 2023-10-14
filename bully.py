@@ -13,14 +13,14 @@ class Rarity(Enum):
     DEVASTATOR = 3
     SUBLIME = 4
 
-nb_points_init_rarity = [4, 5, 6, 7, 8]
-nb_points_lvl_rarity = [1, 1.1, 1.25, 1.5, 2]
+BULLY_RARITY_POINTS = [4, 5, 6, 7, 8]
+BULLY_RARITY_LEVEL = [1, 1.1, 1.25, 1.5, 2]
 
-lvl_max = 50
-base_max_pv = 10
+BULLY_MAX_LEVEL = 50
+BULLY_MAX_BASE_HP = 10
 
 class Bully :
-    def __init__(self, name, file_path, stats=None, rarity=Rarity.NOBODY, must_load_image = True, max_pv = base_max_pv):
+    def __init__(self, name, file_path, stats=None, rarity=Rarity.NOBODY, must_load_image = True, max_pv = BULLY_MAX_BASE_HP):
         self.name = name
         self.set_file_path(file_path)
         #print("associated number ", self.associated_number)
@@ -38,7 +38,7 @@ class Bully :
             self.lethality = 1
             self.viciousness = 1
             #self.increase_stat_with_seed(nb_points=5, extrem_seed=True)
-            points_bonus = nb_points_init_rarity[self.rarity.value]
+            points_bonus = BULLY_RARITY_POINTS[self.rarity.value]
             self.increase_stat_with_seed(nb_points=points_bonus, extrem_seed=True)
                 
         else :
@@ -52,7 +52,7 @@ class Bully :
         if 'rarity' not in state:
             state['rarity'] = Rarity.NOBODY
         if 'max_pv' not in state:
-            state['max_pv'] = base_max_pv
+            state['max_pv'] = BULLY_MAX_BASE_HP
         self.__dict__.update(state)
 
 
@@ -96,7 +96,7 @@ class Bully :
         while self.exp >= self.lvl:
             self.exp -= self.lvl
             self.lvl += 1
-            self.lvl = min(self.lvl, lvl_max)
+            self.lvl = min(self.lvl, BULLY_MAX_LEVEL)
             print("level up :", self.lvl)
             new_points = new_points_lvl_up(self.lvl, self.rarity)
             self.increase_stat_with_seed(nb_points=new_points, talktative = True)
@@ -373,7 +373,7 @@ def random_seed_index(cumulative_probs):
 
 # Pour gérer lvl up selon rareté 
 def new_points_lvl_up(lvl, rarity=Rarity.NOBODY):
-    coef_bonus = nb_points_lvl_rarity[rarity.value] - 1
+    coef_bonus = BULLY_RARITY_LEVEL[rarity.value] - 1
     if(coef_bonus < 0):
         raise Exception("coef_bonus n'est pas censé être négatif")
     if(coef_bonus > 1):

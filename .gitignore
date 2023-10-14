@@ -120,6 +120,15 @@ ENV/
 env.bak/
 venv.bak/
 
+# Python venv
+Lib/
+Scripts/
+Include/
+pyvenv.cfg
+
+# VSCode
+.vscode
+
 # Spyder project settings
 .spyderproject
 .spyproject
@@ -158,3 +167,6 @@ game_data/player_data/*/*/*.png
 shop/*.png
 shop/*
 game_data/*
+**/*.png
+config
+test/

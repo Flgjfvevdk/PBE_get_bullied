@@ -2,36 +2,38 @@ import os
 import random
 from bully import Bully #ne pas confondre avec bully (le fichier)
 import bully #ne pas confondre avec Bully (la class)
-import interract_game
+import interact_game
 import fight_manager
 import money
 import pickle
 import asyncio
+
+import utils
+
+from discord.ext.commands import Context
 
 ID_joueur_en_donjon = []
 
 enemies_possibles_names=["Thyr O'Flan", "Grobrah Le Musclé", "Plu Didié", "Wè wè", "XxX_BOSS_XxX", "Crapcrap", "Fou Fur", "Eric", "le gars qu'on choisit en dernier en sport et qui se venge" ]
 size_dungeon = 5
 
-delaie_timeout_dungeon = 30
-delaie_delete_thread_fin = 90
+DUNGEON_CHOICE_TIMEOUT = 30
+THREAD_DELETE_AFTER = 90
 coef_xp_win = 0.3
 
 minimum_pv = 4
 maximum_pv = 10
 
-def generate_donjon_team(level, size):
+def generate_donjon_team(level: int, size:int):
     Enemies = []
     Enemies_pv = []
     for k in range(size):
-        name = enemies_possibles_names[k]
-        file_path = ""
         rarity = bully.Rarity.TOXIC if random.random() < level/10 else bully.Rarity.NOBODY
 
         e = Bully(enemies_possibles_names[k], "", [1,1,1,1], rarity=rarity, must_load_image=False)
 
-        point_init = bully.nb_points_init_rarity[rarity.value]
-        coef_point_lvl_up = bully.nb_points_lvl_rarity[rarity.value]
+        point_init = bully.BULLY_RARITY_POINTS[rarity.value]
+        coef_point_lvl_up = bully.BULLY_RARITY_LEVEL[rarity.value]
         
         if(k < size - 1):
             preterme1 = (size - k - 1)/size
@@ -54,29 +56,29 @@ def generate_donjon_team(level, size):
         Enemies.append(e)
     return Enemies, Enemies_pv
 
-async def enter_the_dungeon(ctx, user, lvl, bot):
+async def enter_the_dungeon(ctx: Context, user, lvl, bot):
     #Le joueur rentre dans le donjon
     ID_joueur_en_donjon.append(ctx.author.id)
 
     message = await ctx.channel.send(f"{user.mention} enters the dungeon lvl : {lvl}")
     try :
-        thread = await ctx.channel.create_thread(name=f"Dungeon - Level {lvl}", message=message)
+        thread = await ctx.channel.create_thread(name=f"Dungeon - Level {lvl}", message=message) #type: ignore
     except Exception as e:
         print(e)
         return
 
     #On met les chemins vers les dossiers du joueur
+    player_brute_path = utils.get_player_path(user.id) / "brutes"
     path_players_data = "game_data/player_data"
-    player_brute_path = path_players_data + "/" + str(user.id) + "/brutes"
 
     #On initialise les pv et xp gagné par les bullies
     pv_team_joueur = [] #pv du bully n°index. Si bully n°index n'existe pas alors -1
     xp_earned_bullies = [] #L'xp gagné par chaque bully
-    for k in range(interract_game.number_bully_max):
-        file_bully = player_brute_path + "/" + str(k) + ".pkl"
-        if os.path.exists(file_bully):
+    for k in range(interact_game.BULLY_NUMBER_MAX):
+        file_bully = player_brute_path / f"{k}.pkl"
+        if file_bully.exists():
             try :
-                with open(file_bully, 'rb') as pickle_file:
+                with file_bully.open('rb') as pickle_file:
                     bul = pickle.load(pickle_file)
                 pv_team_joueur.append(bul.max_pv)
             except Exception as e:
@@ -105,16 +107,19 @@ async def enter_the_dungeon(ctx, user, lvl, bot):
 
         #Le player choisit son bully
         try :
-            bully_joueur, num_bully_j = await interract_game.player_choose_bully(ctx, user= user, bot= bot, channel_cible= thread, delaie_timeout= delaie_timeout_dungeon)
+            bully_joueur, num_bully_j = await interact_game.player_choose_bully(ctx, user= user, bot= bot, channel_cible= thread, timeout= DUNGEON_CHOICE_TIMEOUT)
         except TimeoutError as e:
             await thread.send(f"Your team left the dungeon. Choose faster next time {user}") 
             print (e)
-            await exit_dungeon(ctx= ctx, thread= thread, time_bfr_close=delaie_delete_thread_fin)
+            await exit_dungeon(ctx= ctx, thread= thread, time_bfr_close=THREAD_DELETE_AFTER)
             return 
         except IndexError as e:
             print(e)
-            await thread.send(f"[{user}] -> you don't have a bully n°{num_bully_j}\nYour team left the dungeon") 
-            await exit_dungeon(ctx= ctx, thread= thread, time_bfr_close=delaie_delete_thread_fin)
+            await thread.send(
+                f"[{user}] -> you don't have a bully n°{num_bully_j}\n" #TODO: fix with ui
+                "Your team left the dungeon"
+            ) 
+            await exit_dungeon(ctx= ctx, thread= thread, time_bfr_close=THREAD_DELETE_AFTER)
             return
         except Exception as e:
             print(e)
@@ -147,7 +152,7 @@ async def enter_the_dungeon(ctx, user, lvl, bot):
             if (gold_earned > 0):
                 user_gagnant = user
                 money.give_money(user_id=user_gagnant.id, montant=gold_earned)
-                pretext += f"{user.name} earned {gold_earned}{money.icon_money}\n"
+                pretext += f"{user.name} earned {gold_earned}{money.MONEY_ICON}\n"
             xp_earned_bullies[num_bully_j] += exp_earned
 
             #On envoie le message de succès et on progress dans le dungeon
@@ -174,19 +179,19 @@ async def enter_the_dungeon(ctx, user, lvl, bot):
     #on donne la récompense d'xp
     for k in range(len(xp_earned_bullies)):
         if(pv_team_joueur[k] > 0 and xp_earned_bullies[k] > 0):
-            file_path = player_brute_path + "/" + str(k) + ".pkl"
+            file_path = player_brute_path / f"{str(k)}.pkl"
 
             try :
-                with open(file_path, 'rb') as pickle_file:
+                with file_path.open('rb') as pickle_file:
                     bully_joueur = pickle.load(pickle_file)
                 bully_joueur.give_exp(round(xp_earned_bullies[k] * coef_xp_win, 1))
             except Exception as e:
                 print (e)
 
     #On maj le record du joueur sur son dungeon si nécessaire
-    player_dungeon_stat = path_players_data + "/" + str(user.id) + "/playerMaxDungeon.txt"
+    player_dungeon_stat = utils.get_player_path(user.id) / "playerMaxDungeon.txt"
     try:
-        file = open(player_dungeon_stat, "r+")  # Open the file for reading and writing
+        file = player_dungeon_stat.open("r+")  # Open the file for reading and writing
         contents = file.read()
 
         if contents:
@@ -205,11 +210,11 @@ async def enter_the_dungeon(ctx, user, lvl, bot):
         file.close()
 
     #On quitte le donjon
-    await exit_dungeon(ctx= ctx, thread= thread, time_bfr_close=delaie_delete_thread_fin)
+    await exit_dungeon(ctx= ctx, thread= thread, time_bfr_close=THREAD_DELETE_AFTER)
     return
 
 
-# async def fight_enemy_dungeon(ctx, bot, bully_joueur, bully_enemy, pv_joueur, pv_enemy, channel_cible=None):
+# async def fight_enemy_dungeon(ctx: Context, bot, bully_joueur, bully_enemy, pv_joueur, pv_enemy, channel_cible=None):
 #     """
 #     return : (pv_restant_joueur, pv_restant_bully)
 #     """
@@ -254,7 +259,7 @@ async def enter_the_dungeon(ctx, user, lvl, bot):
 #     return pv_joueur, pv_enemy
 
 
-async def exit_dungeon(ctx, thread, time_bfr_close):
+async def exit_dungeon(ctx: Context, thread, time_bfr_close):
     ID_joueur_en_donjon.remove(ctx.author.id)
     try :
         await asyncio.sleep(time_bfr_close)
@@ -264,7 +269,7 @@ async def exit_dungeon(ctx, thread, time_bfr_close):
     return
 
 
-async def str_leaderboard_donjon(ctx, bot):
+async def str_leaderboard_donjon(ctx: Context, bot):
     dossier_principal = "game_data/player_data"
     text_classement = ""
 

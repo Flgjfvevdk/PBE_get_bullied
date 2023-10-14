@@ -2,6 +2,7 @@ import os
 import random
 from bully import Bully
 from item import Item
+from dataclasses import dataclass
 import pickle
 import interact_game
 import money
@@ -188,19 +189,6 @@ async def fight_simulation(ctx, bot, stat_base_1, stat_base_2, name_1, name_2, m
                     await test_interruption_combat_reaction(user_2, message=message, reaction_interrupt= '🔁' )
             except InterruptionCombat as erreur:
                 raise InterruptionCombat(pv_1= pv_1, pv_2= pv_2)
-            # message = await message.channel.fetch_message(message.id)
-            # user_reacted = False
-            # for reaction in message.reactions:
-            #     if str(reaction.emoji) == '🔁' :
-            #         async for user in reaction.users():
-            #             if user == user_1:
-            #                 user_reacted = True
-            #                 break  # No need to continue checking reactions
-            #         if user_reacted:
-            #             break
-            # if(user_reacted):
-            #     raise InterruptionCombat(pv_1= pv_1, pv_2= pv_2)
-                
 
     return pv_1, pv_2
 
@@ -411,3 +399,11 @@ class InterruptionCombat(Exception):
         self.pv_1 = pv_1
         self.pv_2 = pv_2
         super().__init__(f"{text}. [pv_1 = {pv_1}, pv_2 = {pv_2}]")
+
+@dataclass
+class fightingBully():
+    combattant: Bully
+    pv: int
+    base_stat:list
+    stat: list
+

@@ -5,6 +5,10 @@ import pickle
 import shutil
 
 from enum import Enum
+from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import String
+from database import Base
+
 #self.rarity.name pour avoir le nom du truc
 class Rarity(Enum):
     NOBODY = 0
@@ -19,7 +23,14 @@ BULLY_RARITY_LEVEL = [1, 1.1, 1.25, 1.5, 2]
 BULLY_MAX_LEVEL = 50
 BULLY_MAX_BASE_HP = 10
 
-class Bully :
+class Bully(Base):
+    __tablename__ = "bully"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(50))
+    lvl: Mapped[int]
+    exp: Mapped[float]
+    rarity: Mapped[Rarity] #Automatic Enum mapping! neat
+    max_pv: Mapped[int]
     def __init__(self, name, file_path, stats=None, rarity=Rarity.NOBODY, must_load_image = True, max_pv = BULLY_MAX_BASE_HP):
         self.name = name
         self.set_file_path(file_path)

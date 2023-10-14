@@ -14,22 +14,41 @@ import item
 import utils
 from pathlib import Path
 
+from sqlalchemy import Engine, create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
+
 import asyncio
 
 from discord.ext.commands import Bot, Context, CommandNotFound
 
 #Les 2 lignes en dessous permettent de lire le token qui est noté dans .env
 from dotenv import load_dotenv
+def getenv(name:str) -> str:
+    val = os.getenv(name)
+    if val is None:
+        raise Exception("ENV variable {name} is not set!")
+    return val
+
 load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
-if TOKEN is None:
-    print("ENV variable DISCORD_TOKEN is not set !")
-    exit(-1)
+TOKEN = getenv("DISCORD_TOKEN")
 
 intents = discord.Intents.default()
 intents.message_content = True
 
-bot = Bot(command_prefix = "!!", intents=intents)
+ENGINE = create_async_engine(getenv("DB_URL"))
+
+new_session = async_sessionmaker(bind=ENGINE, class_=AsyncSession)
+
+class GetBulliedBot(Bot):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    @property
+    def session(self) -> AsyncSession:
+        return new_session()
+
+bot = GetBulliedBot(command_prefix = "!!", intents=intents)
 
 @bot.event
 async def on_ready():

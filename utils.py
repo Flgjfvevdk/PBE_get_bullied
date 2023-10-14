@@ -20,10 +20,14 @@ def has_joined():
         return _user_has_joined(ctx.author.id)
     return commands.check(predicate)
 
-
-with Path("config/admins.txt").open("r") as f:
-    ADMIN_LIST = set(int(id.strip()) for id in f.readlines())
-
+try:
+    with Path("config/admins.txt").open("r") as f:
+        ADMIN_LIST = set(int(id.strip()) for id in f.readlines())
+except Exception as e:
+    print("Exception found parsing admin list !")
+    print(e)
+    print("Admin commands are disabled !")
+    ADMIN_LIST = set()
 
 def is_admin():
     """ Command decorator to check if the message author is an admin.

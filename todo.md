@@ -5,3 +5,4 @@ Liste des choses à faire prochainement:
 - [x] Renommer `interract_game.py` en `interact_game.py` (ou autre variante)
 - [ ] Utiliser une bdd (sqlite dans un premier temps) et un ORM (`SQLAlchemy` ou `peewee`)
 - [ ] Créer une classe de combattants pour simplifier les fonctions.
+- [ ] Conteneuriser avec Docker.

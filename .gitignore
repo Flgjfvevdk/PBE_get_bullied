@@ -164,9 +164,8 @@ cython_debug/
 .env
 game_data/bully_images/*/*.png
 game_data/player_data/*/*/*.png
-shop/*.png
-shop/*
-game_data/*
+shop/
+game_data/
 **/*.png
-config
+config/
 test/

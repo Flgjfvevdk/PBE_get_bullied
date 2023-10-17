@@ -1,6 +1,8 @@
 import os
 import random
-from bully import Bully
+
+import discord
+from bully import Bully, Stats
 from item import Item
 from fighting_bully import FightingBully
 import pickle
@@ -9,21 +11,23 @@ import money
 import asyncio
 import math
 
-from discord.ext.commands import Context
+from discord.ext.commands import Context, Bot
+from player import Player
 from typing import Optional
+from dataclasses import replace
 
 
 CHOICE_TIMEOUT = 20
 fight_msg_time_update = 1
 
-async def proposition_fight(ctx: Context, user_1, user_2, bot, for_fun = False) -> None:
-    await manager_start_fight(ctx, user_1, user_2, bot, for_fun)
+async def proposition_fight(ctx: Context, user_1: discord.abc.User, player_1: Player, user_2: discord.abc.User, player_2: Player, bot: Bot, for_fun = False) -> None:
+    await manager_start_fight(ctx, user_1, player_1, user_2, player_2, bot, for_fun)
     return
 
-async def manager_start_fight(ctx: Context, user_1, user_2, bot, for_fun = False) -> None:
-    text_challenge = f"{user_1.mention} challenge {user_2.mention} !"
+async def manager_start_fight(ctx: Context, user_1: discord.abc.User, player_1: Player, user_2: discord.abc.User, player_2: Player, bot: Bot, for_fun = False) -> None:
+    text_challenge = f"{user_1.mention} challenges {user_2.mention} !"
     if for_fun :
-        text_challenge = f"{user_1.mention} challenge {user_2.mention} to a fun fight (no death, no xp)!"
+        text_challenge = f"{user_1.mention} challenges {user_2.mention} to a fun fight (no death, no xp)!"
     message = await ctx.channel.send(text_challenge)
     await message.add_reaction("✅")
     await message.add_reaction("❌")
@@ -38,31 +42,31 @@ async def manager_start_fight(ctx: Context, user_1, user_2, bot, for_fun = False
         await message.reply(f"Too late! No fight between {user_1} and {user_2}")
         print (e)
         return
-    await start_fight(ctx, user_1, user_2, bot, for_fun)
+    await start_fight(ctx, user_1, player_1, user_2, player_2, bot, for_fun)
     return
 
-async def start_fight(ctx: Context, user_1, user_2, bot, for_fun = False) -> None:
+async def start_fight(ctx: Context, user_1: discord.abc.User, player_1: Player, user_2: discord.abc.User, player_2: Player, bot: Bot, for_fun = False) -> None:
     # bully_1, _ = await interact_game.player_choose_bully(ctx= ctx, user = user_1, bot= bot, timeout = CHOICE_TIMEOUT)
     # bully_2, _ = await interact_game.player_choose_bully(ctx= ctx, user = user_2, bot= bot, timeout = CHOICE_TIMEOUT)
-    fighting_bully_1, _ = await interact_game.player_choose_bully(ctx= ctx, user = user_1, bot= bot, timeout = CHOICE_TIMEOUT)
-    fighting_bully_2, _ = await interact_game.player_choose_bully(ctx= ctx, user = user_2, bot= bot, timeout = CHOICE_TIMEOUT)
+    fighting_bully_1, _ = await interact_game.player_choose_bully(ctx, user_1, player_1, bot, timeout = CHOICE_TIMEOUT)
+    fighting_bully_2, _ = await interact_game.player_choose_bully(ctx, user_2, player_2, bot, timeout = CHOICE_TIMEOUT)
     
-    item_1, item_2 = await manager_equip_item(ctx=ctx, user_1=user_1, user_2=user_2, bot=bot)
+    item_1, item_2 = await manager_equip_item(ctx, user_1, player_1, user_2, player_2, bot)
     # await fight(ctx, user_1, user_2, bot, bully_1, bully_2, for_fun, item_1=item_1, item_2=item_2)
-    await fight(ctx, user_1, user_2, bot, fighting_bully_1, fighting_bully_2, for_fun, item_1=item_1, item_2=item_2)
+    await fight(ctx, user_1, player_1, user_2, player_2, bot, fighting_bully_1, fighting_bully_2, for_fun, item_1=item_1, item_2=item_2)
     
     return
 
-async def manager_equip_item(ctx: Context, user_1, user_2, bot) -> tuple[Optional[Item], Optional[Item]]:
+async def manager_equip_item(ctx: Context, user_1: discord.abc.User, player_1: Player, user_2: discord.abc.User, player_2: Player, bot: Bot) -> tuple[Optional[Item], Optional[Item]]:
     item_1:Optional[Item] = None
     item_2:Optional[Item] = None
 
-    item_1 = await interact_game.player_choose_item(ctx= ctx, user= user_1, bot= bot, timeout=CHOICE_TIMEOUT)
-    item_2 = await interact_game.player_choose_item(ctx= ctx, user= user_2, bot= bot, timeout=CHOICE_TIMEOUT)
+    item_1 = await interact_game.player_choose_item(ctx, user_1, player_1, bot, timeout=CHOICE_TIMEOUT)
+    item_2 = await interact_game.player_choose_item(ctx, user_2, player_2, bot, timeout=CHOICE_TIMEOUT)
     return item_1, item_2
 
 
-async def fight(ctx: Context, user_1, user_2, bot, fighting_bully_1:FightingBully, fighting_bully_2:FightingBully, 
+async def fight(ctx: Context, user_1: discord.abc.User, player_1: Player, user_2: discord.abc.User, player_2: Player, bot: Bot, fighting_bully_1:FightingBully, fighting_bully_2:FightingBully, 
                 for_fun = False, item_1:Optional[Item] = None, item_2:Optional[Item] = None) -> None:
     #On initialise les variables pour le combat :
     # max_pv_1 = fighting_bully_1.pv
@@ -94,8 +98,8 @@ async def fight(ctx: Context, user_1, user_2, bot, fighting_bully_1:FightingBull
             bully_gagnant.give_exp(exp_earned)
             pretext += f"{bully_gagnant.name} earned {exp_earned} xp\n"
         if (gold_earned > 0):
-            user_gagnant = user_1 if bully_gagnant == fighting_bully_1.combattant else user_2
-            money.give_money(user_id=user_gagnant.id, montant=gold_earned)
+            user_gagnant, player_gagnant = (user_1,player_1) if bully_gagnant == fighting_bully_1.combattant else (user_2, player_2)
+            money.give_money(player_gagnant, montant=gold_earned)
             pretext += f"{user_gagnant.name} earned {gold_earned}{money.MONEY_ICON}\n"
         await bully_perdant.kill()
         await ctx.channel.send(f"{pretext}{bully_perdant.name} died in terrible agony")
@@ -117,8 +121,8 @@ async def fight_simulation(ctx, bot, fighting_bully_1:FightingBully, fighting_bu
                             user_1 = None, user_2 = None, is_switch_possible = False, 
                             item_1:Optional[Item] = None, item_2:Optional[Item] = None, channel_cible = None) -> None:    
 
-    print("fighting_bully_1.stat ", fighting_bully_1.stat)
-    print("fighting_bully_2.stat ", fighting_bully_2.stat)
+    print("fighting_bully_1.stats ", fighting_bully_1.stats)
+    print("fighting_bully_2.stats ", fighting_bully_2.stats)
     if(channel_cible == None):
         channel_cible = ctx.channel
 
@@ -219,31 +223,33 @@ def nouvelle_action_stat(fighting_bully_1:FightingBully, fighting_bully_2:Fighti
     name_1 = fighting_bully_1.combattant.name
     name_2 = fighting_bully_2.combattant.name
 
-    stat_j1 = fighting_bully_1.stat.copy()
-    stat_j2 = fighting_bully_2.stat.copy()
-
     #On regarde les fourberies
-    fourberie_j1 = challenge_viciosite_stats(stat_j1, stat_j2)
-    fourberie_j2 = challenge_viciosite_stats(stat_j2, stat_j1)
+    fourberie_j1 = challenge_viciosite_stats(fighting_bully_1.stats, fighting_bully_2.stats)
+    fourberie_j2 = challenge_viciosite_stats(fighting_bully_2.stats, fighting_bully_1.stats)
+
+    stat_j1 = replace(fighting_bully_1.stats).__dict__
+    stat_j2 = replace(fighting_bully_2.stats).__dict__
+    del stat_j1["viciousness"]
+    del stat_j2["viciousness"]
     if(fourberie_j1 and not fourberie_j2):
         #La meilleure de j2 (hors viciosite) devient égale au minimum entre : la stat de j1-1 et sa propre stat - 1. (minimum 1)
-        max_value, max_index = max((value, index) for index, value in enumerate(stat_j2[0:3]))
+        max_stat_name = max((n for n in stat_j2 if n != "viciousness"), key=lambda n: stat_j2[n])
         #stat_j2[max_index] = max(1, min(stat_j1[max_index], stat_j2[max_index]) - 1)
-        if (stat_j2[max_index] <= stat_j1[max_index]):
-            stat_j2[max_index] = max(1,stat_j2[max_index] - 1)
+        if (stat_j2[max_stat_name] <= stat_j1[max_stat_name]):
+            stat_j2[max_stat_name] = max(1,stat_j2[max_stat_name] - 1)
         else :
-            diff = stat_j2[max_index] - stat_j1[max_index]
-            stat_j2[max_index] = max (1,stat_j1[max_index] - 1 + round(diff * (1 - math.exp(-stat_j2[3]/stat_j1[3] / 1.5)) ))
+            diff = stat_j2[max_stat_name] - stat_j1[max_stat_name]
+            stat_j2[max_stat_name] = max (1,stat_j1[max_stat_name] - 1 + round(diff * (1 - math.exp(-stat_j2["viciousness"]/stat_j1["viciousness"] / 1.5)) ))
     
     if(fourberie_j2 and not fourberie_j1):
         #La meilleure de j1 (hors viciosite) devient egale au minimum entre : la stat de j2-2 et sa propre stat - 1. (minimum 1)
-        max_value, max_index = max((value, index) for index, value in enumerate(stat_j1[0:3]))
+        max_stat_name = max((n for n in stat_j2 if n != "viciousness"), key=lambda n: stat_j2[n])
         #stat_j1[max_index] = max(1, min(stat_j2[max_index], stat_j1[max_index]) - 1)
-        if (stat_j1[max_index] <= stat_j2[max_index]):
-            stat_j1[max_index] = max(1,stat_j1[max_index] - 1)
+        if (stat_j1[max_stat_name] <= stat_j2[max_stat_name]):
+            stat_j1[max_stat_name] = max(1,stat_j1[max_stat_name] - 1)
         else :
-            diff = stat_j1[max_index] - stat_j2[max_index]
-            stat_j1[max_index] = max (1,stat_j2[max_index] - 1 + round(diff * (1 - math.exp(-stat_j1[3]/stat_j2[3] / 1.5)) ))
+            diff = stat_j1[max_stat_name] - stat_j2[max_stat_name]
+            stat_j1[max_stat_name] = max (1,stat_j2[max_stat_name] - 1 + round(diff * (1 - math.exp(-stat_j1["viciousness"]/stat_j2["viciousness"] / 1.5)) ))
 
     
     (name_actif, stat_j_actif), (name_passif, stat_j_passif) = ((name_1, stat_j1.copy()), (name_2, stat_j2.copy())) if tour==0 else ((name_2, stat_j2.copy()), (name_1, stat_j1.copy()))
@@ -303,9 +309,9 @@ def challenge_coup_critique_stats(stat_attaquant, stat_defenseur) -> bool:
     coup_critique = Bully.clash_stat(st_actif = stat_att_lethality, st_passif = stat_def_strength)
     return coup_critique
 
-def challenge_viciosite_stats(stat_attaquant, stat_defenseur) -> bool:
-    stat_att_vicieux = stat_attaquant[3]
-    stat_def_vicieux = stat_defenseur[3]
+def challenge_viciosite_stats(stat_attaquant: Stats, stat_defenseur: Stats) -> bool:
+    stat_att_vicieux = stat_attaquant.viciousness
+    stat_def_vicieux = stat_defenseur.viciousness
     minim = min(stat_att_vicieux, stat_def_vicieux)
     fourberie = Bully.clash_stat(st_actif = stat_att_vicieux, st_passif = stat_def_vicieux, neutre=minim)
     
@@ -359,7 +365,7 @@ def check_reaction_yes_no(author, sent_message):
     
     return inner_check
 
-def check_reaction_number(author, sent_message):
+def check_reaction_number(author: discord.abc.User, sent_message: discord.Message):
     def inner_check(reaction, user): 
         return author.id == user.id and sent_message.id == reaction.message.id and str(reaction.emoji) in ["\u0030\u20E3", "\u0031\u20E3", "\u0032\u20E3", "\u0033\u20E3", "\u0034\u20E3"]
     
@@ -394,7 +400,7 @@ def from_emote_to_number(emote) -> int:
         case "\u0034\u20E3" :
             return 4
          
-    return -1
+    raise Exception("This is not a valid number!")
 
 class InterruptionCombat(Exception):
     def __init__(self, pv_1, pv_2, text=""):

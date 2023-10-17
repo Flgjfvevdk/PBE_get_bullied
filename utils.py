@@ -47,7 +47,7 @@ def getenv(name:str) -> str:
         raise Exception("ENV variable {name} is not set!")
     return val
 
-players_in_interaction = set()
+players_in_interaction: set[int] = set()
 
 def author_is_free(f):
     async def predicate(ctx: commands.Context):

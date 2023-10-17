@@ -71,19 +71,16 @@ def generate_donjon_team(level: int, size:int) -> List[FightingBully]:
 
     return enemies_fighters
 
-async def enter_the_dungeon(ctx: Context, session: AsyncSession, user: User, lvl: int, bot: Bot) -> None:
+async def enter_the_dungeon(ctx: Context, player: Player, lvl: int, bot: Bot) -> None:
     #Le joueur rentre dans le donjon
     ID_joueur_en_donjon.append(ctx.author.id)
 
-    message = await ctx.channel.send(f"{user.mention} enters the dungeon lvl : {lvl}")
+    message = await ctx.channel.send(f"{ctx.author.mention} enters the dungeon lvl : {lvl}")
     try :
         thread = await ctx.channel.create_thread(name=f"Dungeon - Level {lvl}", message=message) #type: ignore
     except Exception as e:
         print(e)
         return
-
-    #On met les chemins vers les dossiers du joueur
-    player_brute_path = utils.get_player_path(user.id) / "brutes"
 
     #On initialise les pv et xp gagné par les bullies
     #pv_team_joueur = [] #pv du bully n°index. Si bully n°index n'existe pas alors -1

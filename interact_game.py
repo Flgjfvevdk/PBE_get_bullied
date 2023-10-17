@@ -287,37 +287,24 @@ def generate_name() -> List[str]:
     return [prenom, nom]
 
 #A SUPPRIMER
-async def add_bully_custom(ctx: Context, player_path: Path, name_brute, stats, rarity, channel_cible=None):
+async def add_bully_custom(ctx: Context, player: Player, name_brute, stats, rarity, channel_cible=None):
     
     #Par défaut, le channel d'envoie est le channel du contexte
     if(channel_cible==None):
         channel_cible = ctx.channel
     
-    player_brute_path = player_path / "brutes"
-    ind = 0
-    while os.path.exists(player_brute_path / f"{ind}.pkl"):
-        ind += 1
+    
 
-    if(ind > 4) :
+    if(len(player.bullies) >= 5) :
         await channel_cible.send(f"You can't have more than 5 bullies at the same time")
         return
-    
-    id_brute = str(ind)
 
-    file_path = player_brute_path / f"{id_brute}.pkl"
-    
-    # Open the file in write mode (creates the file if it doesn't exist)
-    file = open(file_path, "wb")
     name_bully = name_brute[0] + " " + name_brute[1]
-    new_bully = Bully(name_bully, file_path=file_path, stats=stats, rarity=rarity)
-    try :
-        pickle.dump(new_bully, file)
-    except Exception as e :
-        print(e)
+    new_bully = Bully(name_bully, stats=stats, rarity=rarity)
+
+    player.bullies.append(new_bully)
 
     await channel_cible.send("You have a new bully : " + name_bully)
-    # Close the file
-    file.close()
 
 async def increase_all_lvl(ctx: Context, player_path: Path, channel_cible=None) -> None:
 
@@ -341,24 +328,8 @@ async def increase_all_lvl(ctx: Context, player_path: Path, channel_cible=None) 
     #await ctx.channel.send("done")
     await channel_cible.send("done")
 
-def nb_bully_in_team(user_id) -> int:
-    player_path = utils.get_player_path(user_id)
-    player_brute_path = player_path / "brutes"
-    ind = 0
-    for k in range(BULLY_NUMBER_MAX):
-        if os.path.exists(player_brute_path / f"{k}.pkl"):
-            ind += 1
+def nb_bully_in_team(player: Player) -> int:
+    return len(player.bullies)
 
-    return ind
-
-
-def correct_missing_folder(user_path: Path) -> None:
-    if(not os.path.exists(user_path)):
-        raise Exception("Le joueur n'existe pas dans la bdd, il doit join")
-    else : 
-        if (not os.path.exists(user_path / "brutes")):
-            os.makedirs(user_path / "brutes", exist_ok=True)
-        if (not os.path.exists(user_path / "items")):
-            os.makedirs(user_path / "items", exist_ok=True)
 
     

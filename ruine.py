@@ -270,7 +270,7 @@ async def fight_manage_ruin(ctx: Context, user, bot,
 
         #On tue le bully qui est ded
         await channel_cible.send(f"{fighting_bully_joueur.combattant.name} died in terrible agony")
-        fighting_bully_joueur.combattant.kill()
+        await fighting_bully_joueur.combattant.kill()
         team_fighters_player[num_bully_j] = None
 
     return is_success   

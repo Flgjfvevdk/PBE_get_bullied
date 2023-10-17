@@ -14,6 +14,7 @@ import shop
 import bully
 import item
 import database
+from player import Player
 
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import sessionmaker
@@ -60,26 +61,39 @@ async def join(ctx: Context):
         
 
 @bot.command(aliases=['py', 'pay'])
+@utils.author_is_free
 async def payday(ctx: Context):
-    # Vérifier si l'utilisateur a déjà fait la commande récemment
-    cooldown_restant = await money.cooldown_restant_pay(ctx.author.id)
-    if cooldown_restant > 0:
-        await ctx.send(f"Vous devez attendre encore {money.format_temps(round(cooldown_restant))} avant de pouvoir utiliser cette commande à nouveau.")
-        return
+    async with database.new_session() as session:
+        player = await session.get(Player, ctx.author.id)
+        if player is None:
+            await ctx.reply("Please join the game first !")
+            return
+        # Vérifier si l'utilisateur a déjà fait la commande récemment
+        cooldown_restant = await money.cooldown_restant_pay(player)
+        if cooldown_restant > 0:
+            await ctx.send(f"Vous devez attendre encore {money.format_temps(round(cooldown_restant))} avant de pouvoir utiliser cette commande à nouveau.")
+            return
 
-    # Donner de l'argent à l'utilisateur
-    money.give_money(ctx.author.id, montant=money.PAYDAY_VALUE)
-    await ctx.send(
-        f"Vous avez reçu des {money.MONEY_ICON} ! (+{money.PAYDAY_VALUE}{money.MONEY_ICON})\n"
-        f"Vous avez {money.get_money_user(ctx.author.id)} {money.MONEY_ICON}"
-    )
+        # Donner de l'argent à l'utilisateur
+        money.give_money(player, montant=money.PAYDAY_VALUE)
+        await ctx.send(
+            f"Vous avez reçu des {money.MONEY_ICON} ! (+{money.PAYDAY_VALUE}{money.MONEY_ICON})\n"
+            f"Vous avez {money.get_money_user(player)} {money.MONEY_ICON}"
+        )
 
-    # Enregistrer l'heure actuelle comme dernière utilisation de la commande
-    money.enregistrer_cooldown_pay(ctx.author.id)
+        # Enregistrer l'heure actuelle comme dernière utilisation de la commande
+        money.enregistrer_cooldown_pay(player)
+        await session.commit()
 
 @bot.command(aliases=['money'])
 async def bank(ctx: Context):
-    await ctx.send(f"Vous avez {money.get_money_user(ctx.author.id)} {money.MONEY_ICON}")
+    async with database.new_session() as session:
+        player = await session.get(Player, ctx.author.id)
+        if player is None:
+            await ctx.reply("Please join the game first !")
+            return
+        
+        await ctx.send(f"Vous avez {money.get_money_user(player)} {money.MONEY_ICON}")
 
 @bot.command(aliases=['patch', 'update'])
 async def patchnote(ctx: Context):
@@ -229,17 +243,14 @@ async def show_item(ctx: Context, user:Optional[discord.abc.User] = None):
 @bot.command()
 @utils.is_admin()
 async def admin_give(ctx: Context):
-    user_player_path = utils.get_player_path(ctx.author.id)
-    if(not os.path.exists(user_player_path)):
-        await ctx.channel.send("You can't use any commands if the target doesn't have an account")
-        return
-    await interact_game.add_bully_custom(ctx, user_player_path, ["Balez", "EZ"], [99,99,99,99], bully.Rarity.DEVASTATOR)
-
-@bot.command()
-@utils.is_admin()
-async def admin_bot_join(ctx:Context):
-    user_player_path = utils.get_player_path(ctx.me.id) #id du bot
-    await interact_game.join_game(ctx, user_player_path)        
+    players_in_interaction.add(ctx.author.id)
+    async with database.new_session() as session:
+        player = await session.get(Player, ctx.author.id)
+        if player is None:
+            await ctx.reply("You can't use any commands if the target doesn't have an account")
+            return
+        await interact_game.add_bully_custom(ctx, player, ["Balez", "EZ"], [99,99,99,99], bully.Rarity.DEVASTATOR)
+        await session.commit()
 
 @bot.command(aliases=['new_shop', 'ns'])
 @utils.is_admin()

@@ -1,16 +1,15 @@
 
-from dataclasses import dataclass
-from bully import Bully
+from dataclasses import dataclass, replace
+from bully import Bully, Stats
 
 @dataclass
 class FightingBully():
     combattant: Bully
     pv: int
-    base_stat:list
-    stat: list
+    base_stats: Stats
+    stats: Stats
 
     @staticmethod
     def create_fighting_bully(b:Bully) -> "FightingBully":
-        stat = [b.strength, b.agility, b.lethality, b.viciousness]
-        fighter = FightingBully(combattant= b, pv= b.max_pv, base_stat= stat.copy(), stat= stat.copy())
+        fighter = FightingBully(combattant=b, pv=b.max_pv, base_stats=replace(b.stats), stats=replace(b.stats))
         return fighter

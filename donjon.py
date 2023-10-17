@@ -3,6 +3,7 @@ import random
 from bully import Bully #ne pas confondre avec bully (le fichier)
 import bully #ne pas confondre avec Bully (la class)
 from fighting_bully import FightingBully
+from player import Player
 import interact_game
 import fight_manager
 import money
@@ -14,7 +15,11 @@ import utils
 from typing import Optional
 from typing import List
 
-from discord.ext.commands import Context
+from discord.ext.commands import Context, Bot
+from discord.abc import User
+from discord import Thread
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 ID_joueur_en_donjon = []
 
@@ -39,8 +44,8 @@ def generate_donjon_team(level: int, size:int) -> List[FightingBully]:
 
         enemy_fighter = Bully(enemies_possibles_names[k], stats=bully.Stats(1,1,1,1), rarity=rarity, must_load_image=False)
 
-        point_init = bully.BULLY_RARITY_POINTS[rarity.value]
-        coef_point_lvl_up = bully.BULLY_RARITY_LEVEL[rarity.value]
+        point_init = enemy_fighter.rarity.points_bonus
+        coef_point_lvl_up = enemy_fighter.rarity.level_bonus
         
         if(k < size - 1):
             preterme1 = (size - k - 1)/size
@@ -51,27 +56,22 @@ def generate_donjon_team(level: int, size:int) -> List[FightingBully]:
 
             pv_enemy = round((maximum_pv - minimum_pv)*(k + 1) / size + minimum_pv)
             lvl_enemy = round((pointBonus - 4) * pv_enemy / 10, 1) if pointBonus > 4 else (round(pointBonus / 5 * pv_enemy / 10, 1))
-            #enemies_pv.append(pv_enemy)
             
         else :
             pointBonus = int(point_init + level * coef_point_lvl_up)
             lvl_enemy = level
             pv_enemy = maximum_pv
-            #enemies_pv.append(pv_enemy)
         
         enemy_fighter.increase_stat_with_seed(pointBonus)
         enemy_fighter.lvl = lvl_enemy # Attention, ne recalcule pas les stats
-        # enemies.append(enemy_fighter)
 
-        stat_enemy = [enemy_fighter.strength, enemy_fighter.agility, enemy_fighter.lethality, enemy_fighter.viciousness]
-        #new_fighter = FightingBully(combattant= enemy_fighter, pv= pv_enemy, base_stat= stat_enemy.copy(), stat= stat_enemy.copy())
         new_fighter = FightingBully.create_fighting_bully(enemy_fighter)
 
         enemies_fighters.append(new_fighter)
-    return enemies_fighters
-    return enemies, enemies_pv
 
-async def enter_the_dungeon(ctx: Context, user, lvl, bot) -> None:
+    return enemies_fighters
+
+async def enter_the_dungeon(ctx: Context, session: AsyncSession, user: User, lvl: int, bot: Bot) -> None:
     #Le joueur rentre dans le donjon
     ID_joueur_en_donjon.append(ctx.author.id)
 
@@ -84,7 +84,6 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot) -> None:
 
     #On met les chemins vers les dossiers du joueur
     player_brute_path = utils.get_player_path(user.id) / "brutes"
-    path_players_data = "game_data/player_data"
 
     #On initialise les pv et xp gagné par les bullies
     #pv_team_joueur = [] #pv du bully n°index. Si bully n°index n'existe pas alors -1
@@ -150,7 +149,7 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot) -> None:
         #On fait le combat. Les pv sont maj dans la class fightingBully
         fighting_bully_joueur = fighters_joueur[num_bully_j]
         if(fighting_bully_joueur is None or fighting_bully_joueur.pv <= 0):
-            await thread.send(f"Your bully is dead or do not exist. \nYour team left the dungeon") 
+            await thread.send(f"Your bully is dead or do not exist. \nYour team left the dungeon.") 
             await exit_dungeon(ctx= ctx, thread= thread, time_bfr_close=THREAD_DELETE_AFTER)
             return 
         
@@ -173,11 +172,11 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot) -> None:
             pretext = ""
             if (exp_earned > 0):
                 bully_joueur.give_exp(exp_earned)
-                pretext += f"{bully_joueur.name} earned {exp_earned} xp\n"
+                pretext += f"{bully_joueur.name} earned {exp_earned} xp!\n"
             if (gold_earned > 0):
                 user_gagnant = user
                 money.give_money(user_id=user_gagnant.id, montant=gold_earned)
-                pretext += f"{user.name} earned {gold_earned}{money.MONEY_ICON}\n"
+                pretext += f"{user.name} earned {gold_earned}{money.MONEY_ICON}!\n"
             xp_earned_bullies[num_bully_j] += exp_earned
 
             #On envoie le message de succès et on progress dans le dungeon
@@ -192,8 +191,8 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot) -> None:
             #enemies_pv[current_floor] = fighting_bully_enemy.pv
 
             #On tue le bully qui est ded
-            await thread.send(f"{bully_joueur.name} died in terrible agony")
-            bully_joueur.kill()
+            await thread.send(f"{bully_joueur.name} died in terrible agony.")
+            await bully_joueur.kill()
             fighters_joueur[num_bully_j] = None
 
     #On est plus dans le combat, le joueur à tryompher
@@ -211,25 +210,11 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot) -> None:
             bully_joueur_recompense.give_exp(round(xp_earned_bullies[k] * COEF_XP_WIN, 1))
 
     #On maj le record du joueur sur son dungeon si nécessaire
-    player_dungeon_stat = utils.get_player_path(user.id) / "playerMaxDungeon.txt"
-    try:
-        file = player_dungeon_stat.open("r+")  # Open the file for reading and writing
-        contents = file.read()
-
-        if contents:
-            number = int(contents)
-            if number < lvl:
-                file.seek(0)  # Move the file pointer to the beginning
-                file.write(str(lvl))  # Overwrite the existing number with X
-        else:
-            file.write(str(lvl))  # Write X to the empty file
-
-    except FileNotFoundError:
-        file = open(player_dungeon_stat, "w")  # Create a new file if it doesn't exist
-        file.write(str(lvl))
-
-    finally:
-        file.close()
+    player = await session.get(Player, user.id)
+    if player is None:
+        print("ERROR! Could not save max_donjon for player!")
+    else:
+        player.max_dungeon = max(player.max_dungeon, lvl)
 
     #On quitte le donjon
     await exit_dungeon(ctx= ctx, thread= thread, time_bfr_close=THREAD_DELETE_AFTER)
@@ -237,9 +222,10 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot) -> None:
 
 
 
-async def exit_dungeon(ctx: Context, thread, time_bfr_close) -> None:
+async def exit_dungeon(ctx: Context, thread: Thread, time_bfr_close: int) -> None:
     ID_joueur_en_donjon.remove(ctx.author.id)
     try :
+        # TODO: add thread.leave() to leave the thread an not respond to any more message here.
         await asyncio.sleep(time_bfr_close)
         await thread.delete()
     except Exception as e:

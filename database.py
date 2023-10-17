@@ -1,6 +1,6 @@
 import utils
 from sqlalchemy.orm import DeclarativeBase, MappedAsDataclass
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession, async_scoped_session
 
 
 ENGINE = create_async_engine(utils.getenv("DB_URL"))

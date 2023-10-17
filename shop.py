@@ -10,6 +10,9 @@ import random
 import pickle
 import asyncio
 
+from typing import Optional
+from typing import List
+
 import discord
 from discord.ext.commands import Context
 
@@ -27,7 +30,7 @@ SHOP_CLOSE_WAIT_TIME = 30 #doit être > à SHOP_TIMEOUT (sinon quelqu'un pourrai
 #Si c'est à True, alors la commande shop n'affiche pas le shop mais un message qui demande d'attendre.
 is_shop_restocking = False
 
-async def restock_shop():
+async def restock_shop() -> None:
     empty_bullies_shop()
     for k in range(SHOP_MAX_BULLY):
         try:
@@ -42,7 +45,7 @@ async def restock_shop():
         
         file.close()
 
-async def print_shop(ctx: Context, bot):
+async def print_shop(ctx: Context, bot) -> None:
     if(is_shop_restocking) :
         await ctx.channel.send(restock_message())
         return
@@ -121,14 +124,14 @@ async def print_shop(ctx: Context, bot):
         await shop_msg.edit(content="```Shop is closed. See you again!```")
         #print("time out")
 
-def new_bully_shop(nb):
+def new_bully_shop(nb) -> Bully:
     rarity = random.choices(list(bully.Rarity), weights=RARITY_DROP_CHANCES)[0]
     name = interact_game.generate_name()
     b = Bully(name[0] + " " + name[1], f"shop/{nb}.pkl", rarity=rarity)
     return b
 
-def load_bullies_shop():
-    bullies_in_shop = []
+def load_bullies_shop() -> List[Optional[Bully]]:
+    bullies_in_shop:List[Optional[Bully]] = []
     folder_path = Path("shop/")
     for k in range(SHOP_MAX_BULLY):
         file_path = folder_path / f"{k}.pkl"
@@ -148,14 +151,14 @@ def load_bullies_shop():
     """
     return bullies_in_shop
 
-def empty_bullies_shop():
+def empty_bullies_shop() -> None:
     Bullies_in_shop = load_bullies_shop()
     for k in range(len(Bullies_in_shop)):
         b = Bullies_in_shop[k]
         if(b != None):
             b.kill()
 
-def bullies_in_shop_to_text(Bullies_in_shop):
+def bullies_in_shop_to_text(Bullies_in_shop) -> str:
     text = "Bullies in the shop : "
     for k in range(len(Bullies_in_shop)) :
         b = Bullies_in_shop[k]
@@ -166,8 +169,8 @@ def bullies_in_shop_to_text(Bullies_in_shop):
     text = bully.mise_en_forme_str(text)
     return text
 
-def bullies_in_shop_to_images(Bullies_in_shop):
-    images = []
+def bullies_in_shop_to_images(Bullies_in_shop:List[Bully]) -> List[str]:
+    images: List[str] = []
     for k in range(len(Bullies_in_shop)) :
         b = Bullies_in_shop[k]
         if(b != None):
@@ -177,11 +180,11 @@ def bullies_in_shop_to_images(Bullies_in_shop):
     
     return images
 
-def cout_bully(b):
+def cout_bully(b) -> int:
     r = b.rarity
     return RARITY_PRICES[r.value]
 
-async def restock_shop_automatic():
+async def restock_shop_automatic() -> None:
     global is_shop_restocking
     print("on commence")
     while(True):    
@@ -193,6 +196,6 @@ async def restock_shop_automatic():
         await restock_shop()
 
 
-def restock_message():
+def restock_message() -> str:
     return (f"```The shop is restocking. Please wait <{SHOP_CLOSE_WAIT_TIME} seconds```")
 

@@ -28,6 +28,7 @@ TOKEN = utils.getenv("DISCORD_TOKEN")
 intents = discord.Intents.default()
 intents.message_content = True
 
+players_in_interaction = set()
 
 class GetBulliedBot(Bot):
     def __init__(self, *args, **kwargs):
@@ -54,8 +55,9 @@ async def on_command_error(ctx: Context, error):
 # Command général ____________________________________________________________________________________
 @bot.command()
 async def join(ctx: Context):
-    user_player_path = utils.get_player_path(ctx.author.id)
-    await interact_game.join_game(ctx, user_player_path)
+    async with database.new_session() as session:
+        await interact_game.join_game(ctx, session)
+        
 
 @bot.command(aliases=['py', 'pay'])
 async def payday(ctx: Context):

@@ -6,9 +6,12 @@ from bully import Bully
 import bully
 from item import Item
 import item
+from player import Player
 
 from pathlib import Path
 from typing import Optional, List, Dict
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 
 import fight_manager # ##$$$
 from fighting_bully import FightingBully
@@ -20,33 +23,24 @@ from discord.ext.commands import Context
 BULLY_NUMBER_MAX = 5
 CHOICE_TIMEOUT = 20
 
-async def join_game(ctx: Context, user_player_path: Path, channel_cible: Optional[discord.abc.Messageable]=None) -> None:
+async def join_game(ctx: Context, session: AsyncSession, channel_cible: Optional[discord.abc.Messageable]=None) -> None:
 
-    #Par défaut, le channel d'envoie est le channel du contexte
+    # Par défaut, le channel d'envoie est le channel du contexte
     if(channel_cible==None):
         channel_cible = ctx.channel
+    
+    player = Player(money.MONEY_JOIN_VALUE)
+    player.id = ctx.author.id
+    try:
+        session.add(player)
+        await session.commit()
+    except IntegrityError:
+        await ctx.reply("You have already joined the game!\n"
+                  "(if you think this is an error, please contact an administrator)")
+        return
 
-    if(user_player_path.exists()):
-        await channel_cible.send("You already joined")
-        return 
-    else :
-        try:
-            user_player_path.mkdir(parents=True)
-            user_player_path.joinpath("brutes").mkdir(exist_ok=True)
-            user_player_path.joinpath("items").mkdir(exist_ok=True)
-
-            with user_player_path.joinpath("playerMoney.txt").open("w") as file:
-                file.write(str(money.MONEY_JOIN_VALUE))
-            
-            user_player_path.joinpath("playerMaxDungeon.txt").touch()
-
-        except FileExistsError:
-            print("Folder already exists! ERROR")
-        except Exception as e:
-            print(e)
-
-        await channel_cible.send("Welcome to the adventure !")
-        return 
+    await ctx.reply("Welcome to the adventure !")
+    return 
 
 async def add_random_bully_to_player(ctx: Context, user_id, name_brute, channel_cible=None) -> None:
 

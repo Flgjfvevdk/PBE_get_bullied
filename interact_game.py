@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Optional, List, Dict
 
 import fight_manager # ##$$$
+from fighting_bully import fightingBully
 import utils
 
 import discord
@@ -198,7 +199,7 @@ async def player_choose_bully(ctx: Context, user, bot, channel_cible=None, timeo
         raise IndexError("Player don't have this bully")
     
     base_stat = [bully_selected.strength, bully_selected.agility, bully_selected.lethality, bully_selected.viciousness]
-    fighting_bully = fight_manager.fightingBully(pv = bully_selected.max_pv, base_stat= base_stat.copy(), stat= base_stat.copy())
+    fighting_bully = fightingBully(combattant= bully_selected, name= bully_selected.name, lvl= bully_selected.lvl, pv = bully_selected.max_pv, base_stat= base_stat.copy(), stat= base_stat.copy())
     
     return fighting_bully, bully_number
     return bully_selected, bully_number

@@ -197,7 +197,7 @@ async def hire(ctx: Context):
     if(not user_player_path.exists()):
         await ctx.channel.send("You can't use any commands until you have joined")
         return
-    await interact_game.add_random_bully_to_player(ctx, id, interact_game.generate_name())
+    await interact_game.add_random_bully_to_player(ctx, ctx.author.id, interact_game.generate_name())
 
 @bot.command(aliases=['item', 'items'])
 async def show_item(ctx: Context, user:Optional[discord.abc.User] = None):

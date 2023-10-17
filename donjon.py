@@ -2,8 +2,8 @@ import os
 import random
 from bully import Bully #ne pas confondre avec bully (le fichier)
 import bully #ne pas confondre avec Bully (la class)
+from fighting_bully import fightingBully
 import interact_game
-from fight_manager import fightingBully
 import fight_manager
 import money
 import pickle
@@ -20,18 +20,21 @@ size_dungeon = 5
 
 DUNGEON_CHOICE_TIMEOUT = 30
 THREAD_DELETE_AFTER = 90
-coef_xp_win = 0.3
+COEF_XP_WIN = 0.3
 
 minimum_pv = 4
 maximum_pv = 10
 
-def generate_donjon_team(level: int, size:int):
-    Enemies = []
-    Enemies_pv = []
+def generate_donjon_team(level: int, size:int) -> list[fightingBully]:
+    # enemies = []
+    # enemies_pv = []
+
+    enemies_fighters = []
+
     for k in range(size):
         rarity = bully.Rarity.TOXIC if random.random() < level/10 else bully.Rarity.NOBODY
 
-        e = Bully(enemies_possibles_names[k], "", [1,1,1,1], rarity=rarity, must_load_image=False)
+        enemy_fighter = Bully(enemies_possibles_names[k], "", [1,1,1,1], rarity=rarity, must_load_image=False)
 
         point_init = bully.BULLY_RARITY_POINTS[rarity.value]
         coef_point_lvl_up = bully.BULLY_RARITY_LEVEL[rarity.value]
@@ -42,20 +45,27 @@ def generate_donjon_team(level: int, size:int):
             preterme2 = (k + 1) / size
             terme2 = (level * coef_point_lvl_up + point_init) * preterme2
             pointBonus = round(terme1 + terme2)
-            pv_e = round((maximum_pv - minimum_pv)*(k + 1) / size + minimum_pv)
-            lvl_set = round((pointBonus - 4) * pv_e / 10, 1) if pointBonus > 4 else (round(pointBonus / 5 * pv_e / 10, 1))
-            #lvl_set = round((level * (k + 1) / size /2) * 10) /10
-            Enemies_pv.append(pv_e)
+
+            pv_enemy = round((maximum_pv - minimum_pv)*(k + 1) / size + minimum_pv)
+            lvl_enemy = round((pointBonus - 4) * pv_enemy / 10, 1) if pointBonus > 4 else (round(pointBonus / 5 * pv_enemy / 10, 1))
+            #enemies_pv.append(pv_enemy)
             
         else :
             pointBonus = int(point_init + level * coef_point_lvl_up)
-            lvl_set = level
-            Enemies_pv.append(maximum_pv)
+            lvl_enemy = level
+            pv_enemy = maximum_pv
+            #enemies_pv.append(pv_enemy)
         
-        e.increase_stat_with_seed(pointBonus)
-        e.set_level(lvl_set)
-        Enemies.append(e)
-    return Enemies, Enemies_pv
+        enemy_fighter.increase_stat_with_seed(pointBonus)
+        enemy_fighter.set_level(lvl_enemy)
+        # enemies.append(enemy_fighter)
+
+        stat_enemy = [enemy_fighter.strength, enemy_fighter.agility, enemy_fighter.lethality, enemy_fighter.viciousness]
+        new_fighter = fightingBully(combattant= enemy_fighter, name=enemy_fighter.name, lvl= lvl_enemy, pv= pv_enemy, base_stat= stat_enemy.copy(), stat= stat_enemy.copy())
+
+        enemies_fighters.append(new_fighter)
+    return enemies_fighters
+    return enemies, enemies_pv
 
 async def enter_the_dungeon(ctx: Context, user, lvl, bot):
     #Le joueur rentre dans le donjon
@@ -73,7 +83,8 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot):
     path_players_data = "game_data/player_data"
 
     #On initialise les pv et xp gagné par les bullies
-    pv_team_joueur = [] #pv du bully n°index. Si bully n°index n'existe pas alors -1
+    #pv_team_joueur = [] #pv du bully n°index. Si bully n°index n'existe pas alors -1
+    fighters_joueur:list[fightingBully] = []
     xp_earned_bullies = [] #L'xp gagné par chaque bully
     for k in range(interact_game.BULLY_NUMBER_MAX):
         file_bully = player_brute_path / f"{k}.pkl"
@@ -81,19 +92,23 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot):
             try :
                 with file_bully.open('rb') as pickle_file:
                     bul = pickle.load(pickle_file)
-                pv_team_joueur.append(bul.max_pv)
+                new_fighter = fightingBully.create_fighting_bully(bul)
+                fighters_joueur.append(new_fighter)
+                #pv_team_joueur.append(bul.max_pv)
             except Exception as e:
                 print (e)
-                print("erreur DATATATATATATA")
                 await thread.send("probleme DATA") 
-                pv_team_joueur.append(10)
+                raise e
+                #pv_team_joueur.append(10)
             xp_earned_bullies.append(0)
         else :
-            pv_team_joueur.append(-1)
+            fighters_joueur.append(None)
+            #pv_team_joueur.append(-1)
             xp_earned_bullies.append(-1)
 
     #On génère les ennemies
-    Enemies, Enemies_pv = generate_donjon_team(lvl, size_dungeon)
+    #enemies, enemies_pv = generate_donjon_team(lvl, size_dungeon)
+    enemies_fighters = generate_donjon_team(lvl, size_dungeon)
 
     #On set les paramètres du donjon
     current_floor = 0
@@ -102,17 +117,18 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot):
     while current_floor < size_dungeon :
 
         #On affiche le prochain ennemy
-        current_enemy = Enemies[current_floor]
-        text_enemy_coming = f"An enemy is coming! {current_enemy.get_print(compact_print=True)}"
+        #current_enemy = enemies[current_floor]
+        fighting_bully_enemy = enemies_fighters[current_floor]
+        text_enemy_coming = f"An enemy is coming! {fighting_bully_enemy.combattant.get_print(compact_print=True)}"
         await thread.send(f"{bully.mise_en_forme_str(text_enemy_coming)}") 
 
         #Le player choisit son bully
         try :
             #bully_joueur, num_bully_j = await interact_game.player_choose_bully(ctx, user= user, bot= bot, channel_cible= thread, timeout= DUNGEON_CHOICE_TIMEOUT)
-            fighting_bully_joueur, num_bully_j = await interact_game.player_choose_bully(ctx, user= user, bot= bot, channel_cible= thread, timeout= DUNGEON_CHOICE_TIMEOUT)
+            _, num_bully_j = await interact_game.player_choose_bully(ctx, user= user, bot= bot, channel_cible= thread, timeout= DUNGEON_CHOICE_TIMEOUT)
         except TimeoutError as e:
-            await thread.send(f"Your team left the dungeon. Choose faster next time {user}") 
             print (e)
+            await thread.send(f"Your team left the dungeon. Choose faster next time {user}") 
             await exit_dungeon(ctx= ctx, thread= thread, time_bfr_close=THREAD_DELETE_AFTER)
             return 
         except IndexError as e:
@@ -127,30 +143,29 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot):
             print(e)
             return
         
-        #On fait le combat et on récup les pv restants des combattants
-        #stat_joueur = [bully_joueur.strength, bully_joueur.agility, bully_joueur.lethality, bully_joueur.viciousness]
-        stat_enemy = [current_enemy.strength, current_enemy.agility, current_enemy.lethality, current_enemy.viciousness]
-        fighting_bully_enemy = fightingBully(combattant=current_enemy, name=current_enemy.name, lvl=current_enemy.lvl, pv=Enemies_pv[current_floor], base_stat=stat_enemy, stat=stat_enemy)
-        # pv_restant_joueur, pv_restant_enemy = await fight_manager.fight_simulation(ctx, bot= bot, 
-        #                                                             stat_base_1= stat_joueur, stat_base_2= stat_enemy, 
-        #                                                             name_1= bully_joueur.name, name_2= current_enemy.name, 
-        #                                                             max_pv_1= pv_team_joueur[num_bully_j], max_pv_2= Enemies_pv[current_floor], 
-        #                                                             lvl_1= bully_joueur.lvl, lvl_2= current_enemy.lvl,
-        #                                                             channel_cible=thread)
+        #On fait le combat. Les pv sont maj dans la class fightingBully
+        fighting_bully_joueur = fighters_joueur[num_bully_j]
+        if(fighting_bully_joueur is None or fighting_bully_joueur.pv <= 0):
+            await thread.send(f"Your bully is dead or do not exist. \nYour team left the dungeon") 
+            await exit_dungeon(ctx= ctx, thread= thread, time_bfr_close=THREAD_DELETE_AFTER)
+            return 
+        
         await fight_manager.fight_simulation(ctx, bot= bot, 
-                                                fighting_bully_1= fighting_bully_joueur, fighting_bully_2= fighting_bully_enemy,
-                                                channel_cible=thread)
+                                            fighting_bully_1= fighting_bully_joueur, fighting_bully_2= fighting_bully_enemy,
+                                            channel_cible= thread)
+        
         pv_restant_joueur = fighting_bully_joueur.pv
+        bully_joueur = fighting_bully_joueur.combattant
         #On regarde qui a perdu (le joueur ou l'ennemi)
         if(pv_restant_joueur > 0) :
             #Le joueur a gagné
 
             #On maj les pv des combattants
-            pv_team_joueur[num_bully_j] = pv_restant_joueur
-            Enemies_pv[current_floor] = 0
+            #pv_team_joueur[num_bully_j] = pv_restant_joueur
+            #enemies_pv[current_floor] = 0
 
             #On calcul les récompenses, on les affiches et on les stocks
-            (exp_earned, gold_earned) = fight_manager.reward_win_fight(bully_joueur, current_enemy)
+            (exp_earned, gold_earned) = fight_manager.reward_win_fight(bully_joueur, fighting_bully_enemy.combattant)
             pretext = ""
             if (exp_earned > 0):
                 bully_joueur.give_exp(exp_earned)
@@ -162,19 +177,20 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot):
             xp_earned_bullies[num_bully_j] += exp_earned
 
             #On envoie le message de succès et on progress dans le dungeon
-            await thread.send(f"{pretext}{current_enemy.name} is dead! You progress in the dungeon.")
+            await thread.send(f"{pretext}{fighting_bully_enemy.name} is dead! You progress in the dungeon.")
             current_floor += 1
 
         else : 
             #Le joueur à perdu
 
             #On maj les pv des combattants
-            pv_team_joueur[num_bully_j] = 0
-            Enemies_pv[current_floor] = fighting_bully_enemy.pv
+            #pv_team_joueur[num_bully_j] = 0
+            #enemies_pv[current_floor] = fighting_bully_enemy.pv
 
             #On tue le bully qui est ded
             await thread.send(f"{bully_joueur.name} died in terrible agony")
             bully_joueur.kill()
+            fighters_joueur[num_bully_j] = None
 
     #On est plus dans le combat, le joueur à tryompher
 
@@ -184,15 +200,17 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot):
 
     #on donne la récompense d'xp
     for k in range(len(xp_earned_bullies)):
-        if(pv_team_joueur[k] > 0 and xp_earned_bullies[k] > 0):
-            file_path = player_brute_path / f"{str(k)}.pkl"
-
-            try :
-                with file_path.open('rb') as pickle_file:
-                    bully_joueur = pickle.load(pickle_file)
-                bully_joueur.give_exp(round(xp_earned_bullies[k] * coef_xp_win, 1))
-            except Exception as e:
-                print (e)
+        # if(pv_team_joueur[k] > 0 and xp_earned_bullies[k] > 0):
+        if(fighters_joueur[k] != None and xp_earned_bullies[k] > 0):
+            bully_joueur_recompense = fighters_joueur[k].combattant
+            bully_joueur_recompense.give_exp(round(xp_earned_bullies[k] * COEF_XP_WIN, 1))
+            # file_path = player_brute_path / f"{str(k)}.pkl"
+            # try :
+            #     with file_path.open('rb') as pickle_file:
+            #         bully_joueur_recompense = pickle.load(pickle_file)
+            #     bully_joueur_recompense.give_exp(round(xp_earned_bullies[k] * COEF_XP_WIN, 1))
+            # except Exception as e:
+            #     print (e)
 
     #On maj le record du joueur sur son dungeon si nécessaire
     player_dungeon_stat = utils.get_player_path(user.id) / "playerMaxDungeon.txt"

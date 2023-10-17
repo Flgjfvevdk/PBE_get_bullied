@@ -2,7 +2,7 @@ import os
 import random
 from bully import Bully
 from item import Item
-from dataclasses import dataclass
+from fighting_bully import fightingBully
 import pickle
 import interact_game
 import money
@@ -15,16 +15,6 @@ from typing import Optional
 
 CHOICE_TIMEOUT = 20
 fight_msg_time_update = 1
-
-@dataclass
-class fightingBully():
-    combattant: Bully
-    name: str
-    lvl: int
-    pv: int
-    base_stat:list
-    stat: list
-    #equipped_item: Item
 
 async def proposition_fight(ctx: Context, user_1, user_2, bot, for_fun = False):
     await manager_start_fight(ctx, user_1, user_2, bot, for_fun)
@@ -60,7 +50,7 @@ async def start_fight(ctx: Context, user_1, user_2, bot, for_fun = False):
     item_1, item_2 = await manager_equip_item(ctx=ctx, user_1=user_1, user_2=user_2, bot=bot)
     # await fight(ctx, user_1, user_2, bot, bully_1, bully_2, for_fun, item_1=item_1, item_2=item_2)
     await fight(ctx, user_1, user_2, bot, fighting_bully_1, fighting_bully_2, for_fun, item_1=item_1, item_2=item_2)
-
+    
     return
 
 async def manager_equip_item(ctx: Context, user_1, user_2, bot):
@@ -145,7 +135,8 @@ async def fight_simulation(ctx, bot, fighting_bully_1:fightingBully, fighting_bu
     """
     return : (pv_restant_joueur_1, pv_restant_joueur_2)
     """
-
+    print("fighting_bully_1.stat ", fighting_bully_1.stat)
+    print("fighting_bully_2.stat ", fighting_bully_2.stat)
     if(channel_cible == None):
         channel_cible = ctx.channel
 

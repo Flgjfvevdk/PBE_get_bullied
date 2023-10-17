@@ -138,7 +138,7 @@ async def fight_simulation(ctx, bot, fighting_bully_1:FightingBully, fighting_bu
     barre_pv_joueur = value_to_bar_str(fighting_bully_1.pv, max_value= max_pv_1)
     barre_pv_enemy = value_to_bar_str(fighting_bully_2.pv, max_value= max_pv_2)
 
-    text_pv_combat = "\t\tBully 1 : " + fighting_bully_1.name + "\nhp : " + barre_pv_joueur + "\n\n\t\t\t\tVS\n\n\t\tBully 2 : " + fighting_bully_2.name + "\nhp : " + barre_pv_enemy
+    text_pv_combat = "\t\tBully 1 : " + fighting_bully_1.combattant.name + "\nhp : " + barre_pv_joueur + "\n\n\t\t\t\tVS\n\n\t\tBully 2 : " + fighting_bully_2.combattant.name + "\nhp : " + barre_pv_enemy
     
     action_combat = "Let's get ready to rumble!"
     text_combat = "```" + text_pv_combat + "\n\n" + action_combat + "```"
@@ -167,7 +167,7 @@ async def fight_simulation(ctx, bot, fighting_bully_1:FightingBully, fighting_bu
 
         #On fait visuellement la modif de pv : 
         #text_pv_combat = "\t\tBully 1 : " + name_1 + "\nhp : " + barre_pv_joueur + "\n\t\t\t\t\t" + emoji_recap_j1 + "\n\t\t\t\tVS\n\t\t\t\t\t" + emoji_recap_j2 + "\n\t\tBully 2 : " + name_2 + "\nhp : " + barre_pv_enemy
-        text_pv_combat = "\t\tBully 1 : " + fighting_bully_1.name + "\nhp : " + barre_pv_joueur + "\n\t\t\t\t\t" + emoji_recap_j1 + "\n\t\t\t\tVS\n\t\t\t\t\t" + emoji_recap_j2 + "\n\t\tBully 2 : " + fighting_bully_2.name + "\nhp : " + barre_pv_enemy
+        text_pv_combat = "\t\tBully 1 : " + fighting_bully_1.combattant.name + "\nhp : " + barre_pv_joueur + "\n\t\t\t\t\t" + emoji_recap_j1 + "\n\t\t\t\tVS\n\t\t\t\t\t" + emoji_recap_j2 + "\n\t\tBully 2 : " + fighting_bully_2.combattant.name + "\nhp : " + barre_pv_enemy
         action_combat = text_action
         text_combat = "```" + text_pv_combat + "\n\n" + action_combat + "```"
         await message.edit(content = text_combat)
@@ -216,8 +216,8 @@ def nouvelle_action_stat(fighting_bully_1:FightingBully, fighting_bully_2:Fighti
     emoji_j1=""
     emoji_j2=""
 
-    name_1 = fighting_bully_1.name
-    name_2 = fighting_bully_2.name
+    name_1 = fighting_bully_1.combattant.name
+    name_2 = fighting_bully_2.combattant.name
 
     stat_j1 = fighting_bully_1.stat.copy()
     stat_j2 = fighting_bully_2.stat.copy()

@@ -64,7 +64,8 @@ def generate_donjon_team(level: int, size:int) -> List[FightingBully]:
         # enemies.append(enemy_fighter)
 
         stat_enemy = [enemy_fighter.strength, enemy_fighter.agility, enemy_fighter.lethality, enemy_fighter.viciousness]
-        new_fighter = FightingBully(combattant= enemy_fighter, name=enemy_fighter.name, lvl= lvl_enemy, pv= pv_enemy, base_stat= stat_enemy.copy(), stat= stat_enemy.copy())
+        #new_fighter = FightingBully(combattant= enemy_fighter, pv= pv_enemy, base_stat= stat_enemy.copy(), stat= stat_enemy.copy())
+        new_fighter = FightingBully.create_fighting_bully(enemy_fighter)
 
         enemies_fighters.append(new_fighter)
     return enemies_fighters
@@ -180,7 +181,7 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot) -> None:
             xp_earned_bullies[num_bully_j] += exp_earned
 
             #On envoie le message de succès et on progress dans le dungeon
-            await thread.send(f"{pretext}{fighting_bully_enemy.name} is dead! You progress in the dungeon.")
+            await thread.send(f"{pretext}{fighting_bully_enemy.combattant.name} is dead! You progress in the dungeon.")
             current_floor += 1
 
         else : 

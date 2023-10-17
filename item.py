@@ -57,10 +57,11 @@ class Item :
     def effect_before_fight(self, fighting_bully_self:FightingBully, fighting_bully_adv:FightingBully) -> None:
         if(self.is_bfr_fight) :
             fighting_bully_self.pv += self.buff_start_self_pv
-            buff_self_str = self.buff_start_self_strength + round(fighting_bully_self.lvl * self.buff_start_self_mult_lvl_strength)
-            buff_self_agi = self.buff_start_self_agility + round(fighting_bully_self.lvl * self.buff_start_self_mult_lvl_agility)
-            buff_self_leth = self.buff_start_self_lethality + round(fighting_bully_self.lvl * self.buff_start_self_mult_lvl_lethality)
-            buff_self_vicious = self.buff_start_self_viciousness + round(fighting_bully_self.lvl * self.buff_start_self_mult_lvl_viciousness)
+            lvl_self = fighting_bully_self.combattant.lvl
+            buff_self_str = self.buff_start_self_strength + round(lvl_self * self.buff_start_self_mult_lvl_strength)
+            buff_self_agi = self.buff_start_self_agility + round(lvl_self * self.buff_start_self_mult_lvl_agility)
+            buff_self_leth = self.buff_start_self_lethality + round(lvl_self * self.buff_start_self_mult_lvl_lethality)
+            buff_self_vicious = self.buff_start_self_viciousness + round(lvl_self * self.buff_start_self_mult_lvl_viciousness)
             #stat_self = [stat_self[0] + self.buff_start_self_strength, stat_self[1] + self.buff_start_self_agility, stat_self[2] + self.buff_start_self_lethality, stat_self[3] + self.buff_start_self_viciousness]
             stat_self = fighting_bully_self.base_stat.copy()
             stat_self = [stat_self[0] + buff_self_str, stat_self[1] + buff_self_agi, stat_self[2] + buff_self_leth, stat_self[3] + buff_self_vicious]
@@ -69,10 +70,11 @@ class Item :
             fighting_bully_self.stat = stat_self
 
             fighting_bully_adv.pv += self.buff_start_adv_pv
-            buff_adv_str = self.buff_start_adv_strength + round(fighting_bully_adv.lvl * self.buff_start_adv_mult_lvl_strength)
-            buff_adv_agi = self.buff_start_adv_agility + round(fighting_bully_adv.lvl * self.buff_start_adv_mult_lvl_agility)
-            buff_adv_leth = self.buff_start_adv_lethality + round(fighting_bully_adv.lvl * self.buff_start_adv_mult_lvl_lethality)
-            buff_adv_vicious = self.buff_start_adv_viciousness + round(fighting_bully_adv.lvl * self.buff_start_adv_mult_lvl_viciousness)
+            lvl_adv = fighting_bully_adv.combattant.lvl
+            buff_adv_str = self.buff_start_adv_strength + round(lvl_adv * self.buff_start_adv_mult_lvl_strength)
+            buff_adv_agi = self.buff_start_adv_agility + round(lvl_adv * self.buff_start_adv_mult_lvl_agility)
+            buff_adv_leth = self.buff_start_adv_lethality + round(lvl_adv * self.buff_start_adv_mult_lvl_lethality)
+            buff_adv_vicious = self.buff_start_adv_viciousness + round(lvl_adv * self.buff_start_adv_mult_lvl_viciousness)
             #stat_adv = [stat_adv[0] + self.buff_start_adv_strength, stat_adv[1] + self.buff_start_adv_agility, stat_adv[2] + self.buff_start_adv_lethality, stat_adv[3] + self.buff_start_adv_viciousness]
             stat_adv = fighting_bully_adv.base_stat.copy()
             stat_adv = [stat_adv[0] + buff_adv_str, stat_adv[1] + buff_adv_agi, stat_adv[2] + buff_adv_leth, stat_adv[3] + buff_adv_vicious]

@@ -205,8 +205,6 @@ async def fight_manage_ruin(ctx: Context, user, bot,
         raise IndexError 
 
     #On fait le combat
-    #stat_enemy = [current_enemy_fighter.strength, current_enemy_fighter.agility, current_enemy_fighter.lethality, current_enemy_fighter.viciousness]
-    #pv_enemy = current_enemy_fighter.max_pv
 
     if item_enemy != None :
         print("item_enemy : ", item_enemy.get_print())
@@ -232,11 +230,11 @@ async def fight_manage_ruin(ctx: Context, user, bot,
                 if(new_fighting_bully_joueur == None):
                     raise IndexError
             except TimeoutError as e:
-                await channel_cible.send(f"Too slow, {fighting_bully_joueur.name} stays in fight.")
+                await channel_cible.send(f"Too slow, {fighting_bully_joueur.combattant.name} stays in fight.")
                 new_fighting_bully_joueur = fighting_bully_joueur
                 new_num_bully_j = num_bully_j
             except IndexError as e:
-                await channel_cible.send(f"Erreur, {fighting_bully_joueur.name} reste en combat.") 
+                await channel_cible.send(f"Erreur, {fighting_bully_joueur.combattant.name} reste en combat.") 
                 new_fighting_bully_joueur = fighting_bully_joueur
                 new_num_bully_j = num_bully_j
             
@@ -257,21 +255,21 @@ async def fight_manage_ruin(ctx: Context, user, bot,
         pretext = ""
         if (exp_earned > 0):
             bully_joueur.give_exp(exp_earned)
-            pretext += f"{fighting_bully_joueur.name} earned {exp_earned} xp\n"
+            pretext += f"{fighting_bully_joueur.combattant.name} earned {exp_earned} xp\n"
         if (gold_earned > 0):
             user_gagnant = user
             money.give_money(user_id=user_gagnant.id, montant=gold_earned)
             pretext += f"{user.name} earned {gold_earned}{money.MONEY_ICON}\n"
 
         #On envoie le message de succès et on progress dans le dungeon
-        await channel_cible.send(f"{pretext}{fighting_bully_enemy.name} is dead! You progress in the ruin.")
+        await channel_cible.send(f"{pretext}{fighting_bully_enemy.combattant.name} is dead! You progress in the ruin.")
         
     else : 
         #Le joueur à perdu
         is_success = False
 
         #On tue le bully qui est ded
-        await channel_cible.send(f"{fighting_bully_joueur.name} died in terrible agony")
+        await channel_cible.send(f"{fighting_bully_joueur.combattant.name} died in terrible agony")
         fighting_bully_joueur.combattant.kill()
         team_fighters_player[num_bully_j] = None
 

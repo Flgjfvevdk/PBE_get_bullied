@@ -169,7 +169,7 @@ def bullies_in_shop_to_text(Bullies_in_shop) -> str:
     text = bully.mise_en_forme_str(text)
     return text
 
-def bullies_in_shop_to_images(Bullies_in_shop:List[Bully]) -> List[str]:
+def bullies_in_shop_to_images(Bullies_in_shop:List[Optional[Bully]]) -> List[str]:
     images: List[str] = []
     for k in range(len(Bullies_in_shop)) :
         b = Bullies_in_shop[k]

@@ -117,8 +117,8 @@ def value_to_bar_str(v:int, max_value=10) -> str:
 
 
 # ____________________________________________________
-async def fight_simulation(ctx, bot, fighting_bully_1:FightingBully, fighting_bully_2:FightingBully,
-                            user_1 = None, user_2 = None, is_switch_possible = False, 
+async def fight_simulation(ctx, bot: Bot, fighting_bully_1:FightingBully, fighting_bully_2:FightingBully,
+                            user_1: discord.abc.User|None = None, user_2:discord.abc.User|None = None, is_switch_possible = False, 
                             item_1:Optional[Item] = None, item_2:Optional[Item] = None, channel_cible = None) -> None:    
 
     print("fighting_bully_1.stats ", fighting_bully_1.stats)

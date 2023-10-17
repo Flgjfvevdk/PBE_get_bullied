@@ -9,13 +9,15 @@ import fight_manager
 import money
 import pickle
 import asyncio
+from player import Player
 
 from enum import Enum
 
 from typing import Optional
 from typing import List
 
-from discord.ext.commands import Context
+from discord.ext.commands import Context, Bot
+import discord
 
 import utils
 
@@ -99,7 +101,7 @@ def generate_ruine(lvl, index_rarity = None) -> List[tuple[FightingBully, Item] 
     random.shuffle(salles_ruine)
     return salles_ruine
 
-async def enter_the_ruin(ctx: Context, user, lvl, bot) -> None:
+async def enter_the_ruin(ctx: Context, user: discord.abc.User, player: Player, lvl: int, bot: Bot) -> None:
     message = await ctx.channel.send(f"{user.mention} enters a mysterious ruin [lvl : {lvl}]")
     try :
         thread = await ctx.channel.create_thread(name=f"Ruin - Level {lvl}", message= message) #type: ignore
@@ -141,7 +143,7 @@ async def enter_the_ruin(ctx: Context, user, lvl, bot) -> None:
             #On fait le combat
             try :
                 #is_success, fighters_joueur = await fight_manage_ruin(ctx, user, bot, 
-                is_success = await fight_manage_ruin(ctx, user, bot, 
+                is_success = await fight_manage_ruin(ctx, user, player, bot, 
                                                                       team_fighters_player = fighters_joueur, fighting_bully_enemy = current_enemy_fighter, 
                                                                       channel_cible = thread)
                 if is_success :
@@ -159,7 +161,7 @@ async def enter_the_ruin(ctx: Context, user, lvl, bot) -> None:
             #On fait le combat
             try :
                 #is_success, fighters_joueur = await fight_manage_ruin(ctx, user, bot, 
-                is_success = await fight_manage_ruin(ctx, user, bot, 
+                is_success = await fight_manage_ruin(ctx, user, player, bot, 
                                                                     team_fighters_player= fighters_joueur, fighting_bully_enemy= current_enemy_fighter, 
                                                                     channel_cible=thread, 
                                                                     is_switch_possible=True, item_enemy= item_boss) #On autorise de switch car combat contre un boss de ruine
@@ -171,14 +173,14 @@ async def enter_the_ruin(ctx: Context, user, lvl, bot) -> None:
                 return
 
             if (is_success):
-                await interact_game.add_item_to_player(ctx= ctx, user_id= user.id, item=item_boss, channel_cible= thread)
+                await interact_game.add_item_to_player(ctx, player, item_boss, channel_cible=thread)
     await thread.send(f"Congratulation {user}, you beat the boss!") 
     await exit_ruin(ctx, thread, THREAD_DELETE_AFTER)
 
     return
 
 
-async def fight_manage_ruin(ctx: Context, user, bot, 
+async def fight_manage_ruin(ctx: Context, user: discord.abc.User, player: Player, bot: Bot, 
                             team_fighters_player:List[Optional[FightingBully]],  fighting_bully_enemy: FightingBully, 
                             channel_cible, is_switch_possible = False, item_enemy:Optional[Item]=None) -> bool:
     
@@ -187,7 +189,7 @@ async def fight_manage_ruin(ctx: Context, user, bot,
 
     #Le player choisit son bully
     try :
-        _, num_bully_j = await interact_game.player_choose_bully(ctx, user=user, bot=bot, channel_cible=channel_cible, timeout=RUIN_CHOICE_TIMEOUT)
+        _, num_bully_j = await interact_game.player_choose_bully(ctx, user, player, bot, channel_cible=channel_cible, timeout=RUIN_CHOICE_TIMEOUT)
     except TimeoutError as e:
         await channel_cible.send(f"Your team left the ruin. Choose faster next time {user}") 
         raise e #On propage l'exception
@@ -225,7 +227,7 @@ async def fight_manage_ruin(ctx: Context, user, bot,
             print(erreur)
             fin_combat = False
             try :
-                _, new_num_bully_j = await interact_game.player_choose_bully(ctx, user= user, bot= bot, channel_cible= channel_cible, timeout= FIGHTER_CHOICE_TIMEOUT)
+                _, new_num_bully_j = await interact_game.player_choose_bully(ctx, user, player, bot, channel_cible= channel_cible, timeout= FIGHTER_CHOICE_TIMEOUT)
                 new_fighting_bully_joueur = team_fighters_player[new_num_bully_j]
                 if(new_fighting_bully_joueur == None):
                     raise IndexError
@@ -258,7 +260,7 @@ async def fight_manage_ruin(ctx: Context, user, bot,
             pretext += f"{fighting_bully_joueur.combattant.name} earned {exp_earned} xp\n"
         if (gold_earned > 0):
             user_gagnant = user
-            money.give_money(user_id=user_gagnant.id, montant=gold_earned)
+            money.give_money(player, montant=gold_earned)
             pretext += f"{user.name} earned {gold_earned}{money.MONEY_ICON}\n"
 
         #On envoie le message de succès et on progress dans le dungeon

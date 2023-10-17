@@ -230,7 +230,7 @@ async def explore_ruin(ctx: Context, level:int):
         if player is None:
             await ctx.reply("Please join the game first !")
             return
-        await ruine.enter_the_ruin(ctx, player, level, bot)
+        await ruine.enter_the_ruin(ctx, user, player, level, bot)
         await session.commit()
     return
 # //////////////////////////////////////////////////////////////////////////////////////////////////////

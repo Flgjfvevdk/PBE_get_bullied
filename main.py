@@ -1,8 +1,10 @@
 # bot.py
 import os
 from typing import Optional
+from pathlib import Path
 import discord
 
+import utils
 import interact_game
 import fight_manager
 import donjon
@@ -11,8 +13,7 @@ import money
 import shop
 import bully
 import item
-import utils
-from pathlib import Path
+import database
 
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import sessionmaker
@@ -22,23 +23,11 @@ import asyncio
 
 from discord.ext.commands import Bot, Context, CommandNotFound
 
-#Les 2 lignes en dessous permettent de lire le token qui est noté dans .env
-from dotenv import load_dotenv
-def getenv(name:str) -> str:
-    val = os.getenv(name)
-    if val is None:
-        raise Exception("ENV variable {name} is not set!")
-    return val
-
-load_dotenv()
-TOKEN = getenv("DISCORD_TOKEN")
+TOKEN = utils.getenv("DISCORD_TOKEN")
 
 intents = discord.Intents.default()
 intents.message_content = True
 
-ENGINE = create_async_engine(getenv("DB_URL"))
-
-new_session = async_sessionmaker(bind=ENGINE, class_=AsyncSession)
 
 class GetBulliedBot(Bot):
     def __init__(self, *args, **kwargs):
@@ -46,7 +35,7 @@ class GetBulliedBot(Bot):
 
     @property
     def session(self) -> AsyncSession:
-        return new_session()
+        return database.new_session()
 
 bot = GetBulliedBot(command_prefix = "!!", intents=intents)
 

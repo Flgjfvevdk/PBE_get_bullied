@@ -127,7 +127,7 @@ async def print_shop(ctx: Context, bot) -> None:
 def new_bully_shop(nb) -> Bully:
     rarity = random.choices(list(bully.Rarity), weights=RARITY_DROP_CHANCES)[0]
     name = interact_game.generate_name()
-    b = Bully(name[0] + " " + name[1], f"shop/{nb}.pkl", rarity=rarity)
+    b = Bully(name[0] + " " + name[1], file_path=Path(f"shop/{nb}.pkl"), rarity=rarity)
     return b
 
 def load_bullies_shop() -> List[Optional[Bully]]:

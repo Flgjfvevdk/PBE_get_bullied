@@ -97,7 +97,7 @@ async def fight(ctx: Context, user_1, user_2, bot, fighting_bully_1:FightingBull
             user_gagnant = user_1 if bully_gagnant == fighting_bully_1.combattant else user_2
             money.give_money(user_id=user_gagnant.id, montant=gold_earned)
             pretext += f"{user_gagnant.name} earned {gold_earned}{money.MONEY_ICON}\n"
-        bully_perdant.kill()
+        await bully_perdant.kill()
         await ctx.channel.send(f"{pretext}{bully_perdant.name} died in terrible agony")
 
     return

@@ -51,7 +51,7 @@ async def join_game(ctx: Context, user_player_path: Path, channel_cible: Optiona
 async def add_random_bully_to_player(ctx: Context, user_id, name_brute, channel_cible=None) -> None:
 
     name_bully = f"{name_brute[0]} {name_brute[1]}"
-    new_bully = Bully(name_bully, "tmp_val")
+    new_bully = Bully(name_bully)
     
     await add_bully_to_player(ctx, user_id, new_bully, channel_cible)
 
@@ -315,7 +315,7 @@ async def add_bully_custom(ctx: Context, player_path: Path, name_brute, stats, r
     # Open the file in write mode (creates the file if it doesn't exist)
     file = open(file_path, "wb")
     name_bully = name_brute[0] + " " + name_brute[1]
-    new_bully = Bully(name_bully, file_path, stats=stats, rarity=rarity)
+    new_bully = Bully(name_bully, file_path=file_path, stats=stats, rarity=rarity)
     try :
         pickle.dump(new_bully, file)
     except Exception as e :

@@ -37,7 +37,7 @@ def generate_donjon_team(level: int, size:int) -> List[FightingBully]:
     for k in range(size):
         rarity = bully.Rarity.TOXIC if random.random() < level/10 else bully.Rarity.NOBODY
 
-        enemy_fighter = Bully(enemies_possibles_names[k], "", [1,1,1,1], rarity=rarity, must_load_image=False)
+        enemy_fighter = Bully(enemies_possibles_names[k], stats=bully.Stats(1,1,1,1), rarity=rarity, must_load_image=False)
 
         point_init = bully.BULLY_RARITY_POINTS[rarity.value]
         coef_point_lvl_up = bully.BULLY_RARITY_LEVEL[rarity.value]
@@ -60,7 +60,7 @@ def generate_donjon_team(level: int, size:int) -> List[FightingBully]:
             #enemies_pv.append(pv_enemy)
         
         enemy_fighter.increase_stat_with_seed(pointBonus)
-        enemy_fighter.set_level(lvl_enemy)
+        enemy_fighter.lvl = lvl_enemy # Attention, ne recalcule pas les stats
         # enemies.append(enemy_fighter)
 
         stat_enemy = [enemy_fighter.strength, enemy_fighter.agility, enemy_fighter.lethality, enemy_fighter.viciousness]

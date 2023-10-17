@@ -292,7 +292,7 @@ async def exit_ruin(ctx: Context, thread, time_bfr_close_thread) -> None:
 def generate_boss_room(lvl, index_rarity) -> tuple[FightingBully, Item]:
     max_pv_boss:int = 20
 
-    boss = Bully("BOSS", "", rarity=bully.Rarity(index_rarity), must_load_image=False, max_pv=max_pv_boss)
+    boss = Bully("BOSS", rarity=bully.Rarity(index_rarity), must_load_image=False, max_pv=max_pv_boss)
     for k in range(1, lvl) :
         boss.level_up_one()
     item_boss:Item = generate_item(lvl, index_rarity)
@@ -301,7 +301,7 @@ def generate_boss_room(lvl, index_rarity) -> tuple[FightingBully, Item]:
 
 def generate_enemy(lvl, index_rarity) -> FightingBully:
     max_pv_enemy = 5
-    enemy = Bully("enemy", "", rarity=bully.Rarity(index_rarity), must_load_image= False, max_pv= max_pv_enemy)
+    enemy = Bully("enemy", rarity=bully.Rarity(index_rarity), must_load_image= False, max_pv= max_pv_enemy)
     for k in range(1, lvl) :
         enemy.level_up_one()
     enemy_fighter = FightingBully.create_fighting_bully(enemy)

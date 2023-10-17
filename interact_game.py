@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Optional, List, Dict
 
 import fight_manager # ##$$$
-from fighting_bully import fightingBully
+from fighting_bully import FightingBully
 import utils
 
 import discord
@@ -20,7 +20,7 @@ from discord.ext.commands import Context
 BULLY_NUMBER_MAX = 5
 CHOICE_TIMEOUT = 20
 
-async def join_game(ctx: Context, user_player_path: Path, channel_cible: Optional[discord.abc.Messageable]=None):
+async def join_game(ctx: Context, user_player_path: Path, channel_cible: Optional[discord.abc.Messageable]=None) -> None:
 
     #Par défaut, le channel d'envoie est le channel du contexte
     if(channel_cible==None):
@@ -48,15 +48,14 @@ async def join_game(ctx: Context, user_player_path: Path, channel_cible: Optiona
         await channel_cible.send("Welcome to the adventure !")
         return 
 
-async def add_random_bully_to_player(ctx: Context, user_id, name_brute, channel_cible=None):
+async def add_random_bully_to_player(ctx: Context, user_id, name_brute, channel_cible=None) -> None:
 
     name_bully = f"{name_brute[0]} {name_brute[1]}"
     new_bully = Bully(name_bully, "tmp_val")
     
     await add_bully_to_player(ctx, user_id, new_bully, channel_cible)
 
-
-async def add_bully_to_player(ctx: Context, user_id:int , bully: Bully, channel_cible=None):
+async def add_bully_to_player(ctx: Context, user_id:int , bully: Bully, channel_cible=None) -> None:
     #Par défaut, le channel d'envoie est le channel du contexte
     if(channel_cible==None):
         channel_cible = ctx.channel
@@ -80,10 +79,9 @@ async def add_bully_to_player(ctx: Context, user_id:int , bully: Bully, channel_
         except Exception as e :
             print(e)
 
-    await channel_cible.send("You have a new bully : " + bully.name)
-    
+    await channel_cible.send("You have a new bully : " + bully.name)   
 
-async def add_item_to_player(ctx: Context, user_id, item: Item, channel_cible=None):
+async def add_item_to_player(ctx: Context, user_id, item: Item, channel_cible=None) -> None:
     #Par défaut, le channel d'envoie est le channel du contexte
     if(channel_cible==None):
         channel_cible = ctx.channel
@@ -108,7 +106,7 @@ async def add_item_to_player(ctx: Context, user_id, item: Item, channel_cible=No
 
     await channel_cible.send("You have a new item : " + item.name)
 
-async def print_bullies(ctx: Context, player_path: Path, compact_print=False, print_images=False, channel_cible=None):
+async def print_bullies(ctx: Context, player_path: Path, compact_print=False, print_images=False, channel_cible=None) -> None:
     #Par défaut, le channel d'envoie est le channel du contexte
     if(channel_cible==None):
         channel_cible = ctx.channel
@@ -145,7 +143,7 @@ async def print_bullies(ctx: Context, player_path: Path, compact_print=False, pr
         await channel_cible.send(text)
     return
 
-async def print_items(ctx: Context, player_path: Path, compact_print=False, channel_cible=None):
+async def print_items(ctx: Context, player_path: Path, compact_print=False, channel_cible=None) -> None:
     #Par défaut, le channel d'envoie est le channel du contexte
     if(channel_cible==None):
         channel_cible = ctx.channel
@@ -167,7 +165,7 @@ async def print_items(ctx: Context, player_path: Path, compact_print=False, chan
 
     return
 
-async def player_choose_bully(ctx: Context, user, bot, channel_cible=None, timeout = CHOICE_TIMEOUT):
+async def player_choose_bully(ctx: Context, user, bot, channel_cible=None, timeout = CHOICE_TIMEOUT) -> tuple[FightingBully, int]:
     '''Il faut try catch cette méthode car elle peut raise une exception en cas de timeout !!!
     '''
     if(channel_cible == None):
@@ -199,15 +197,15 @@ async def player_choose_bully(ctx: Context, user, bot, channel_cible=None, timeo
         raise IndexError("Player don't have this bully")
     
     base_stat = [bully_selected.strength, bully_selected.agility, bully_selected.lethality, bully_selected.viciousness]
-    fighting_bully = fightingBully(combattant= bully_selected, name= bully_selected.name, lvl= bully_selected.lvl, pv = bully_selected.max_pv, base_stat= base_stat.copy(), stat= base_stat.copy())
+    fighting_bully = FightingBully(combattant= bully_selected, name= bully_selected.name, lvl= bully_selected.lvl, pv = bully_selected.max_pv, base_stat= base_stat.copy(), stat= base_stat.copy())
     
     return fighting_bully, bully_number
     return bully_selected, bully_number
 
-async def player_choose_item(ctx: Context, user, bot, channel_cible=None, timeout = CHOICE_TIMEOUT):
+async def player_choose_item(ctx: Context, user, bot, channel_cible=None, timeout = CHOICE_TIMEOUT) -> Optional[Item]:
     if(channel_cible==None):
         channel_cible = ctx.channel
-    item = None
+    item:Optional[Item] = None
 
     text_ask_item = f"{user.mention}, do you want to equip an item?"
     message = await channel_cible.send(text_ask_item)
@@ -225,8 +223,8 @@ async def player_choose_item(ctx: Context, user, bot, channel_cible=None, timeou
 
     return item
 
-async def select_item_to_equip(ctx: Context, user, bot):
-    selected_item = None
+async def select_item_to_equip(ctx: Context, user, bot) -> Optional[Item]:
+    selected_item: Optional[Item] = None
 
     #Lien vers le dossier des items
     player_path_items = utils.get_player_path(user.id) / "items"
@@ -270,14 +268,15 @@ async def select_item_to_equip(ctx: Context, user, bot):
         reaction, msg = await bot.wait_for("reaction_add", check=fight_manager.check_reaction_number(user, message_item_choix), timeout=CHOICE_TIMEOUT)
         num_item_equipped = fight_manager.from_emote_to_number(reaction.emoji)
         selected_item = Liste_items[num_item_equipped]
-        print(f"{user.name} a choisit l'item : {selected_item.name}")
+        if isinstance(selected_item, Item):
+            print(f"{user.name} a choisit l'item : {selected_item.name}")
     except Exception as e:
         await ctx.channel.send(content=f"[{user.mention}] - No item equipped")
 
     return selected_item
 
 
-def generate_name():
+def generate_name() -> List[str]:
     file_prenom = open("prenom_bully.txt", 'r', encoding='utf-8')
     file_nom = open("nom_bully.txt", 'r', encoding='utf-8')
     lignes = [ligne.strip() for ligne in file_prenom.readlines()]
@@ -325,7 +324,7 @@ async def add_bully_custom(ctx: Context, player_path: Path, name_brute, stats, r
     # Close the file
     file.close()
 
-async def increase_all_lvl(ctx: Context, player_path: Path, channel_cible=None):
+async def increase_all_lvl(ctx: Context, player_path: Path, channel_cible=None) -> None:
 
     #Par défaut, le channel d'envoie est le channel du contexte
     if(channel_cible==None):
@@ -347,7 +346,7 @@ async def increase_all_lvl(ctx: Context, player_path: Path, channel_cible=None):
     #await ctx.channel.send("done")
     await channel_cible.send("done")
 
-def nb_bully_in_team(user_id):
+def nb_bully_in_team(user_id) -> int:
     player_path = utils.get_player_path(user_id)
     player_brute_path = player_path / "brutes"
     ind = 0
@@ -358,7 +357,7 @@ def nb_bully_in_team(user_id):
     return ind
 
 
-def correct_missing_folder(user_path: Path):
+def correct_missing_folder(user_path: Path) -> None:
     if(not os.path.exists(user_path)):
         raise Exception("Le joueur n'existe pas dans la bdd, il doit join")
     else : 

@@ -2,7 +2,7 @@ import os
 import random
 from bully import Bully
 from item import Item
-from fighting_bully import fightingBully
+from fighting_bully import FightingBully
 import pickle
 import interact_game
 import money
@@ -16,11 +16,11 @@ from typing import Optional
 CHOICE_TIMEOUT = 20
 fight_msg_time_update = 1
 
-async def proposition_fight(ctx: Context, user_1, user_2, bot, for_fun = False):
+async def proposition_fight(ctx: Context, user_1, user_2, bot, for_fun = False) -> None:
     await manager_start_fight(ctx, user_1, user_2, bot, for_fun)
     return
 
-async def manager_start_fight(ctx: Context, user_1, user_2, bot, for_fun = False):
+async def manager_start_fight(ctx: Context, user_1, user_2, bot, for_fun = False) -> None:
     text_challenge = f"{user_1.mention} challenge {user_2.mention} !"
     if for_fun :
         text_challenge = f"{user_1.mention} challenge {user_2.mention} to a fun fight (no death, no xp)!"
@@ -41,7 +41,7 @@ async def manager_start_fight(ctx: Context, user_1, user_2, bot, for_fun = False
     await start_fight(ctx, user_1, user_2, bot, for_fun)
     return
 
-async def start_fight(ctx: Context, user_1, user_2, bot, for_fun = False):
+async def start_fight(ctx: Context, user_1, user_2, bot, for_fun = False) -> None:
     # bully_1, _ = await interact_game.player_choose_bully(ctx= ctx, user = user_1, bot= bot, timeout = CHOICE_TIMEOUT)
     # bully_2, _ = await interact_game.player_choose_bully(ctx= ctx, user = user_2, bot= bot, timeout = CHOICE_TIMEOUT)
     fighting_bully_1, _ = await interact_game.player_choose_bully(ctx= ctx, user = user_1, bot= bot, timeout = CHOICE_TIMEOUT)
@@ -53,31 +53,21 @@ async def start_fight(ctx: Context, user_1, user_2, bot, for_fun = False):
     
     return
 
-async def manager_equip_item(ctx: Context, user_1, user_2, bot):
-    item_1 = None
-    item_2 = None
+async def manager_equip_item(ctx: Context, user_1, user_2, bot) -> tuple[Optional[Item], Optional[Item]]:
+    item_1:Optional[Item] = None
+    item_2:Optional[Item] = None
 
     item_1 = await interact_game.player_choose_item(ctx= ctx, user= user_1, bot= bot, timeout=CHOICE_TIMEOUT)
     item_2 = await interact_game.player_choose_item(ctx= ctx, user= user_2, bot= bot, timeout=CHOICE_TIMEOUT)
     return item_1, item_2
 
 
-#async def fight(ctx: Context, user_1, user_2, bot, bully_1:Bully, bully_2:Bully, for_fun = False, item_1:Optional[Item] = None, item_2:Optional[Item] = None):
-async def fight(ctx: Context, user_1, user_2, bot, fighting_bully_1:fightingBully, fighting_bully_2:fightingBully, for_fun = False, item_1:Optional[Item] = None, item_2:Optional[Item] = None):
+async def fight(ctx: Context, user_1, user_2, bot, fighting_bully_1:FightingBully, fighting_bully_2:FightingBully, 
+                for_fun = False, item_1:Optional[Item] = None, item_2:Optional[Item] = None) -> None:
     #On initialise les variables pour le combat :
-    # max_pv_1 = bully_1.max_pv
-    # max_pv_2 = bully_2.max_pv
-    max_pv_1 = fighting_bully_1.pv
-    max_pv_2 = fighting_bully_2.pv
+    # max_pv_1 = fighting_bully_1.pv
+    # max_pv_2 = fighting_bully_2.pv
     
-    # stat_base_1 = [bully_1.strength, bully_1.agility, bully_1.lethality, bully_1.viciousness]
-    # stat_base_2 = [bully_2.strength, bully_2.agility, bully_2.lethality, bully_2.viciousness]
-    
-    # pv_1, pv_2 = await fight_simulation(ctx= ctx, user_1= user_1, user_2= user_2, bot= bot, 
-    #                                     stat_base_1= stat_base_1, stat_base_2= stat_base_2, name_1= bully_1.name, name_2=bully_2.name, 
-    #                                     max_pv_1= max_pv_1, max_pv_2= max_pv_2, 
-    #                                     lvl_1= bully_1.lvl, lvl_2= bully_2.lvl,
-    #                                     item_1= item_1, item_2= item_2)
     await fight_simulation(ctx= ctx, user_1= user_1, user_2= user_2, bot= bot, 
                                         fighting_bully_1= fighting_bully_1, fighting_bully_2= fighting_bully_2,
                                         item_1= item_1, item_2= item_2)
@@ -112,8 +102,7 @@ async def fight(ctx: Context, user_1, user_2, bot, fighting_bully_1:fightingBull
 
     return
 
-
-def value_to_bar_str(v:int, max_value=10):
+def value_to_bar_str(v:int, max_value=10) -> str:
     v = max(0,v) #Pour éviter des valeurs négatives
     t = ""
     for k in range(v):
@@ -124,17 +113,10 @@ def value_to_bar_str(v:int, max_value=10):
 
 
 # ____________________________________________________
-# async def fight_simulation(ctx, bot, stat_base_1, stat_base_2, name_1, name_2, max_pv_1 = 10, max_pv_2 = 10,
-#                             lvl_1 = 1, lvl_2 = 1,
-#                             user_1 = None, user_2 = None, is_switch_possible = False, 
-#                             item_1:Optional[Item] = None, item_2:Optional[Item] = None, channel_cible = None):
-async def fight_simulation(ctx, bot, fighting_bully_1:fightingBully, fighting_bully_2:fightingBully,
+async def fight_simulation(ctx, bot, fighting_bully_1:FightingBully, fighting_bully_2:FightingBully,
                             user_1 = None, user_2 = None, is_switch_possible = False, 
-                            item_1:Optional[Item] = None, item_2:Optional[Item] = None, channel_cible = None):    
+                            item_1:Optional[Item] = None, item_2:Optional[Item] = None, channel_cible = None) -> None:    
 
-    """
-    return : (pv_restant_joueur_1, pv_restant_joueur_2)
-    """
     print("fighting_bully_1.stat ", fighting_bully_1.stat)
     print("fighting_bully_2.stat ", fighting_bully_2.stat)
     if(channel_cible == None):
@@ -145,21 +127,17 @@ async def fight_simulation(ctx, bot, fighting_bully_1:fightingBully, fighting_bu
     
     #S'il y a des items, on change les valeurs des variables :
     if(item_1 != None and item_1.is_bfr_fight) : 
-        #max_pv_1, stat_base_1, max_pv_2, stat_base_2 = item_1.effect_before_fight(pv_self=max_pv_1, stat_self=stat_base_1, pv_adv=max_pv_2, stat_adv=stat_base_2, lvl_self=lvl_1, lvl_adv=lvl_2)
         item_1.effect_before_fight(fighting_bully_self= fighting_bully_1, fighting_bully_adv= fighting_bully_2)
     if(item_2 != None and item_2.is_bfr_fight) : 
-        #max_pv_2, stat_base_2, max_pv_1, stat_base_1 = item_2.effect_before_fight(pv_self=max_pv_2, stat_self=stat_base_2, pv_adv=max_pv_1, stat_adv=stat_base_1, lvl_self=lvl_2, lvl_adv=lvl_1)
         item_2.effect_before_fight(fighting_bully_self= fighting_bully_2, fighting_bully_adv= fighting_bully_1)
+
     max_pv_1 = fighting_bully_1.pv
     max_pv_2 = fighting_bully_2.pv
-    # pv_1 = max_pv_1
-    # pv_2 = max_pv_2
 
     #On calcul le texte
     barre_pv_joueur = value_to_bar_str(fighting_bully_1.pv, max_value= max_pv_1)
     barre_pv_enemy = value_to_bar_str(fighting_bully_2.pv, max_value= max_pv_2)
 
-    #text_pv_combat = "\t\tBully 1 : " + name_1 + "\nhp : " + barre_pv_joueur + "\n\n\t\t\t\tVS\n\n\t\tBully 2 : " + name_2 + "\nhp : " + barre_pv_enemy
     text_pv_combat = "\t\tBully 1 : " + fighting_bully_1.name + "\nhp : " + barre_pv_joueur + "\n\n\t\t\t\tVS\n\n\t\tBully 2 : " + fighting_bully_2.name + "\nhp : " + barre_pv_enemy
     
     action_combat = "Let's get ready to rumble!"
@@ -184,8 +162,6 @@ async def fight_simulation(ctx, bot, fighting_bully_1:fightingBully, fighting_bu
         emoji_recap_j2+= emoji_j2
 
         #on maj les parametres des pv 
-        # pv_1 -= pv_perdu_1
-        # pv_2 -= pv_perdu_2
         barre_pv_joueur = value_to_bar_str(fighting_bully_1.pv, max_value= max_pv_1)
         barre_pv_enemy = value_to_bar_str(fighting_bully_2.pv, max_value= max_pv_2)
 
@@ -207,9 +183,8 @@ async def fight_simulation(ctx, bot, fighting_bully_1:fightingBully, fighting_bu
             except InterruptionCombat as erreur:
                 raise InterruptionCombat(fighting_bully_1.pv, fighting_bully_2.pv)
     return 
-    #return pv_1, pv_2
 
-async def test_interruption_combat_reaction(user, message, reaction_interrupt):
+async def test_interruption_combat_reaction(user, message, reaction_interrupt) -> None:
     message = await message.channel.fetch_message(message.id)
     user_reacted = False
     for reaction in message.reactions:
@@ -226,11 +201,12 @@ async def test_interruption_combat_reaction(user, message, reaction_interrupt):
 
 # Pour calculer l'action du tour : ///////////////////////////////////////////////////////////////////////////////////////////////////////
 #def nouvelle_action_stat(stat_base_1, stat_base_2, name_1, name_2, tour):
-def nouvelle_action_stat(fighting_bully_1:fightingBully, fighting_bully_2:fightingBully, tour):
+def nouvelle_action_stat(fighting_bully_1:FightingBully, fighting_bully_2:FightingBully, tour) ->tuple[str, str, str, int]:
     """
     tour est égale à 0 ou 1. Il indique le tour du bully qui devrait normalement agir maintenant. 0 = bully_1, 1 = bully_2
     Retourne un tuple sous la forme : 
-    (text_action, pv_perdu_j1, pv_perdu_j2, emoji_j1, emoji_j2, tour)
+    (text_action, emoji_j1, emoji_j2, tour)
+    C4EST DEGUEUX FAIRE UNE CLASS QUI PREN TOUT 9A EN COMPTE ET TOUT BREF LA C4EST NIMP
     """
     Emotes_possibles = ["👊", "🩸", "🛡️","🔪", "💥"] # ,"💔" #C'est juste pour pouvoir copier/coller
     text_action = ""
@@ -309,25 +285,25 @@ def nouvelle_action_stat(fighting_bully_1:fightingBully, fighting_bully_2:fighti
     #return (text_action, pv_perdu_j1, pv_perdu_j2, emoji_j1, emoji_j2, tour)
 
 # Pour les comparaisons de stat ____________________________________
-def challenge_prendre_de_vitesse_stats(stat_voulant_rejouer, stat_qui_attaque_normalement):
+def challenge_prendre_de_vitesse_stats(stat_voulant_rejouer, stat_qui_attaque_normalement) -> bool:
     stat_veux_rejouer_agility = stat_voulant_rejouer[1]
     stat_attaquant_normal_agility = stat_qui_attaque_normalement[1]
     rejouer = Bully.clash_stat(stat_veux_rejouer_agility, stat_attaquant_normal_agility)
     return rejouer
 
-def challenge_defense_stats(stat_attaquant, stat_defenseur):
+def challenge_defense_stats(stat_attaquant, stat_defenseur) -> bool:
     stat_att_strength = stat_attaquant[0]
     stat_def_strength = stat_defenseur[0]
     parade_reussie = Bully.clash_stat(st_actif = stat_def_strength, st_passif = stat_att_strength)
     return parade_reussie
 
-def challenge_coup_critique_stats(stat_attaquant, stat_defenseur):
+def challenge_coup_critique_stats(stat_attaquant, stat_defenseur) -> bool:
     stat_att_lethality = stat_attaquant[2]
     stat_def_strength = stat_defenseur[0]
     coup_critique = Bully.clash_stat(st_actif = stat_att_lethality, st_passif = stat_def_strength)
     return coup_critique
 
-def challenge_viciosite_stats(stat_attaquant, stat_defenseur):
+def challenge_viciosite_stats(stat_attaquant, stat_defenseur) -> bool:
     stat_att_vicieux = stat_attaquant[3]
     stat_def_vicieux = stat_defenseur[3]
     minim = min(stat_att_vicieux, stat_def_vicieux)
@@ -339,7 +315,7 @@ def challenge_viciosite_stats(stat_attaquant, stat_defenseur):
 # ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 # Les récompenses ____________________________________
-def reward_win_fight(b_win, b_lose):
+def reward_win_fight(b_win, b_lose) -> tuple[float, int]:
     exp_earned = 0
     gold_earned = 0
     if(b_win.lvl >= b_lose.lvl + 5):
@@ -391,7 +367,7 @@ def check_reaction_number(author, sent_message):
 
 # emote <-> int
 
-def from_number_to_emote(nb):
+def from_number_to_emote(nb) -> str:
     match nb:
         case 0 :
             return "\u0030\u20E3"
@@ -405,7 +381,7 @@ def from_number_to_emote(nb):
             return "\u0034\u20E3"
     return ":error:"
 
-def from_emote_to_number(emote):
+def from_emote_to_number(emote) -> int:
     match emote:
         case "\u0030\u20E3" :
             return 0

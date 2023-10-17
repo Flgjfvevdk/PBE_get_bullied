@@ -1,5 +1,5 @@
 import os
-from fighting_bully import fightingBully
+from fighting_bully import FightingBully
 
 class Item :
 
@@ -54,8 +54,7 @@ class Item :
             #Faire un truc 
             pass
 
-    #def effect_before_fight(self, pv_self, stat_self, pv_adv, stat_adv, lvl_self=1, lvl_adv=1):
-    def effect_before_fight(self, fighting_bully_self:fightingBully, fighting_bully_adv:fightingBully):
+    def effect_before_fight(self, fighting_bully_self:FightingBully, fighting_bully_adv:FightingBully) -> None:
         if(self.is_bfr_fight) :
             fighting_bully_self.pv += self.buff_start_self_pv
             buff_self_str = self.buff_start_self_strength + round(fighting_bully_self.lvl * self.buff_start_self_mult_lvl_strength)
@@ -81,29 +80,33 @@ class Item :
             fighting_bully_adv.base_stat = stat_adv
             fighting_bully_adv.stat = stat_adv
 
+        return
         #return (pv_self, stat_self, pv_adv, stat_adv)
+
+    def effect_end_round(self, pv_self, stat_self, pv_adv, stat_adv, 
+                        my_turn:bool = False, hit_success:bool = False, letha_success:bool = False, 
+                        agi_success:bool = False, vicious_success:bool = False, vicious_victim:bool = False) -> None:
+        #IL FAUDRAIT MIEUX CREER UNE CLASS ETAT LAST ROUND QUI RECAPITULE TT CES PARamETRES PARCE QUE LA C4EST DLA MERDE
+        
+        #Modification
         return
 
-    def effect_end_round(self, pv_self, stat_self, pv_adv, stat_adv, my_turn:bool = False, hit_success:bool = False, letha_sucess:bool = False, agi_success:bool = False, vicious_succes:bool = False, vicious_victim:bool = False):
-        #Modification
-        return (pv_self, stat_self, pv_adv, stat_adv)
-
-    def effect_after_fight(self, gold_earned, xp_earned):
+    def effect_after_fight(self, gold_earned, xp_earned) -> tuple[int, float]:
         #Modification
         return (gold_earned, xp_earned)
 
 
     # __
-    def set_file_path(self, new_file_path):
+    def set_file_path(self, new_file_path) -> None:
         self.associated_file_path = new_file_path
         self.associated_number = os.path.splitext(os.path.basename(new_file_path))[0]
 
-    def get_print(self, compact_print = False):
+    def get_print(self, compact_print = False) -> str:
         return str_print_item(self, compact_print)
 
 
 # Pour gérer les print ______________________________________________
-def str_print_item(i:Item, compact_print = False):
+def str_print_item(i:Item, compact_print = False) -> str:
     text = ""
     if(compact_print) :
         text += i.name
@@ -128,7 +131,7 @@ def str_print_item(i:Item, compact_print = False):
 
     return text
 
-def mise_en_forme_str(text):
+def mise_en_forme_str(text) -> str:
     new_text = "```" + text + "```"
     return new_text
 

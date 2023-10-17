@@ -2,7 +2,7 @@ import os
 import random
 from bully import Bully #ne pas confondre avec bully (le fichier)
 import bully #ne pas confondre avec Bully (la class)
-from fighting_bully import fightingBully
+from fighting_bully import FightingBully
 import interact_game
 import fight_manager
 import money
@@ -10,6 +10,9 @@ import pickle
 import asyncio
 
 import utils
+
+from typing import Optional
+from typing import List
 
 from discord.ext.commands import Context
 
@@ -25,11 +28,11 @@ COEF_XP_WIN = 0.3
 minimum_pv = 4
 maximum_pv = 10
 
-def generate_donjon_team(level: int, size:int) -> list[fightingBully]:
+def generate_donjon_team(level: int, size:int) -> List[FightingBully]:
     # enemies = []
     # enemies_pv = []
 
-    enemies_fighters = []
+    enemies_fighters:List[FightingBully] = []
 
     for k in range(size):
         rarity = bully.Rarity.TOXIC if random.random() < level/10 else bully.Rarity.NOBODY
@@ -61,13 +64,13 @@ def generate_donjon_team(level: int, size:int) -> list[fightingBully]:
         # enemies.append(enemy_fighter)
 
         stat_enemy = [enemy_fighter.strength, enemy_fighter.agility, enemy_fighter.lethality, enemy_fighter.viciousness]
-        new_fighter = fightingBully(combattant= enemy_fighter, name=enemy_fighter.name, lvl= lvl_enemy, pv= pv_enemy, base_stat= stat_enemy.copy(), stat= stat_enemy.copy())
+        new_fighter = FightingBully(combattant= enemy_fighter, name=enemy_fighter.name, lvl= lvl_enemy, pv= pv_enemy, base_stat= stat_enemy.copy(), stat= stat_enemy.copy())
 
         enemies_fighters.append(new_fighter)
     return enemies_fighters
     return enemies, enemies_pv
 
-async def enter_the_dungeon(ctx: Context, user, lvl, bot):
+async def enter_the_dungeon(ctx: Context, user, lvl, bot) -> None:
     #Le joueur rentre dans le donjon
     ID_joueur_en_donjon.append(ctx.author.id)
 
@@ -84,7 +87,7 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot):
 
     #On initialise les pv et xp gagné par les bullies
     #pv_team_joueur = [] #pv du bully n°index. Si bully n°index n'existe pas alors -1
-    fighters_joueur:list[fightingBully] = []
+    fighters_joueur:List[Optional[FightingBully]] = []
     xp_earned_bullies = [] #L'xp gagné par chaque bully
     for k in range(interact_game.BULLY_NUMBER_MAX):
         file_bully = player_brute_path / f"{k}.pkl"
@@ -92,7 +95,7 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot):
             try :
                 with file_bully.open('rb') as pickle_file:
                     bul = pickle.load(pickle_file)
-                new_fighter = fightingBully.create_fighting_bully(bul)
+                new_fighter = FightingBully.create_fighting_bully(b=bul)
                 fighters_joueur.append(new_fighter)
                 #pv_team_joueur.append(bul.max_pv)
             except Exception as e:
@@ -134,7 +137,7 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot):
         except IndexError as e:
             print(e)
             await thread.send(
-                f"[{user}] -> you don't have a bully n°{num_bully_j}\n" #TODO: fix with ui
+                f"[{user}] -> You don't have this bully\n" #TODO: fix with ui
                 "Your team left the dungeon"
             ) 
             await exit_dungeon(ctx= ctx, thread= thread, time_bfr_close=THREAD_DELETE_AFTER)
@@ -201,16 +204,10 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot):
     #on donne la récompense d'xp
     for k in range(len(xp_earned_bullies)):
         # if(pv_team_joueur[k] > 0 and xp_earned_bullies[k] > 0):
-        if(fighters_joueur[k] != None and xp_earned_bullies[k] > 0):
-            bully_joueur_recompense = fighters_joueur[k].combattant
+        fighter = fighters_joueur[k]
+        if(isinstance(fighter, FightingBully) and xp_earned_bullies[k] > 0):
+            bully_joueur_recompense = fighter.combattant
             bully_joueur_recompense.give_exp(round(xp_earned_bullies[k] * COEF_XP_WIN, 1))
-            # file_path = player_brute_path / f"{str(k)}.pkl"
-            # try :
-            #     with file_path.open('rb') as pickle_file:
-            #         bully_joueur_recompense = pickle.load(pickle_file)
-            #     bully_joueur_recompense.give_exp(round(xp_earned_bullies[k] * COEF_XP_WIN, 1))
-            # except Exception as e:
-            #     print (e)
 
     #On maj le record du joueur sur son dungeon si nécessaire
     player_dungeon_stat = utils.get_player_path(user.id) / "playerMaxDungeon.txt"
@@ -239,7 +236,7 @@ async def enter_the_dungeon(ctx: Context, user, lvl, bot):
 
 
 
-async def exit_dungeon(ctx: Context, thread, time_bfr_close):
+async def exit_dungeon(ctx: Context, thread, time_bfr_close) -> None:
     ID_joueur_en_donjon.remove(ctx.author.id)
     try :
         await asyncio.sleep(time_bfr_close)
@@ -249,7 +246,7 @@ async def exit_dungeon(ctx: Context, thread, time_bfr_close):
     return
 
 
-async def str_leaderboard_donjon(ctx: Context, bot):
+async def str_leaderboard_donjon(ctx: Context, bot) -> str:
     dossier_principal = "game_data/player_data"
     text_classement = ""
 

@@ -45,7 +45,7 @@ async def add_random_bully_to_player(ctx: Context, player: Player, name_brute: l
 
     name_bully = f"{name_brute[0]} {name_brute[1]}"
     new_bully = Bully(name_bully)
-    
+    print("new_bully.stats : ", new_bully.stats)
     await add_bully_to_player(ctx, player, new_bully, channel_cible)
 
 async def add_bully_to_player(ctx: Context, player: Player, b: Bully, channel_cible=None) -> None:
@@ -54,8 +54,9 @@ async def add_bully_to_player(ctx: Context, player: Player, b: Bully, channel_ci
         channel_cible = ctx.channel
 
     if len(player.bullies) >= BULLY_NUMBER_MAX:
-        channel_cible.send(f"You cannot have more than {BULLY_NUMBER_MAX} bullies!")
-
+        await channel_cible.send(f"You cannot have more than {BULLY_NUMBER_MAX} bullies!")
+        return
+    print("b.stats : ", b.stats)
     player.bullies.append(b)
 
     await channel_cible.send("You have a new bully : " + b.name)   
@@ -81,7 +82,6 @@ async def print_bullies(ctx: Context, player: Player, compact_print=False, print
     for b in player.bullies:
         text += "\n___________\n"
         text += b.get_print(compact_print=compact_print)
-
         if print_images:
             image_path = b.image_file_path
             if image_path is not None:

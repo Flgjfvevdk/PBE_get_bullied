@@ -300,6 +300,19 @@ async def show_item(ctx: Context, user:Optional[discord.abc.User] = None):
             await ctx.reply("Please join the game first !")
             return
         await interact_game.print_items(ctx, player)
+
+@bot.command()
+async def kill_all(ctx: Context):
+    user = ctx.author
+    async with database.new_session() as session:
+        player = await session.get(Player, user.id)
+        if player is None:
+            await ctx.reply("Please join the game first !")
+            return
+        for b in player.bullies:
+            if isinstance(b, bully.Bully):
+                await b.kill()
+        await session.commit()
     
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -6,7 +6,7 @@ import money
 import donjon
 import utils
 import database
-from player import Player
+from player_info import Player
 
 import os
 import random 
@@ -40,6 +40,7 @@ bullies_in_shop: dict[int,Bully] = {}
 shop_lock = asyncio.Lock()
 
 def restock_shop() -> None:
+    bullies_in_shop.clear()
     for k in range(SHOP_MAX_BULLY):
         b = new_bully_shop()
         bullies_in_shop[k] = b
@@ -84,17 +85,17 @@ async def print_shop(ctx: Context, bot: Bot) -> None:
 
 async def handle_shop_reaction(ctx: Context, reaction: discord.Reaction, user: discord.abc.User, shop_msg: discord.Message):
     if user.id in utils.players_in_interaction:
-        await ctx.reply("You are already in an action.")
+        await ctx.send("You are already in an action.")
     utils.players_in_interaction.add(user.id)
 
     # Get the index of the selected item
     item_index = int(str(reaction.emoji)[0])
     if not (0 <= item_index <= len(bullies_in_shop)):
-        await ctx.reply("Invalid selection.")
+        await ctx.send("Invalid selection.")
         return
     
-    if item_index not in bullies_in_shop:
-        await ctx.reply("This bully has already been purchased.")
+    elif item_index not in bullies_in_shop:
+        await ctx.send("This bully has already been purchased.")
         return
 
     #get the selected bully 
@@ -104,10 +105,10 @@ async def handle_shop_reaction(ctx: Context, reaction: discord.Reaction, user: d
     async with database.new_session() as session:
         player = await session.get(Player, user.id)
         if player is None:
-            await ctx.reply("Please join the game first !")
+            await ctx.send("Please join the game first !")
             return
         if(money.get_money_user(player) < cout_bully(b)):
-            await ctx.reply(f"You don't have enough {money.MONEY_ICON} {user} for {b.name} [cost: {cout_bully(b)}{money.MONEY_ICON}]")
+            await ctx.send(f"You don't have enough {money.MONEY_ICON} {user} for {b.name} [cost: {cout_bully(b)}{money.MONEY_ICON}]")
             return
     
         if(interact_game.nb_bully_in_team(player) >= interact_game.BULLY_NUMBER_MAX):

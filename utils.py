@@ -54,8 +54,9 @@ def author_is_free(f):
         if ctx.author.id in players_in_interaction:
             await ctx.reply("You are already in an action.")
         players_in_interaction.add(ctx.author.id)
-        await f(ctx)
-        players_in_interaction.discard(ctx.author.id)
+        try:
+            await f(ctx)
+        finally:
+            players_in_interaction.discard(ctx.author.id)
         return
     return predicate
-    

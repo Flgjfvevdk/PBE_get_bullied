@@ -6,7 +6,7 @@ from bully import Bully
 import bully
 from item import Item
 import item
-from player import Player
+from player_info import Player
 
 from pathlib import Path
 from typing import Optional, List, Dict
@@ -24,7 +24,6 @@ BULLY_NUMBER_MAX = 5
 CHOICE_TIMEOUT = 20
 
 async def join_game(ctx: Context, session: AsyncSession, channel_cible: Optional[discord.abc.Messageable]=None) -> None:
-
     # Par défaut, le channel d'envoie est le channel du contexte
     if(channel_cible==None):
         channel_cible = ctx.channel

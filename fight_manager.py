@@ -12,7 +12,7 @@ import asyncio
 import math
 
 from discord.ext.commands import Context, Bot
-from player import Player
+from player_info import Player
 from typing import Optional
 from dataclasses import replace
 

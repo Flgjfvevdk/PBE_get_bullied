@@ -14,7 +14,7 @@ import shop
 import bully
 import item
 import database
-from player import Player
+from player_info import Player
 
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import sessionmaker
@@ -47,8 +47,10 @@ async def on_ready():
 
 @bot.event
 async def on_command_error(ctx: Context, error):
+    print(error)
     if isinstance(error, CommandNotFound):
         return
+    
 
 
 # Command général ____________________________________________________________________________________
@@ -146,55 +148,64 @@ async def say_thanks(ctx: Context):
 
 #Les combats : ___________________________________________________________
 @bot.command(aliases=['ch'])
-@utils.author_is_free
+#@utils.author_is_free
 async def challenge(ctx: Context, user_2:discord.Member):
     user_1 = ctx.author
-
+    if user_1.id in utils.players_in_interaction:
+        await ctx.reply(f"You are already in an interaction.")
     if user_2.id in utils.players_in_interaction:
         await ctx.channel.send(f"Sorry, but {user_2} is already busy!")
 
+    utils.players_in_interaction.add(user_1.id)
     utils.players_in_interaction.add(user_2.id)
-    async with database.new_session() as session:
-        p1 = await session.get(Player, user_1.id)
-        p2 = await session.get(Player, user_2.id)
-        if p1 is None:
-            await ctx.reply("Please join the game first !")
-            return
-        if p2 is None:
-            await ctx.reply(f"{user_2} has not joined the game.")
-            return
-        await fight_manager.proposition_fight(ctx, user_1, p1, user_2, p2, bot)
-        await session.commit()
-    utils.players_in_interaction.discard(user_2.id)
+    try:
+        async with database.new_session() as session:
+            p1 = await session.get(Player, user_1.id)
+            p2 = await session.get(Player, user_2.id)
+            if p1 is None:
+                await ctx.reply("Please join the game first !")
+                return
+            if p2 is None:
+                await ctx.reply(f"{user_2} has not joined the game.")
+                return
+            await fight_manager.proposition_fight(ctx, user_1, p1, user_2, p2, bot)
+            await session.commit()
+    finally:
+        utils.players_in_interaction.discard(user_2.id)
+        utils.players_in_interaction.discard(user_1.id)
 
     return
 
 @bot.command(aliases=['fch'])
 async def fun_challenge(ctx: Context, user_2:discord.Member):
     user_1 = ctx.author
-
+    if user_1.id in utils.players_in_interaction:
+        await ctx.reply(f"You are already in an interaction.")
     if user_2.id in utils.players_in_interaction:
         await ctx.channel.send(f"Sorry, but {user_2} is already busy!")
 
+    utils.players_in_interaction.add(user_1.id)
     utils.players_in_interaction.add(user_2.id)
-    async with database.new_session() as session:
-        p1 = await session.get(Player, user_1.id)
-        p2 = await session.get(Player, user_2.id)
-        if p1 is None:
-            await ctx.reply("Please join the game first !")
-            return
-        if p2 is None:
-            await ctx.reply(f"{user_2} has not joined the game.")
-            return
-        await fight_manager.proposition_fight(ctx, user_1, p1, user_2, p2, bot, for_fun=True)
-    utils.players_in_interaction.discard(user_2.id)
+    try:
+        async with database.new_session() as session:
+            p1 = await session.get(Player, user_1.id)
+            p2 = await session.get(Player, user_2.id)
+            if p1 is None:
+                await ctx.reply("Please join the game first !")
+                return
+            if p2 is None:
+                await ctx.reply(f"{user_2} has not joined the game.")
+                return
+            await fight_manager.proposition_fight(ctx, user_1, p1, user_2, p2, bot, for_fun=True)
+    finally:
+        utils.players_in_interaction.discard(user_2.id)
+        utils.players_in_interaction.discard(user_1.id)
 
     return
 
 @bot.command(aliases=['dungeon', 'donjon'])
-@utils.author_is_free
+#@utils.author_is_free
 async def explore_dungeon(ctx: Context, level:int):
-    user = ctx.author
     if(level <= 0) :
         await ctx.channel.send("Dungeon level must be greater than 0.")
         return
@@ -202,22 +213,26 @@ async def explore_dungeon(ctx: Context, level:int):
         await ctx.channel.send("Pour l'instant c'est limité jusqu'au lvl 10 le temps d'équilibrer.")
         return
     
-    async with database.new_session() as session:
-        player = await session.get(Player, user.id)
-        if player is None:
-            await ctx.reply("Please join the game first !")
-            return
-        await donjon.enter_the_dungeon(ctx, player, level, bot)
-        await session.commit()
+    user = ctx.author
+    if user.id in utils.players_in_interaction:
+        await ctx.reply(f"You are already in an interaction.")
+
+    utils.players_in_interaction.add(user.id)
+    try:
+        async with database.new_session() as session:
+            player = await session.get(Player, user.id)
+            if player is None:
+                await ctx.reply("Please join the game first !")
+                return
+            await donjon.enter_the_dungeon(ctx, player, level, bot)
+            await session.commit()
+    finally:
+        utils.players_in_interaction.discard(user.id)
     return
 
 @bot.command(aliases=['ruin', 'ruine'])
-@utils.author_is_free
+#@utils.author_is_free
 async def explore_ruin(ctx: Context, level:int):
-    user = ctx.author
-    if(ctx.author.id in donjon.ID_joueur_en_donjon):
-        await ctx.channel.send("You can't, you are in a dungeon")
-        return
     if(level <= 0) :
         await ctx.channel.send("Ruin level must be greater than 0")
         return
@@ -225,13 +240,22 @@ async def explore_ruin(ctx: Context, level:int):
         await ctx.channel.send("Pour l'instant c'est limité jusqu'au lvl 100 le temps d'équilibrer.")
         return
     
-    async with database.new_session() as session:
-        player = await session.get(Player, user.id)
-        if player is None:
-            await ctx.reply("Please join the game first !")
-            return
-        await ruine.enter_the_ruin(ctx, user, player, level, bot)
-        await session.commit()
+    user = ctx.author
+    if user.id in utils.players_in_interaction:
+        await ctx.reply(f"You are already in an interaction.")
+
+    utils.players_in_interaction.add(user.id)
+    try:
+    
+        async with database.new_session() as session:
+            player = await session.get(Player, user.id)
+            if player is None:
+                await ctx.reply("Please join the game first !")
+                return
+            await ruine.enter_the_ruin(ctx, user, player, level, bot)
+            await session.commit()
+    finally:
+        utils.players_in_interaction.discard(user.id)
     return
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -248,15 +272,23 @@ async def club(ctx: Context, user:Optional[discord.abc.User] = None):
         await interact_game.print_bullies(ctx, player, print_images = True)
 
 @bot.command(aliases=['h'])
-@utils.author_is_free
+#@utils.author_is_free
 async def hire(ctx: Context):
-    async with database.new_session() as session:
-        player = await session.get(Player, ctx.author.id)
-        if player is None:
-            await ctx.reply("Please join the game first !")
-            return
-        await interact_game.add_random_bully_to_player(ctx, player, interact_game.generate_name())
-        await session.commit()
+    user = ctx.author
+    if user.id in utils.players_in_interaction:
+        await ctx.reply(f"You are already in an interaction.")
+
+    utils.players_in_interaction.add(user.id)
+    try:
+        async with database.new_session() as session:
+            player = await session.get(Player, ctx.author.id)
+            if player is None:
+                await ctx.reply("Please join the game first !")
+                return
+            await interact_game.add_random_bully_to_player(ctx, player, interact_game.generate_name())
+            await session.commit()
+    finally:
+        utils.players_in_interaction.discard(user.id)
 
 @bot.command(aliases=['item', 'items'])
 async def show_item(ctx: Context, user:Optional[discord.abc.User] = None):
@@ -276,15 +308,24 @@ async def show_item(ctx: Context, user:Optional[discord.abc.User] = None):
 #Command d'admin _____________________________________________________________________________________________________
 @bot.command()
 @utils.is_admin()
-@utils.author_is_free
+#@utils.author_is_free
 async def admin_give(ctx: Context):
-    async with database.new_session() as session:
-        player = await session.get(Player, ctx.author.id)
-        if player is None:
-            await ctx.reply("You can't use any commands if the target doesn't have an account")
-            return
-        await interact_game.add_bully_custom(ctx, player, ["Balez", "EZ"], [99,99,99,99], bully.Rarity.DEVASTATOR)
-        await session.commit()
+    user = ctx.author
+    if user.id in utils.players_in_interaction:
+        await ctx.reply(f"You are already in an interaction.")
+
+    utils.players_in_interaction.add(user.id)
+    try:
+        async with database.new_session() as session:
+            
+            player = await session.get(Player, ctx.author.id)
+            if player is None:
+                await ctx.reply("You can't use any commands if the target doesn't have an account")
+                return
+            await interact_game.add_bully_custom(ctx, player, ["Balez", "EZ"], [99,99,99,99], bully.Rarity.DEVASTATOR)
+            await session.commit()
+    finally:
+        utils.players_in_interaction.discard(user.id)
 
 @bot.command(aliases=['new_shop', 'ns'])
 @utils.is_admin()
@@ -298,36 +339,53 @@ async def admin_new_shop(ctx: Context):
 
 @bot.command()
 @utils.is_admin()
-@utils.author_is_free
+#@utils.author_is_free
 async def get_item(ctx: Context):
-    async with database.new_session() as session:
-        player = await session.get(Player, ctx.author.id)
-        if player is None:
-            await ctx.reply("Please join the game first !")
-            return
-        try:
-            new_item = item.Item(name="Str - x0.5", is_bfr_fight=True, buff_start_self=item.ItemStats(1,0,0,0,pv=4), buff_start_self_mult_lvl=item.Seed(0.5, 0, 0, 0))
-            await interact_game.add_item_to_player(ctx, player, new_item)
-            await session.commit()
-        except Exception as e:
-            print("on est la en fait")
-            print(e)
+    user = ctx.author
+    if user.id in utils.players_in_interaction:
+        await ctx.reply(f"You are already in an interaction.")
 
+    utils.players_in_interaction.add(user.id)
+    try:
+        async with database.new_session() as session:
+            player = await session.get(Player, ctx.author.id)
+            if player is None:
+                await ctx.reply("Please join the game first !")
+                return
+            try:
+                new_item = item.Item(name="Str - x0.5", is_bfr_fight=True, buff_start_self=item.ItemStats(1,0,0,0,pv=4), buff_start_self_mult_lvl=item.Seed(0.5, 0, 0, 0))
+                await interact_game.add_item_to_player(ctx, player, new_item)
+                await session.commit()
+            except Exception as e:
+                print("on est la en fait")
+                print(e)
+    finally:
+        utils.players_in_interaction.discard(user.id)
 
 # JUSTE POUR LE PBE JUSTE POUR LE PBE
 @bot.command()
 @utils.is_admin()
+#@utils.author_is_free
 async def give_lvl(ctx: Context):
     if not ctx.me.display_name.startswith("PBE"):
         return
     
-    async with database.new_session() as session:
-        player = await session.get(Player, ctx.author.id)
-        if player is None:
-            await ctx.reply("Please join the game first !")
-            return
-        await interact_game.increase_all_lvl(ctx, player)
-        await session.commit()
+    user = ctx.author
+    if user.id in utils.players_in_interaction:
+        await ctx.reply(f"You are already in an interaction.")
+
+    utils.players_in_interaction.add(user.id)
+    try:
+
+        async with database.new_session() as session:
+            player = await session.get(Player, ctx.author.id)
+            if player is None:
+                await ctx.reply("Please join the game first !")
+                return
+            await interact_game.increase_all_lvl(ctx, player)
+            await session.commit()
+    finally:
+        utils.players_in_interaction.discard(user.id)
 
 bot.run(TOKEN)
 

@@ -7,13 +7,13 @@ from typing import List, Optional, Tuple
 from dataclasses import dataclass, replace, InitVar, KW_ONLY
 from pathlib import Path
 
-from player import Player
+import player_info
 
 from enum import Enum
 from sqlalchemy.orm import Mapped, mapped_column, MappedAsDataclass, relationship, composite
 from sqlalchemy import String, select, ForeignKey
 from sqlalchemy.ext.asyncio.session import async_object_session
-from database import Base, new_session
+from database import Base, new_session, DBPath
 
 
 BULLY_RARITY_POINTS = [4, 5, 6, 7, 8]
@@ -52,6 +52,7 @@ class Rarity(Enum):
     @property
     def death_max_gold(self):
         return BULLY_RARITY_DEATH_MIN_GOLD[self.value]
+    
 @dataclass
 class Stats():
     strength: int
@@ -120,13 +121,13 @@ class Bully(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, init=False)
     player_id: Mapped[int] = mapped_column(ForeignKey("player.id"),init=False) 
-    player: Mapped[Player] = relationship(back_populates="bullies", init=False)
+    player: Mapped["player_info.Player"] = relationship(back_populates="bullies", init=False, lazy="selectin")
 
     name: Mapped[str] = mapped_column(String(50))
 
     _: KW_ONLY #Marks all following fields as kw_only=true, which means that they must be explicitly specified in the init.
 
-    image_file_path: Mapped[Optional[Path]] = mapped_column(default=None)
+    image_file_path: Mapped[Optional[Path]] = mapped_column(type_ = DBPath, default=None, )
     must_load_image: InitVar[bool] = True
     lvl: Mapped[int] = mapped_column(default = 1)
     exp: Mapped[float] = mapped_column(default = 0.0)
@@ -146,16 +147,15 @@ class Bully(Base):
         mapped_column(name="stat_viciousness"),
         default=None
     )
-    associated_number: Mapped[int] = mapped_column("associated_number", init=False)
-
 
     def __post_init__(self, must_load_image:bool):
         if(must_load_image):
             self.image_file_path = self.new_possible_image_random()
 
-        if self.stats is None:
-            self.stats = self.generate_bully_stat()
+        if self.stats is None or (None in self.stats.__dict__.items()):
+            self.generate_bully_stat()
     
+
     def generate_bully_stat(self) -> None:
         self.stats = Stats(1,1,1,1)
         nb_points = self.rarity.points_bonus
@@ -203,7 +203,7 @@ class Bully(Base):
         
         mini = self.rarity.death_min_gold
         maxi = self.rarity.death_max_gold
-        gold = lerp(mini, maxi, (self.lvl -1)/9)
+        gold = lerp(mini, maxi, (self.lvl - 1)/9)
         return gold
 
 
@@ -259,13 +259,13 @@ class Bully(Base):
 def str_print_bully(bully:Bully, compact_print = False):
     text = ""
     if(compact_print) :
-        text += bully.name + " | lvl : " + str(bully.lvl) + " | Rarity : " + bully.rarity.name + "\n\t[" + str(bully.associated_number) + "]\t" 
+        text += bully.name + " | lvl : " + str(bully.lvl) + " | Rarity : " + bully.rarity.name + "\n\t" 
         text += " |S : "+ str(bully.stats.strength)
         text += " |A : "+ str(bully.stats.agility)
         text += " |L : "+ str(bully.stats.lethality)
         text += " |V : "+ str(bully.stats.viciousness)
     else :
-        text += bully.name + "\t[" + str(bully.associated_number) + "]" + " | Rarity : " + bully.rarity.name
+        text += bully.name + "\tRarity : " + bully.rarity.name
         text += "\nlvl : " + str(bully.lvl)
         text += "\texp : " + str(bully.exp)
         #On print la force

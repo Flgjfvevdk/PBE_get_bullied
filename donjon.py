@@ -3,7 +3,7 @@ import random
 from bully import Bully #ne pas confondre avec bully (le fichier)
 import bully #ne pas confondre avec Bully (la class)
 from fighting_bully import FightingBully
-from player import Player
+from player_info import Player
 import interact_game
 import fight_manager
 import money

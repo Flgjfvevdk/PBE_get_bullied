@@ -3,7 +3,7 @@ from fighting_bully import FightingBully
 from database import Base
 from sqlalchemy.orm import Mapped, mapped_column, relationship, composite
 from sqlalchemy import ForeignKey, String
-from player import Player
+import player_info
 from dataclasses import KW_ONLY, replace, dataclass
 
 from bully import Stats, Seed
@@ -18,7 +18,7 @@ class Item(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, init=False)
     player_id: Mapped[int] = mapped_column(ForeignKey("player.id"),init=False) 
-    player: Mapped[Player] = relationship(back_populates="items", init=False)
+    player: Mapped["player_info.Player"] = relationship(back_populates="items", init=False, lazy="selectin")
 
     name: Mapped[str] = mapped_column(String(50))
 

@@ -2,7 +2,7 @@
 import os
 from datetime import datetime, timezone, timedelta
 from utils import get_player_path
-from player import Player
+from player_info import Player
 
 # Var payday
 PAYDAY_COOLDOWN = 10 * 60 * 60
@@ -15,7 +15,7 @@ async def cooldown_restant_pay(player: Player) -> int:
     # Vérifier si l'utilisateur est en cooldown
     # En utilisant les informations enregistrées dans un fichier ou une base de données
     # Par exemple, vous pouvez stocker la dernière utilisation dans un fichier
-    last_usage = player.last_payday
+    last_usage = player.last_payday.replace(tzinfo=timezone.utc)
 
     current_time = datetime.now(timezone.utc)
     elapsed_time = current_time - last_usage

@@ -9,7 +9,7 @@ import fight_manager
 import money
 import pickle
 import asyncio
-from player import Player
+from player_info import Player
 
 from enum import Enum
 

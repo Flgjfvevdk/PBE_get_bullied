@@ -3,7 +3,7 @@ import random
 from bully import Bully #ne pas confondre avec bully (le fichier)
 import bully #ne pas confondre avec Bully (la class)
 from fighting_bully import FightingBully
-from item import Item
+from item import Item, ItemStats, Seed
 import interact_game
 import fight_manager
 import money
@@ -309,17 +309,16 @@ def generate_enemy(lvl, index_rarity) -> FightingBully:
     enemy_fighter = FightingBully.create_fighting_bully(enemy)
     return enemy_fighter
 
-def generate_item(lvl, index_rarity) -> Item:
-    Items_list = []
-    Items_list.append(Item(name="Str - x0.5", is_bfr_fight= True, buff_self_start=[0,1,0,0,0], buff_self_start_multiplicatif_lvl=[0.5, 0, 0, 0]))
-    Items_list.append(Item(name="Str - x1", is_bfr_fight= True, buff_self_start=[0,1,0,0,0], buff_self_start_multiplicatif_lvl=[1, 0, 0, 0]))
-    Items_list.append(Item(name="Agi - x0.5", is_bfr_fight= True, buff_self_start=[0,0,1,0,0], buff_self_start_multiplicatif_lvl=[0, 0.5, 0, 0]))
-    Items_list.append(Item(name="Agi - x2", is_bfr_fight= True, buff_self_start=[0,0,1,0,0], buff_self_start_multiplicatif_lvl=[0, 2, 0, 0]))
-    Items_list.append(Item(name="Letha - x0.5", is_bfr_fight= True, buff_self_start=[0,0,0,1,0], buff_self_start_multiplicatif_lvl=[0, 0, 0.5, 0]))
-    Items_list.append(Item(name="Vic - x0.5", is_bfr_fight= True, buff_self_start=[0,0,0,0,1], buff_self_start_multiplicatif_lvl=[0, 0, 0, 0.5]))
-    Items_list.append(Item(name="HP - 5", is_bfr_fight= True, buff_self_start=[5,0,0,0,0]))
-    random.shuffle(Items_list)
-    item = Items_list[0]
+def generate_item(lvl:int, index_rarity) -> Item:
+    item_list: list[Item] = []
+    item_list.append(Item(name="Str - x0.5", is_bfr_fight= True, buff_start_self=ItemStats(1,0,0,0,0), buff_start_self_mult_lvl=Seed(0.5, 0, 0, 0)))
+    item_list.append(Item(name="Str - x1", is_bfr_fight= True, buff_start_self=ItemStats(1,0,0,0,0), buff_start_self_mult_lvl=Seed(1, 0, 0, 0)))
+    item_list.append(Item(name="Agi - x0.5", is_bfr_fight= True, buff_start_self=ItemStats(0,1,0,0,0), buff_start_self_mult_lvl=Seed(0, 0.5, 0, 0)))
+    item_list.append(Item(name="Agi - x2", is_bfr_fight= True, buff_start_self=ItemStats(0,1,0,0,0), buff_start_self_mult_lvl=Seed(0, 2, 0, 0)))
+    item_list.append(Item(name="Letha - x0.5", is_bfr_fight= True, buff_start_self=ItemStats(0,0,1,0,0), buff_start_self_mult_lvl=Seed(0, 0, 0.5, 0)))
+    item_list.append(Item(name="Vic - x0.5", is_bfr_fight= True, buff_start_self=ItemStats(0,0,0,1,0), buff_start_self_mult_lvl=Seed(0, 0, 0, 0.5)))
+    item_list.append(Item(name="HP - 5", is_bfr_fight= True, buff_start_self=ItemStats(0,0,0,0,5)))
+    item = random.choice(item_list)
     return item
 
 def generate_trap(lvl, index_rarity) -> Trap:

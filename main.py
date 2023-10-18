@@ -306,7 +306,7 @@ async def get_item(ctx: Context):
             await ctx.reply("Please join the game first !")
             return
         try:
-            new_item = item.Item(name="Str - x0.5", is_bfr_fight=True, buff_self_start=[4,1,0,0,0], buff_self_start_multiplicatif_lvl=[0.5, 0, 0, 0])
+            new_item = item.Item(name="Str - x0.5", is_bfr_fight=True, buff_start_self=item.ItemStats(1,0,0,0,pv=4), buff_start_self_mult_lvl=item.Seed(0.5, 0, 0, 0))
             await interact_game.add_item_to_player(ctx, player, new_item)
             await session.commit()
         except Exception as e:

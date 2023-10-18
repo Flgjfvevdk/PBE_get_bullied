@@ -1,5 +1,7 @@
 # bot.py
 import os
+from pathlib import Path
+import pickle
 import discord
 
 import interract_game
@@ -257,7 +259,71 @@ async def give_lvl(ctx):
 #
 
 
-bot.run(TOKEN)
+#bot.run(TOKEN)
 
+from dataclasses import dataclass, field
 
+@dataclass
+class Player:
+    id: int
+    cooldown: int = field(default=0)
+    money: int = field(default=400)
+    max_dungeon: int = field(default=0)
+
+    bullies: list[bully.Bully] = field(default_factory=list)
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "cooldown": self.cooldown,
+            "money": self.money,
+            "max_dungeon": self.max_dungeon,
+            "bullies": [b.to_json() for b in self.bullies]
+        }
+
+data_folder = Path("game_data/player_data")
+players = []
+for p in data_folder.iterdir():
+    if not p.is_dir():
+        continue
+
+    pl = Player(int(p.name))
+    file_path = p.joinpath("playerMoney.txt")
+    if file_path.exists():
+        with file_path.open('r') as f:
+            try:
+                pl.money = int(f.read())
+            except ValueError:
+                pass
+    file_path = p.joinpath("playerMaxDungeon.txt")
+    if file_path.exists():
+        with file_path.open('r') as f:
+            try:
+                pl.max_dungeon = int(f.read())
+            except ValueError:
+                pass
+    file_path = p.joinpath("cooldown.txt")
+    if file_path.exists():
+        with file_path.open('r') as f:
+            try:
+                pl.cooldown = int(f.read())
+            except ValueError:
+                pass
+
+    print(pl)
+    
+    player_brute_path = p / "brutes"
+    if player_brute_path.exists() and player_brute_path.is_dir():
+        for file_path in player_brute_path.iterdir():
+            if file_path.suffix != ".pkl":
+                continue
+            with open(file_path, 'rb') as pickle_file:
+                b = pickle.load(pickle_file)
+            pl.bullies.append(b)
+    
+    players.append(pl.to_json())
+
+import json
+with Path("test/old_vals.json").open("w") as f:
+    json.dump(players, f)
 

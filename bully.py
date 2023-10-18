@@ -46,6 +46,19 @@ class Bully :
             self.agility = stats[1]
             self.lethality = stats[2]
             self.viciousness = stats[3]
+
+    def to_json(self):
+        return {
+            "name": self.name,
+            "file_path": self.get_file_path(),
+            "lvl": self.lvl,
+            "exp": self.exp,
+            "rarity": self.rarity.name,
+            "max_pv": self.max_pv,
+            "seed": list(self.seed),
+            "stats": [self.strength, self.agility, self.lethality, self.viciousness],
+            "image_file_path": self.get_image_path()
+        }
     
     def __setstate__(self, state):
         # Check if 'rarity' exists in the state

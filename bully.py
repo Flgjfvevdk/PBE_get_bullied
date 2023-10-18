@@ -3,7 +3,7 @@ import random
 import numpy as np
 import pickle
 import shutil
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 from dataclasses import dataclass, replace, InitVar, KW_ONLY
 from pathlib import Path
 
@@ -14,6 +14,7 @@ from sqlalchemy.orm import Mapped, mapped_column, MappedAsDataclass, relationshi
 from sqlalchemy import String, select, ForeignKey
 from sqlalchemy.ext.asyncio.session import async_object_session
 from database import Base, new_session, DBPath
+from sqlalchemy.ext.mutable import MutableComposite
 
 
 BULLY_RARITY_POINTS = [4, 5, 6, 7, 8]
@@ -54,17 +55,22 @@ class Rarity(Enum):
         return BULLY_RARITY_DEATH_MIN_GOLD[self.value]
     
 @dataclass
-class Stats():
+class Stats(MutableComposite):
     strength: int
     agility: int
     lethality: int
     viciousness: int
 
+    def __setattr__(self, __name: str, __value: Any) -> None:
+        super().__setattr__(__name, __value)
+        self.changed()
+
     def increase_with_seed(self, seed:"Seed", *, talkative = False) -> None:
         # Get a random stat
         random_num = random.uniform(0, 0.9999) # Not 1 to account for possible float calculation errors.
         cum_prob = seed.cumulative_probs()
-        for i, field_name in enumerate(self.__dataclass_fields__):
+        stats = self.__dict__
+        for i, field_name in enumerate(stats):
             if random_num <= cum_prob[i]:
                 break
         else:
@@ -72,17 +78,21 @@ class Stats():
             return
         
         # Increase the value of the attribute
-        setattr(self,field_name,getattr(self,field_name)+1)
+        stats[field_name] += 1
         if(talkative):
             print(f"{field_name.capitalize()} +1!")
         return
     
 @dataclass
-class Seed():
+class Seed(MutableComposite):
     strength: float
     agility: float
     lethality: float
     viciousness: float
+
+    def __setattr__(self, __name: str, __value: Any) -> None:
+        super().__setattr__(__name, __value)
+        self.changed()
 
     @staticmethod
     def generate_seed_stat() -> "Seed":

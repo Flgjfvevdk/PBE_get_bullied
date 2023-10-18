@@ -69,7 +69,7 @@ class Stats(MutableComposite):
         # Get a random stat
         random_num = random.uniform(0, 0.9999) # Not 1 to account for possible float calculation errors.
         cum_prob = seed.cumulative_probs()
-        stats = self.__dict__
+        stats = self.__dataclass_fields__
         for i, field_name in enumerate(stats):
             if random_num <= cum_prob[i]:
                 break
@@ -78,7 +78,7 @@ class Stats(MutableComposite):
             return
         
         # Increase the value of the attribute
-        stats[field_name] += 1
+        setattr(self, field_name, getattr(self,field_name) + 1)
         if(talkative):
             print(f"{field_name.capitalize()} +1!")
         return
@@ -107,12 +107,12 @@ class Seed(MutableComposite):
     
     def extremization(self) -> "Seed":
         seed_extreme = replace(self)
-        seed_vals = seed_extreme.__dict__
-        for name in seed_vals:
-            seed_vals[name] **= 1.5
-        total = sum(seed_vals[name] for name in seed_vals)
-        for name in seed_vals:
-            seed_vals[name] /= total
+        seed_names = seed_extreme.__dataclass_fields__
+        for name in seed_names:
+            setattr(seed_extreme, name, getattr(seed_extreme,name) ** 1.5)
+        total = sum(getattr(seed_extreme,name) for name in seed_names)
+        for name in seed_names:
+            setattr(seed_extreme, name, getattr(seed_extreme,name) / total)
         return seed_extreme
 
     def cumulative_probs(self) -> List[float]:
@@ -120,8 +120,8 @@ class Seed(MutableComposite):
         cumulative_probs = []
 
         # Calculate the cumulative sum of the probabilities
-        for name in self.__dict__:
-            cumulative_sum += self.__dict__[name]
+        for name in self.__dataclass_fields__:
+            cumulative_sum += getattr(self, name)
             cumulative_probs.append(cumulative_sum)
         return cumulative_probs
     
@@ -137,7 +137,7 @@ class Bully(Base):
 
     _: KW_ONLY #Marks all following fields as kw_only=true, which means that they must be explicitly specified in the init.
 
-    image_file_path: Mapped[Optional[Path]] = mapped_column(type_ = DBPath, default=None, )
+    image_file_path: Mapped[Optional[Path]] = mapped_column(type_ = DBPath, default=None, nullable=True)
     must_load_image: InitVar[bool] = True
     lvl: Mapped[int] = mapped_column(default = 1)
     exp: Mapped[float] = mapped_column(default = 0.0)

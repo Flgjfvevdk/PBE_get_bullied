@@ -17,7 +17,9 @@ class DBPath(types.TypeDecorator):
     cache_ok = True
 
     def process_bind_param(self, value, dialect):
-        return str(value)
+        if isinstance(value, Path):
+            return str(value)
+        return value #On ne fait rien si on ne sait pas traiter
 
     def process_result_value(self, value, dialect):
         if value is None:

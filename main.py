@@ -401,6 +401,6 @@ async def give_lvl(ctx: Context):
         utils.players_in_interaction.discard(user.id)
 
 bot.run(TOKEN)
-
+#asyncio.run(database.init_models())
 
 

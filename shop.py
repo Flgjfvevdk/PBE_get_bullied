@@ -8,6 +8,8 @@ import utils
 import database
 from player_info import Player
 
+from discord.ext import tasks
+
 import os
 import random 
 import pickle
@@ -39,16 +41,32 @@ bullies_in_shop: dict[int,Bully] = {}
 # On lock le shop lors des modifs pour éviter les conflits
 shop_lock = asyncio.Lock()
 
-def restock_shop() -> None:
+async def restock_shop() -> None:
     bullies_in_shop.clear()
     for k in range(SHOP_MAX_BULLY):
         b = new_bully_shop()
         bullies_in_shop[k] = b
 
+async def init_shop():
+    await restock_shop()
+    restock_shop_loop.start()
+
+@tasks.loop(seconds=SHOP_RESTOCK_TIMEOUT)
+async def restock_shop_loop():
+    print("on restock le shop !")
+    global is_shop_restocking
+    is_shop_restocking = True
+    await asyncio.sleep(SHOP_CLOSE_WAIT_TIME)
+    await restock_shop()
+    print("Restock done !")
+    is_shop_restocking = False
+
+
 async def print_shop(ctx: Context, bot: Bot) -> None:
     if(is_shop_restocking) :
         await ctx.channel.send(restock_message())
         return
+    
     text = bullies_in_shop_to_text()
     images = bullies_in_shop_to_images()
     if images:
@@ -56,8 +74,7 @@ async def print_shop(ctx: Context, bot: Bot) -> None:
         shop_msg = await ctx.channel.send(content=text, files=files)
     else:
         shop_msg = await ctx.channel.send(text)
-    #shop_msg = await ctx.channel.send(text)
-
+    
     # Add reaction emotes
     for i in bullies_in_shop:
         await shop_msg.add_reaction(str(i) + "️⃣")
@@ -80,7 +97,7 @@ async def print_shop(ctx: Context, bot: Bot) -> None:
     except Exception as e:
         if not isinstance(e, asyncio.TimeoutError):
             print(e)
-        await shop_msg.edit(content="```Shop is closed. See you again!```")
+        await shop_msg.edit(content="```Shop is closed. See you again!```", attachments=[])
         return
 
 async def handle_shop_reaction(ctx: Context, reaction: discord.Reaction, user: discord.abc.User, shop_msg: discord.Message):
@@ -164,9 +181,12 @@ async def restock_shop_automatic() -> None:
         print("on restock le shop !")
         is_shop_restocking = True
         await asyncio.sleep(SHOP_CLOSE_WAIT_TIME)
-        restock_shop()
+        await restock_shop()
         is_shop_restocking = False
+
+
 
 
 def restock_message() -> str:
     return (f"```The shop is restocking. Please wait <{SHOP_CLOSE_WAIT_TIME} seconds```")
+

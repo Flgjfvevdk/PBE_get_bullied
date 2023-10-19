@@ -42,7 +42,8 @@ bot = GetBulliedBot(command_prefix = "!!", intents=intents)
 @bot.event
 async def on_ready():
     print(f'{bot.user} is now running !')
-    asyncio.create_task(shop.restock_shop_automatic())
+    await shop.init_shop()
+    
     print("on est bien là")
 
 @bot.event
@@ -344,7 +345,7 @@ async def admin_give(ctx: Context):
 @utils.is_admin()
 async def admin_new_shop(ctx: Context):
     try:
-        shop.restock_shop()
+        await shop.restock_shop()
         await shop.print_shop(ctx, bot)
     except Exception as e:
         print(e)

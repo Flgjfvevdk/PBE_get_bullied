@@ -82,7 +82,7 @@ async def fight(ctx: Context, user_1: discord.abc.User, player_1: Player, user_2
     if(pv_1 <= 0):
         bully_gagnant = fighting_bully_2.combattant ##MODIF HERE
         bully_perdant = fighting_bully_1.combattant ##MODIF HERE
-    if(pv_2 <= 0):
+    elif(pv_2 <= 0):
         bully_gagnant = fighting_bully_1.combattant ##MODIF HERE
         bully_perdant = fighting_bully_2.combattant ##MODIF HERE
     else:
@@ -103,7 +103,6 @@ async def fight(ctx: Context, user_1: discord.abc.User, player_1: Player, user_2
             pretext += f"{user_gagnant.name} earned {gold_earned}{money.MONEY_ICON}\n"
         await bully_perdant.kill()
         await ctx.channel.send(f"{pretext}{bully_perdant.name} died in terrible agony")
-
     return
 
 def value_to_bar_str(v:int, max_value=10) -> str:
@@ -158,9 +157,8 @@ async def fight_simulation(ctx, bot: Bot, fighting_bully_1:FightingBully, fighti
 
     while fighting_bully_1.pv > 0 and fighting_bully_2.pv > 0 :
         #On l'action
-        #(text_action, pv_perdu_1, pv_perdu_2, emoji_j1, emoji_j2, tour) = nouvelle_action_stat(stat_base_1= stat_base_1, stat_base_2= stat_base_2, name_1= name_1, name_2= name_2, tour= tour)
         (text_action, emoji_j1, emoji_j2, tour) = nouvelle_action_stat(fighting_bully_1= fighting_bully_1, fighting_bully_2=fighting_bully_2, tour= tour)
-
+        
         #On save les emoji pour la frise chronologique
         emoji_recap_j1+= emoji_j1
         emoji_recap_j2+= emoji_j2
@@ -219,50 +217,61 @@ def nouvelle_action_stat(fighting_bully_1:FightingBully, fighting_bully_2:Fighti
     pv_perdu = 0
     emoji_j1=""
     emoji_j2=""
-
+    
     name_1 = fighting_bully_1.combattant.name
     name_2 = fighting_bully_2.combattant.name
 
     #On regarde les fourberies
     fourberie_j1 = challenge_viciosite_stats(fighting_bully_1.stats, fighting_bully_2.stats)
     fourberie_j2 = challenge_viciosite_stats(fighting_bully_2.stats, fighting_bully_1.stats)
-
-    stat_j1 = replace(fighting_bully_1.stats).__dict__
-    stat_j2 = replace(fighting_bully_2.stats).__dict__
-    del stat_j1["viciousness"]
-    del stat_j2["viciousness"]
+    
+    #stat_j1 = replace(fighting_bully_1.stats).__dict__
+    #stat_j2 = replace(fighting_bully_2.stats).__dict__
+    stat_j1 = replace(fighting_bully_1.stats)
+    stat_j2 = replace(fighting_bully_2.stats)
+    
     if(fourberie_j1 and not fourberie_j2):
         #La meilleure de j2 (hors viciosite) devient égale au minimum entre : la stat de j1-1 et sa propre stat - 1. (minimum 1)
-        max_stat_name = max((n for n in stat_j2 if n != "viciousness"), key=lambda n: stat_j2[n])
-        #stat_j2[max_index] = max(1, min(stat_j1[max_index], stat_j2[max_index]) - 1)
-        if (stat_j2[max_stat_name] <= stat_j1[max_stat_name]):
-            stat_j2[max_stat_name] = max(1,stat_j2[max_stat_name] - 1)
+        stat_j1_dict = replace(fighting_bully_1.stats).__dict__
+        stat_j2_dict = replace(fighting_bully_2.stats).__dict__
+        del stat_j1_dict['_parents']
+        del stat_j2_dict['_parents']
+        max_stat_name = max((n for n in stat_j2_dict if n != "viciousness"), key=lambda n: stat_j2_dict[n])
+        if (stat_j2_dict[max_stat_name] <= stat_j2_dict[max_stat_name]):
+            stat_j2_dict[max_stat_name] = max(1,stat_j2_dict[max_stat_name] - 1)
         else :
-            diff = stat_j2[max_stat_name] - stat_j1[max_stat_name]
-            stat_j2[max_stat_name] = max (1,stat_j1[max_stat_name] - 1 + round(diff * (1 - math.exp(-stat_j2["viciousness"]/stat_j1["viciousness"] / 1.5)) ))
+            diff = stat_j2_dict[max_stat_name] - stat_j1_dict[max_stat_name]
+            coef_vicious = stat_j2_dict["viciousness"]/stat_j1_dict["viciousness"]
+            stat_j2_dict[max_stat_name] = max (1,stat_j1_dict[max_stat_name] - 1 + round(diff * (1 - math.exp(-coef_vicious / 1.5)) ))
     
     if(fourberie_j2 and not fourberie_j1):
         #La meilleure de j1 (hors viciosite) devient egale au minimum entre : la stat de j2-2 et sa propre stat - 1. (minimum 1)
-        max_stat_name = max((n for n in stat_j2 if n != "viciousness"), key=lambda n: stat_j2[n])
-        #stat_j1[max_index] = max(1, min(stat_j2[max_index], stat_j1[max_index]) - 1)
-        if (stat_j1[max_stat_name] <= stat_j2[max_stat_name]):
-            stat_j1[max_stat_name] = max(1,stat_j1[max_stat_name] - 1)
+        stat_j1_dict = replace(fighting_bully_1.stats).__dict__
+        stat_j2_dict = replace(fighting_bully_2.stats).__dict__
+        del stat_j1_dict['_parents']
+        del stat_j2_dict['_parents']
+        max_stat_name = max((n for n in stat_j1_dict if n != "viciousness"), key=lambda n: stat_j1_dict[n])
+        if (stat_j1_dict[max_stat_name] <= stat_j2_dict[max_stat_name]):
+            stat_j1_dict[max_stat_name] = max(1,stat_j1_dict[max_stat_name] - 1)
         else :
-            diff = stat_j1[max_stat_name] - stat_j2[max_stat_name]
-            stat_j1[max_stat_name] = max (1,stat_j2[max_stat_name] - 1 + round(diff * (1 - math.exp(-stat_j1["viciousness"]/stat_j2["viciousness"] / 1.5)) ))
+            diff = stat_j1_dict[max_stat_name] - stat_j2_dict[max_stat_name]
+            coef_vicious = stat_j1_dict["viciousness"]/stat_j2_dict["viciousness"]
+            stat_j1_dict[max_stat_name] = max (1,stat_j2_dict[max_stat_name] - 1 + round(diff * (1 - math.exp(-coef_vicious / 1.5)) ))
 
+
+    #(name_actif, stat_j_actif), (name_passif, stat_j_passif) = ((name_1, stat_j1.copy()), (name_2, stat_j2.copy())) if tour==0 else ((name_2, stat_j2.copy()), (name_1, stat_j1.copy()))
+    (name_actif, stat_j_actif), (name_passif, stat_j_passif) = ((name_1, stat_j1), (name_2, stat_j2)) if tour==0 else ((name_2, stat_j2), (name_1, stat_j1))
     
-    (name_actif, stat_j_actif), (name_passif, stat_j_passif) = ((name_1, stat_j1.copy()), (name_2, stat_j2.copy())) if tour==0 else ((name_2, stat_j2.copy()), (name_1, stat_j1.copy()))
-
     if challenge_prendre_de_vitesse_stats(stat_j_passif, stat_j_actif) :
         #On inverse le tour
         tour = (tour - 1) * - 1 
-        (name_actif, stat_j_actif), (name_passif, stat_j_passif) = ((name_1, stat_j1.copy()), (name_2, stat_j2.copy())) if tour==0 else ((name_2, stat_j2.copy()), (name_1, stat_j1.copy()))
+        # (name_actif, stat_j_actif), (name_passif, stat_j_passif) = ((name_1, stat_j1.copy()), (name_2, stat_j2.copy())) if tour==0 else ((name_2, stat_j2.copy()), (name_1, stat_j1.copy()))
+        (name_actif, stat_j_actif), (name_passif, stat_j_passif) = ((name_1, stat_j1), (name_2, stat_j2)) if tour==0 else ((name_2, stat_j2), (name_1, stat_j1))
         
         text_action += f"{name_actif} follows up with another punch. "
     else : 
         text_action += f"{name_actif} strikes. "
-    
+        
     
     if challenge_defense_stats(stat_j_actif, stat_j_passif):
         text_action += f"But {name_passif} block! "
@@ -286,26 +295,26 @@ def nouvelle_action_stat(fighting_bully_1:FightingBully, fighting_bully_2:Fighti
 
     fighting_bully_1.pv -= pv_perdu_j1
     fighting_bully_2.pv -= pv_perdu_j2
-
+    
     return (text_action, emoji_j1, emoji_j2, tour)
     #return (text_action, pv_perdu_j1, pv_perdu_j2, emoji_j1, emoji_j2, tour)
 
 # Pour les comparaisons de stat ____________________________________
-def challenge_prendre_de_vitesse_stats(stat_voulant_rejouer, stat_qui_attaque_normalement) -> bool:
-    stat_veux_rejouer_agility = stat_voulant_rejouer[1]
-    stat_attaquant_normal_agility = stat_qui_attaque_normalement[1]
+def challenge_prendre_de_vitesse_stats(stat_voulant_rejouer: Stats, stat_qui_attaque_normalement: Stats) -> bool:
+    stat_veux_rejouer_agility = stat_voulant_rejouer.agility
+    stat_attaquant_normal_agility = stat_qui_attaque_normalement.agility
     rejouer = Bully.clash_stat(stat_veux_rejouer_agility, stat_attaquant_normal_agility)
     return rejouer
 
-def challenge_defense_stats(stat_attaquant, stat_defenseur) -> bool:
-    stat_att_strength = stat_attaquant[0]
-    stat_def_strength = stat_defenseur[0]
+def challenge_defense_stats(stat_attaquant: Stats, stat_defenseur: Stats) -> bool:
+    stat_att_strength = stat_attaquant.strength
+    stat_def_strength = stat_defenseur.strength
     parade_reussie = Bully.clash_stat(st_actif = stat_def_strength, st_passif = stat_att_strength)
     return parade_reussie
 
-def challenge_coup_critique_stats(stat_attaquant, stat_defenseur) -> bool:
-    stat_att_lethality = stat_attaquant[2]
-    stat_def_strength = stat_defenseur[0]
+def challenge_coup_critique_stats(stat_attaquant: Stats, stat_defenseur: Stats) -> bool:
+    stat_att_lethality = stat_attaquant.lethality
+    stat_def_strength = stat_defenseur.strength
     coup_critique = Bully.clash_stat(st_actif = stat_att_lethality, st_passif = stat_def_strength)
     return coup_critique
 

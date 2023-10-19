@@ -45,7 +45,7 @@ async def add_random_bully_to_player(ctx: Context, player: Player, name_brute: l
 
     name_bully = f"{name_brute[0]} {name_brute[1]}"
     new_bully = Bully(name_bully)
-    print("new_bully.stats : ", new_bully.stats)
+
     await add_bully_to_player(ctx, player, new_bully, channel_cible)
 
 async def add_bully_to_player(ctx: Context, player: Player, b: Bully, channel_cible=None) -> None:
@@ -56,7 +56,7 @@ async def add_bully_to_player(ctx: Context, player: Player, b: Bully, channel_ci
     if len(player.bullies) >= BULLY_NUMBER_MAX:
         await channel_cible.send(f"You cannot have more than {BULLY_NUMBER_MAX} bullies!")
         return
-    print("b.stats : ", b.stats)
+    
     player.bullies.append(b)
 
     await channel_cible.send("You have a new bully : " + b.name)   

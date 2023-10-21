@@ -219,6 +219,7 @@ class Bully(Base):
 
     async def kill(self):
         print("je me tue : ", self.name)
+        self.player.bullies.remove(self)
         session = async_object_session(self)
         if session is not None:
             await session.delete(self)

@@ -36,9 +36,6 @@ minimum_pv = 4
 maximum_pv = 10
 
 def generate_donjon_team(level: int, size:int) -> List[FightingBully]:
-    # enemies = []
-    # enemies_pv = []
-
     enemies_fighters:List[FightingBully] = []
 
     for k in range(size):
@@ -81,16 +78,14 @@ async def enter_the_dungeon(ctx: Context, player: Player, lvl: int, bot: Bot) ->
         return
 
     #On initialise les pv et xp gagné par les bullies
-    #pv_team_joueur = [] #pv du bully n°index. Si bully n°index n'existe pas alors -1
     fighters_joueur: List[FightingBully] = []
-    xp_earned_bullies = [] #L'xp gagné par chaque bully
+    xp_earned_bullies: dict[FightingBully, float] = {} #L'xp gagné par chaque bully
     for b in player.bullies:
         new_fighter = FightingBully.create_fighting_bully(b)
         fighters_joueur.append(new_fighter)
-        xp_earned_bullies.append(0)
+        xp_earned_bullies[new_fighter] = 0
         
     #On génère les ennemies
-    #enemies, enemies_pv = generate_donjon_team(lvl, size_dungeon)
     enemies_fighters = generate_donjon_team(lvl, size_dungeon)
 
     #On set les paramètres du donjon
@@ -100,15 +95,13 @@ async def enter_the_dungeon(ctx: Context, player: Player, lvl: int, bot: Bot) ->
     while current_floor < size_dungeon :
 
         #On affiche le prochain ennemy
-        #current_enemy = enemies[current_floor]
         fighting_bully_enemy = enemies_fighters[current_floor]
         text_enemy_coming = f"An enemy is coming! {fighting_bully_enemy.combattant.get_print(compact_print=True)}"
         await thread.send(f"{bully.mise_en_forme_str(text_enemy_coming)}") 
 
         #Le player choisit son bully
         try :
-            #bully_joueur, num_bully_j = await interact_game.player_choose_bully(ctx, user= user, bot= bot, channel_cible= thread, timeout= DUNGEON_CHOICE_TIMEOUT)
-            _, num_bully_j = await interact_game.player_choose_bully(ctx, ctx.author, player, bot, channel_cible= thread, timeout= DUNGEON_CHOICE_TIMEOUT)
+            _, num_bully_j = await interact_game.player_choose_bully(ctx, ctx.author, player, bot, channel_cible=thread, timeout=DUNGEON_CHOICE_TIMEOUT)
         except TimeoutError as e:
             print (e)
             await thread.send(f"Your team left the dungeon. Choose faster next time {ctx.author}") 
@@ -120,7 +113,7 @@ async def enter_the_dungeon(ctx: Context, player: Player, lvl: int, bot: Bot) ->
                 f"[{ctx.author}] -> You don't have this bully\n" #TODO: fix with ui
                 "Your team left the dungeon"
             ) 
-            await exit_dungeon(ctx= ctx, thread= thread, time_bfr_close=THREAD_DELETE_AFTER)
+            await exit_dungeon(ctx=ctx, thread=thread, time_bfr_close=THREAD_DELETE_AFTER)
             return
         except Exception as e:
             print(e)
@@ -130,7 +123,7 @@ async def enter_the_dungeon(ctx: Context, player: Player, lvl: int, bot: Bot) ->
         fighting_bully_joueur = fighters_joueur[num_bully_j]
         if(fighting_bully_joueur is None or fighting_bully_joueur.pv <= 0):
             await thread.send(f"Your bully is dead or do not exist. \nYour team left the dungeon.") 
-            await exit_dungeon(ctx= ctx, thread= thread, time_bfr_close=THREAD_DELETE_AFTER)
+            await exit_dungeon(ctx=ctx, thread=thread, time_bfr_close=THREAD_DELETE_AFTER)
             return 
         
         await fight_manager.fight_simulation(ctx, bot= bot, 
@@ -152,11 +145,11 @@ async def enter_the_dungeon(ctx: Context, player: Player, lvl: int, bot: Bot) ->
             pretext = ""
             if (exp_earned > 0):
                 bully_joueur.give_exp(exp_earned)
+                xp_earned_bullies[fighting_bully_joueur] += exp_earned
                 pretext += f"{bully_joueur.name} earned {exp_earned} xp!\n"
             if (gold_earned > 0):
                 money.give_money(player, montant=gold_earned)
                 pretext += f"{ctx.author} earned {gold_earned}{money.MONEY_ICON}!\n"
-            xp_earned_bullies[num_bully_j] += exp_earned
 
             #On envoie le message de succès et on progress dans le dungeon
             await thread.send(f"{pretext}{fighting_bully_enemy.combattant.name} is dead! You progress in the dungeon.")
@@ -180,13 +173,12 @@ async def enter_the_dungeon(ctx: Context, player: Player, lvl: int, bot: Bot) ->
     await ctx.channel.send(f"{ctx.author.name} has beaten the level {lvl} dungeon!") 
     await thread.send(f"{ctx.author.name} has beaten the level {lvl} dungeon!") 
 
-    #on donne la récompense d'xp
-    for k in range(len(xp_earned_bullies)):
-        # if(pv_team_joueur[k] > 0 and xp_earned_bullies[k] > 0):
-        fighter = fighters_joueur[k]
-        if(isinstance(fighter, FightingBully) and xp_earned_bullies[k] > 0):
+    #on donne la récompense d'xp aux joueurs encore en vie
+    for fighter in fighters_joueur:
+        xp_earned = xp_earned_bullies[fighter]
+        if xp_earned > 0:
             bully_joueur_recompense = fighter.combattant
-            bully_joueur_recompense.give_exp(round(xp_earned_bullies[k] * COEF_XP_WIN, 1))
+            bully_joueur_recompense.give_exp(round(xp_earned * COEF_XP_WIN, 1))
 
     #On maj le record du joueur sur son dungeon si nécessaire
     if lvl > player.max_dungeon:

@@ -49,22 +49,18 @@ def generate_donjon_team(level: int, size:int) -> List[FightingBully]:
         point_init = enemy_fighter.rarity.points_bonus
         coef_point_lvl_up = enemy_fighter.rarity.level_bonus
         
-        if(k < size - 1):
-            preterme1 = (size - k - 1)/size
-            terme1 = (level * coef_point_lvl_up + point_init) / 3 * preterme1
-            preterme2 = (k + 1) / size
-            terme2 = (level * coef_point_lvl_up + point_init) * preterme2
-            pointBonus = round(terme1 + terme2)
-
-            pv_enemy = round((maximum_pv - minimum_pv)*(k + 1) / size + minimum_pv)
-            lvl_enemy = round((pointBonus - 4) * pv_enemy / 10, 1) if pointBonus > 4 else (round(pointBonus / 5 * pv_enemy / 10, 1))
-            
-        else :
-            pointBonus = int(point_init + level * coef_point_lvl_up)
-            lvl_enemy = level
-            pv_enemy = maximum_pv
+        def lerp(start, end, x):
+            return x*end + (1-x) * start
         
-        enemy_fighter.increase_stat_with_seed(pointBonus)
+        xp_points = level * coef_point_lvl_up + point_init
+        points_bonus = round(lerp(xp_points / 3, xp_points, k/size))
+        pv_enemy = round(lerp(minimum_pv, maximum_pv, k/size))
+        
+        lvl_enemy = round((points_bonus - 4) * pv_enemy / 10, 1) if points_bonus > 4 else (round(points_bonus / 5 * pv_enemy / 10, 1))    
+        if k==size:
+            lvl_enemy = level
+        
+        enemy_fighter.increase_stat_with_seed(points_bonus)
         enemy_fighter.lvl = lvl_enemy # Attention, ne recalcule pas les stats
 
         new_fighter = FightingBully.create_fighting_bully(enemy_fighter)
@@ -86,7 +82,7 @@ async def enter_the_dungeon(ctx: Context, player: Player, lvl: int, bot: Bot) ->
 
     #On initialise les pv et xp gagné par les bullies
     #pv_team_joueur = [] #pv du bully n°index. Si bully n°index n'existe pas alors -1
-    fighters_joueur:List[Optional[FightingBully]] = []
+    fighters_joueur: List[FightingBully] = []
     xp_earned_bullies = [] #L'xp gagné par chaque bully
     for b in player.bullies:
         new_fighter = FightingBully.create_fighting_bully(b)
@@ -176,9 +172,9 @@ async def enter_the_dungeon(ctx: Context, player: Player, lvl: int, bot: Bot) ->
             #On tue le bully qui est ded
             await thread.send(f"{bully_joueur.name} died in terrible agony.")
             await bully_joueur.kill()
-            fighters_joueur[num_bully_j] = None
+            fighters_joueur.pop(num_bully_j)
 
-    #On est plus dans le combat, le joueur à tryompher
+    #On est plus dans le combat, le joueur à triomphé
 
     #On écrit le message de victoire dans les 2 channels
     await ctx.channel.send(f"{ctx.author.name} has beaten the level {lvl} dungeon!") 

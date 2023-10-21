@@ -18,6 +18,7 @@ from dataclasses import replace
 
 
 CHOICE_TIMEOUT = 20
+RECAP_MAX_EMOJI = 15
 fight_msg_time_update = 1
 
 async def proposition_fight(ctx: Context, user_1: discord.abc.User, player_1: Player, user_2: discord.abc.User, player_2: Player, bot: Bot, for_fun = False) -> None:
@@ -134,8 +135,8 @@ async def fight_simulation(ctx, bot: Bot, fighting_bully_1:FightingBully, fighti
     if(item_2 != None and item_2.is_bfr_fight) : 
         item_2.effect_before_fight(fighting_bully_self= fighting_bully_2, fighting_bully_adv= fighting_bully_1)
 
-    max_pv_1 = fighting_bully_1.pv
-    max_pv_2 = fighting_bully_2.pv
+    max_pv_1 = fighting_bully_1.combattant.max_pv
+    max_pv_2 = fighting_bully_2.combattant.max_pv
 
     #On calcul le texte
     barre_pv_joueur = value_to_bar_str(fighting_bully_1.pv, max_value= max_pv_1)
@@ -146,8 +147,8 @@ async def fight_simulation(ctx, bot: Bot, fighting_bully_1:FightingBully, fighti
     action_combat = "Let's get ready to rumble!"
     text_combat = "```" + text_pv_combat + "\n\n" + action_combat + "```"
 
-    emoji_recap_j1 = ""
-    emoji_recap_j2 = ""
+    emoji_recap_j1: list[str] = []
+    emoji_recap_j2: list[str] = []
     
     #On affiche le texte
     message = await channel_cible.send(text_combat)
@@ -156,20 +157,27 @@ async def fight_simulation(ctx, bot: Bot, fighting_bully_1:FightingBully, fighti
     await asyncio.sleep(fight_msg_time_update)
 
     while fighting_bully_1.pv > 0 and fighting_bully_2.pv > 0 :
-        #On l'action
+        #On calcule l'action
         (text_action, emoji_j1, emoji_j2, tour) = nouvelle_action_stat(fighting_bully_1= fighting_bully_1, fighting_bully_2=fighting_bully_2, tour= tour)
         
         #On save les emoji pour la frise chronologique
-        emoji_recap_j1+= emoji_j1
-        emoji_recap_j2+= emoji_j2
+        emoji_recap_j1.append(emoji_j1)
+        emoji_recap_j2.append(emoji_j2)
 
         #on maj les parametres des pv 
         barre_pv_joueur = value_to_bar_str(fighting_bully_1.pv, max_value= max_pv_1)
         barre_pv_enemy = value_to_bar_str(fighting_bully_2.pv, max_value= max_pv_2)
 
         #On fait visuellement la modif de pv : 
-        #text_pv_combat = "\t\tBully 1 : " + name_1 + "\nhp : " + barre_pv_joueur + "\n\t\t\t\t\t" + emoji_recap_j1 + "\n\t\t\t\tVS\n\t\t\t\t\t" + emoji_recap_j2 + "\n\t\tBully 2 : " + name_2 + "\nhp : " + barre_pv_enemy
-        text_pv_combat = "\t\tBully 1 : " + fighting_bully_1.combattant.name + "\nhp : " + barre_pv_joueur + "\n\t\t\t\t\t" + emoji_recap_j1 + "\n\t\t\t\tVS\n\t\t\t\t\t" + emoji_recap_j2 + "\n\t\tBully 2 : " + fighting_bully_2.combattant.name + "\nhp : " + barre_pv_enemy
+        text_pv_combat = (
+            f"\t\tBully 1 : {fighting_bully_1.combattant.name}\n"
+            f"hp : {barre_pv_joueur}\n"
+            f"\t\t\t\t\t{''.join(emoji_recap_j1[-RECAP_MAX_EMOJI:])}\n"
+             "\t\t\t\tVS\n"
+            f"\t\t\t\t\t{''.join(emoji_recap_j2[-RECAP_MAX_EMOJI:])}\n"
+            f"\t\tBully 2 : {fighting_bully_2.combattant.name}\n"
+            f"hp : {barre_pv_enemy}"
+        )
         action_combat = text_action
         text_combat = "```" + text_pv_combat + "\n\n" + action_combat + "```"
         await message.edit(content = text_combat)

@@ -154,8 +154,10 @@ async def challenge(ctx: Context, user_2:discord.Member):
     user_1 = ctx.author
     if user_1.id in utils.players_in_interaction:
         await ctx.reply(f"You are already in an interaction.")
+        return
     if user_2.id in utils.players_in_interaction:
         await ctx.channel.send(f"Sorry, but {user_2} is already busy!")
+        return
 
     utils.players_in_interaction.add(user_1.id)
     utils.players_in_interaction.add(user_2.id)
@@ -182,8 +184,10 @@ async def fun_challenge(ctx: Context, user_2:discord.Member):
     user_1 = ctx.author
     if user_1.id in utils.players_in_interaction:
         await ctx.reply(f"You are already in an interaction.")
+        return
     if user_2.id in utils.players_in_interaction:
         await ctx.channel.send(f"Sorry, but {user_2} is already busy!")
+        return
 
     utils.players_in_interaction.add(user_1.id)
     utils.players_in_interaction.add(user_2.id)
@@ -217,6 +221,7 @@ async def explore_dungeon(ctx: Context, level:int):
     user = ctx.author
     if user.id in utils.players_in_interaction:
         await ctx.reply(f"You are already in an interaction.")
+        return
 
     utils.players_in_interaction.add(user.id)
     try:
@@ -230,7 +235,7 @@ async def explore_dungeon(ctx: Context, level:int):
             print("on a commit les changes du donjon !")
     finally:
         utils.players_in_interaction.discard(user.id)
-    return
+    
 
 @bot.command(aliases=['ruin', 'ruine'])
 #@utils.author_is_free
@@ -245,6 +250,7 @@ async def explore_ruin(ctx: Context, level:int):
     user = ctx.author
     if user.id in utils.players_in_interaction:
         await ctx.reply(f"You are already in an interaction.")
+        return
 
     utils.players_in_interaction.add(user.id)
     try:
@@ -258,7 +264,7 @@ async def explore_ruin(ctx: Context, level:int):
             await session.commit()
     finally:
         utils.players_in_interaction.discard(user.id)
-    return
+    
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 # Par rapport au club ____________________________
@@ -279,6 +285,7 @@ async def hire(ctx: Context):
     user = ctx.author
     if user.id in utils.players_in_interaction:
         await ctx.reply(f"You are already in an interaction.")
+        return
 
     utils.players_in_interaction.add(user.id)
     try:
@@ -328,6 +335,7 @@ async def admin_give(ctx: Context):
     user = ctx.author
     if user.id in utils.players_in_interaction:
         await ctx.reply(f"You are already in an interaction.")
+        return
 
     utils.players_in_interaction.add(user.id)
     try:
@@ -359,6 +367,7 @@ async def get_item(ctx: Context):
     user = ctx.author
     if user.id in utils.players_in_interaction:
         await ctx.reply(f"You are already in an interaction.")
+        return
 
     utils.players_in_interaction.add(user.id)
     try:
@@ -388,10 +397,10 @@ async def give_lvl(ctx: Context):
     user = ctx.author
     if user.id in utils.players_in_interaction:
         await ctx.reply(f"You are already in an interaction.")
+        return
 
     utils.players_in_interaction.add(user.id)
     try:
-
         async with database.new_session() as session:
             player = await session.get(Player, ctx.author.id)
             if player is None:

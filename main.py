@@ -227,6 +227,7 @@ async def explore_dungeon(ctx: Context, level:int):
                 return
             await donjon.enter_the_dungeon(ctx, player, level, bot)
             await session.commit()
+            print("on a commit les changes du donjon !")
     finally:
         utils.players_in_interaction.discard(user.id)
     return

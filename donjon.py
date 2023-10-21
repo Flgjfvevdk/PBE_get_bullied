@@ -203,11 +203,14 @@ async def exit_dungeon(ctx: Context, thread: Thread, time_bfr_close: int) -> Non
     ID_joueur_en_donjon.remove(ctx.author.id)
     try :
         # TODO: add thread.leave() to leave the thread an not respond to any more message here.
-        await asyncio.sleep(time_bfr_close)
-        await thread.delete()
+        async def delete_thread():
+            await asyncio.sleep(time_bfr_close)
+            await thread.delete()
+        asyncio.create_task(delete_thread())
     except Exception as e:
         print(e)
     return
+
 
 
 async def str_leaderboard_donjon(ctx: Context, bot) -> str:

@@ -73,9 +73,9 @@ async def fight(ctx: Context, user_1: discord.abc.User, player_1: Player, user_2
     # max_pv_1 = fighting_bully_1.pv
     # max_pv_2 = fighting_bully_2.pv
     
-    await fight_simulation(ctx= ctx, user_1= user_1, user_2= user_2, bot= bot, 
-                                        fighting_bully_1= fighting_bully_1, fighting_bully_2= fighting_bully_2,
-                                        item_1= item_1, item_2= item_2)
+    await fight_simulation(ctx=ctx, user_1=user_1, user_2=user_2, bot=bot, 
+                                        fighting_bully_1=fighting_bully_1, fighting_bully_2=fighting_bully_2,
+                                        item_1=item_1, item_2=item_2)
     
     pv_1 = fighting_bully_1.pv
     pv_2 = fighting_bully_2.pv
@@ -158,7 +158,7 @@ async def fight_simulation(ctx, bot: Bot, fighting_bully_1:FightingBully, fighti
 
     while fighting_bully_1.pv > 0 and fighting_bully_2.pv > 0 :
         #On calcule l'action
-        (text_action, emoji_j1, emoji_j2, tour) = nouvelle_action_stat(fighting_bully_1= fighting_bully_1, fighting_bully_2=fighting_bully_2, tour= tour)
+        (text_action, emoji_j1, emoji_j2, tour) = nouvelle_action_stat(fighting_bully_1=fighting_bully_1, fighting_bully_2=fighting_bully_2, tour= tour)
         
         #On save les emoji pour la frise chronologique
         emoji_recap_j1.append(emoji_j1)
@@ -167,16 +167,17 @@ async def fight_simulation(ctx, bot: Bot, fighting_bully_1:FightingBully, fighti
         #on maj les parametres des pv 
         barre_pv_joueur = value_to_bar_str(fighting_bully_1.pv, max_value= max_pv_1)
         barre_pv_enemy = value_to_bar_str(fighting_bully_2.pv, max_value= max_pv_2)
+        barre_max_length = max(max_pv_1, max_pv_2)
 
         #On fait visuellement la modif de pv : 
         text_pv_combat = (
             f"\t\tBully 1 : {fighting_bully_1.combattant.name}\n"
-            f"hp : {barre_pv_joueur}\n"
+            f"HP : {barre_pv_joueur:{barre_max_length}} ({fighting_bully_1.pv:02}/{max_pv_1:02})\n"
             f"\t\t\t\t\t{''.join(emoji_recap_j1[-RECAP_MAX_EMOJI:])}\n"
              "\t\t\t\tVS\n"
             f"\t\t\t\t\t{''.join(emoji_recap_j2[-RECAP_MAX_EMOJI:])}\n"
             f"\t\tBully 2 : {fighting_bully_2.combattant.name}\n"
-            f"hp : {barre_pv_enemy}"
+            f"HP : {barre_pv_enemy:{barre_max_length}} ({fighting_bully_2.pv:02}/{max_pv_2:02})"
         )
         action_combat = text_action
         text_combat = "```" + text_pv_combat + "\n\n" + action_combat + "```"
@@ -299,10 +300,10 @@ def nouvelle_action_stat(fighting_bully_1:FightingBully, fighting_bully_2:Fighti
             
     pv_perdu_j1 = pv_perdu if (name_passif == name_1) else 0
     pv_perdu_j2 = pv_perdu if (name_passif == name_2) else 0
-    tour = (tour - 1) * -1 
+    tour ^= 1 
 
-    fighting_bully_1.pv -= pv_perdu_j1
-    fighting_bully_2.pv -= pv_perdu_j2
+    fighting_bully_1.pv = max(0,fighting_bully_1.pv - pv_perdu_j1)
+    fighting_bully_2.pv = max(0,fighting_bully_2.pv - pv_perdu_j2)
     
     return (text_action, emoji_j1, emoji_j2, tour)
     #return (text_action, pv_perdu_j1, pv_perdu_j2, emoji_j1, emoji_j2, tour)

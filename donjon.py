@@ -18,8 +18,10 @@ from typing import List
 from discord.ext.commands import Context, Bot
 from discord.abc import User
 from discord import Thread
+import discord.ui as ui
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 ID_joueur_en_donjon = []
 
@@ -191,65 +193,37 @@ async def enter_the_dungeon(ctx: Context, player: Player, lvl: int, bot: Bot) ->
             bully_joueur_recompense.give_exp(round(xp_earned_bullies[k] * COEF_XP_WIN, 1))
 
     #On maj le record du joueur sur son dungeon si nécessaire
-    player.max_dungeon = max(player.max_dungeon, lvl)
+    if lvl > player.max_dungeon:
+        player.max_dungeon = lvl
 
     #On quitte le donjon
     await exit_dungeon(ctx= ctx, thread= thread, time_bfr_close=THREAD_DELETE_AFTER)
-    return
 
 
 
 async def exit_dungeon(ctx: Context, thread: Thread, time_bfr_close: int) -> None:
     ID_joueur_en_donjon.remove(ctx.author.id)
     try :
-        # TODO: add thread.leave() to leave the thread an not respond to any more message here.
         async def delete_thread():
+            await thread.leave() # leave the thread and stop responding to any more message here.
             await asyncio.sleep(time_bfr_close)
             await thread.delete()
         asyncio.create_task(delete_thread())
     except Exception as e:
         print(e)
-    return
 
-
-
-async def str_leaderboard_donjon(ctx: Context, bot) -> str:
-    dossier_principal = "game_data/player_data"
+async def str_leaderboard_donjon(session: AsyncSession) -> str:
     text_classement = ""
 
-    classement_joueurs = []
-    
-    for nom_dossier in os.listdir(dossier_principal):
-        chemin_dossier = os.path.join(dossier_principal, nom_dossier)
-
-        # Vérifier si l'élément est un dossier
-        if os.path.isdir(chemin_dossier):
-            print("on est ici : ", chemin_dossier)
-            # Lire le fichier "playerMaxDungeon.txt" s'il existe
-            chemin_fichier = os.path.join(chemin_dossier, "playerMaxDungeon.txt")
-            print("on lit : ", chemin_fichier)
-            if os.path.isfile(chemin_fichier):
-                print("c'est un fichier")
-                with open(chemin_fichier, "r") as fichier:
-                    contenu_fichier = fichier.read()
-                    try:
-                        classement = int(contenu_fichier)
-                    except ValueError:
-                        classement = None
-                    print("classement, ", classement)
-
-                    # Ajouter le classement du joueur à la liste
-                    classement_joueurs.append((nom_dossier, classement))
-    
-    # Trier la liste des classements des joueurs
-    classement_joueurs = sorted(classement_joueurs, key=lambda x: x[1], reverse=True)
+    # On récupère tout en une commande SQL
+    classement_joueurs = (await session.scalars(select(Player).order_by(Player.max_dungeon.desc()))).all()
 
     # Afficher le classement des joueurs
-    for joueur, classement in classement_joueurs:
-        if classement is not None:
-            text_classement+=(f"Player : {await bot.fetch_user(int(joueur))} - Highest Dungeon Level Reached: {classement}\n")
+    for joueur in classement_joueurs:
+        if joueur.max_dungeon > 0:
+            text_classement+= f"<@{joueur.id}> - Highest Dungeon Level Reached: {joueur.max_dungeon}\n"
         else:
-            text_classement+=(f"Player : {int(joueur)}: is not ranked\n")
+            text_classement+= f"<@{joueur.id}> is not ranked.\n"
 
-    return "```Leaderbord dungeon :\n" + text_classement + "```"
+    return text_classement
 

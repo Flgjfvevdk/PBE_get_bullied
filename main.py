@@ -23,6 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 import asyncio
 
 from discord.ext.commands import Bot, Context, CommandNotFound
+from discord import Embed
 
 TOKEN = utils.getenv("DISCORD_TOKEN")
 
@@ -109,7 +110,9 @@ async def patchnote(ctx: Context):
 
 @bot.command(aliases=['lb', 'leader'])
 async def leaderboard(ctx: Context):
-    await ctx.channel.send(await donjon.str_leaderboard_donjon(ctx, bot))
+    async with database.new_session() as session:
+        lb = Embed(title="Leaderbord Donjon", description=await donjon.str_leaderboard_donjon(session))
+        await ctx.channel.send(embed=lb)
     
 @bot.command(aliases=['infdung'])
 async def infos_dungeon(ctx: Context):

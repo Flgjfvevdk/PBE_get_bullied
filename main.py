@@ -233,7 +233,7 @@ async def explore_dungeon(ctx: Context, level:int):
             if player is None:
                 await ctx.reply("Please join the game first !")
                 return
-            await donjon.enter_the_dungeon(ctx, player, level, bot)
+            await donjon.Dungeon(ctx, bot, player, level).enter()
             await session.commit()
             print("on a commit les changes du donjon !")
     finally:

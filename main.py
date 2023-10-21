@@ -255,7 +255,7 @@ async def get_item(ctx: Context):
 # JUSTE POUR LE PBE JUSTE POUR LE PBE
 @bot.command()
 async def give_lvl(ctx: Context):
-    if(TOKEN != ***REMOVED***):
+    if not ctx.me.display_name.startswith("PBE"):
         return
     else :
         user_player_path = utils.get_player_path(ctx.author.id)

@@ -53,8 +53,10 @@ async def start_fight(ctx: Context, user_1: discord.abc.User, player_1: Player, 
     fighting_bully_2, _ = await interact_game.player_choose_bully(ctx, user_2, player_2, bot, timeout = CHOICE_TIMEOUT)
     
     item_1, item_2 = await manager_equip_item(ctx, user_1, player_1, user_2, player_2, bot)
+    fighting_bully_1.equipped_item = item_1
+    fighting_bully_2.equipped_item = item_2
     # await fight(ctx, user_1, user_2, bot, bully_1, bully_2, for_fun, item_1=item_1, item_2=item_2)
-    await fight(ctx, user_1, player_1, user_2, player_2, bot, fighting_bully_1, fighting_bully_2, for_fun, item_1=item_1, item_2=item_2)
+    await fight(ctx, user_1, player_1, user_2, player_2, bot, fighting_bully_1, fighting_bully_2, for_fun)
     
     return
 
@@ -68,14 +70,13 @@ async def manager_equip_item(ctx: Context, user_1: discord.abc.User, player_1: P
 
 
 async def fight(ctx: Context, user_1: discord.abc.User, player_1: Player, user_2: discord.abc.User, player_2: Player, bot: Bot, fighting_bully_1:FightingBully, fighting_bully_2:FightingBully, 
-                for_fun = False, item_1:Optional[Item] = None, item_2:Optional[Item] = None) -> None:
+                for_fun = False) -> None:
     #On initialise les variables pour le combat :
     # max_pv_1 = fighting_bully_1.pv
     # max_pv_2 = fighting_bully_2.pv
     
     await fight_simulation(ctx=ctx, user_1=user_1, user_2=user_2, bot=bot, 
-                                        fighting_bully_1=fighting_bully_1, fighting_bully_2=fighting_bully_2,
-                                        item_1=item_1, item_2=item_2)
+                                        fighting_bully_1=fighting_bully_1, fighting_bully_2=fighting_bully_2)
     
     pv_1 = fighting_bully_1.pv
     pv_2 = fighting_bully_2.pv
@@ -118,8 +119,8 @@ def value_to_bar_str(v:int, max_value=10) -> str:
 
 # ____________________________________________________
 async def fight_simulation(ctx, bot: Bot, fighting_bully_1:FightingBully, fighting_bully_2:FightingBully,
-                            user_1: discord.abc.User|None = None, user_2:discord.abc.User|None = None, is_switch_possible = False, 
-                            item_1:Optional[Item] = None, item_2:Optional[Item] = None, channel_cible = None) -> None:    
+                            user_1: discord.abc.User|None = None, user_2:discord.abc.User|None = None, is_switch_possible = False,
+                            channel_cible = None) -> None:    
 
     print("fighting_bully_1.stats ", fighting_bully_1.stats)
     print("fighting_bully_2.stats ", fighting_bully_2.stats)
@@ -130,6 +131,8 @@ async def fight_simulation(ctx, bot: Bot, fighting_bully_1:FightingBully, fighti
     tour = random.randint(0,1)
     
     #S'il y a des items, on change les valeurs des variables :
+    item_1 = fighting_bully_1.equipped_item
+    item_2 = fighting_bully_2.equipped_item
     if(item_1 != None and item_1.is_bfr_fight) : 
         item_1.effect_before_fight(fighting_bully_self= fighting_bully_1, fighting_bully_adv= fighting_bully_2)
     if(item_2 != None and item_2.is_bfr_fight) : 

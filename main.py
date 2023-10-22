@@ -257,13 +257,12 @@ async def explore_ruin(ctx: Context, level:int):
 
     utils.players_in_interaction.add(user.id)
     try:
-    
         async with database.new_session() as session:
             player = await session.get(Player, user.id)
             if player is None:
                 await ctx.reply("Please join the game first !")
                 return
-            await ruine.enter_the_ruin(ctx, user, player, level, bot)
+            await ruine.Ruin(ctx, bot, player, level).enter()
             await session.commit()
     finally:
         utils.players_in_interaction.discard(user.id)

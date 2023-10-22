@@ -123,6 +123,10 @@ async def player_choose_bully(ctx: Context, user: discord.abc.User, player: Play
     if(channel_cible == None):
         channel_cible = ctx.channel
 
+    if len(player.bullies) == 0:
+        channel_cible.send(f"{user.mention}, you do not have any bullies!")
+        raise IndexError
+
     #Demande au joueur de choisir son combattant
     message_choose_fighter = await channel_cible.send(f"{user} choose your fighter : ") 
     await print_bullies(ctx, player, compact_print = True, channel_cible= channel_cible)

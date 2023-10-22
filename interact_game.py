@@ -111,7 +111,7 @@ async def print_items(ctx: Context, player: Player, compact_print=False, channel
 
     for i in player.items:
         text += "\n___________\n"
-        text += i.get_print(compact_print=compact_print)
+        text += i.print(compact_print=compact_print)
 
     text = item.mise_en_forme_str(text)
     await channel_cible.send(text)

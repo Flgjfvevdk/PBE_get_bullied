@@ -110,41 +110,31 @@ class Item(Base):
         #Modification
         return (gold_earned, xp_earned)
 
+    # Pour gérer les print ______________________________________________
+    def print(self, compact_print = False) -> str:
+        text = ""
+        if(compact_print) :
+            text += self.name
+        else :
+            text += self.name
+            text += "\nDescription : " + self.description
+            if(self.is_bfr_fight):
+                if self.buff_start_self.pv != 0:
+                    text += "\nBonus HP : " + str(self.buff_start_self.pv)
+                for stat_name in self.buff_start_self.__dataclass_fields__:
+                    flat_buff = getattr(self.buff_start_self, stat_name)
+                    mult_buff = getattr(self.buff_start_self_mult_lvl, stat_name)
 
-    # __
-    def set_file_path(self, new_file_path) -> None:
-        self.associated_file_path = new_file_path
-        self.associated_number = os.path.splitext(os.path.basename(new_file_path))[0]
-
-    def get_print(self, compact_print = False) -> str:
-        return str_print_item(self, compact_print)
-
-
-# Pour gérer les print ______________________________________________
-def str_print_item(i:Item, compact_print = False) -> str:
-    text = ""
-    if(compact_print) :
-        text += i.name
-    else :
-        text += i.name
-        text += "\nDescription : " + i.description
-        if(i.is_bfr_fight) :
-            if i.buff_start_self.pv != 0:
-                text += "\nBonus HP : " + str(i.buff_start_self.pv)
-            if (i.buff_start_self.strength != 0 or i.buff_start_self_mult_lvl.strength != 0):
-                text += f"\nBonus Strength : {i.buff_start_self.strength} + {i.buff_start_self_mult_lvl.strength}*[LVL]"
-
-            if (i.buff_start_self.agility != 0 or i.buff_start_self_mult_lvl.agility != 0):
-                text += f"\nBonus Agility : {i.buff_start_self.agility} + {i.buff_start_self_mult_lvl.agility}*[LVL]"
-
-            if (i.buff_start_self.lethality != 0 or i.buff_start_self_mult_lvl.lethality != 0):
-                text += f"\nBonus Lethality : {i.buff_start_self.lethality} + {i.buff_start_self_mult_lvl.lethality}*[LVL]"
-
-            if (i.buff_start_self.viciousness != 0 or i.buff_start_self_mult_lvl.viciousness != 0):
-                text += f"\nBonus Viciousness : {i.buff_start_self.viciousness} + {i.buff_start_self_mult_lvl.viciousness}*[LVL]"
+                    if flat_buff != 0 or mult_buff != 0:
+                        text += f"\nBonus {stat_name.capitalize()}: "
+                        if flat_buff != 0:
+                            text += f"{flat_buff}"
+                            if mult_buff:
+                                text += " + "
+                        if mult_buff:
+                            text += f"{mult_buff}*[LVL]"
         
-
-    return text
+        return text
 
 def mise_en_forme_str(text) -> str:
     new_text = "```" + text + "```"

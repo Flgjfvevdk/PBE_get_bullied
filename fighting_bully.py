@@ -1,7 +1,8 @@
-
+from __future__ import annotations # Replace type hints to their string form (Item => "Item"), which resolves circular dependencies
+                                   # WARNING: Should only be used for type hints
 from dataclasses import dataclass, replace
 from bully import Bully, Stats
-from item import Item
+import item
 
 @dataclass
 class FightingBully():
@@ -10,9 +11,10 @@ class FightingBully():
     base_stats: Stats
     stats: Stats
 
-    equipped_item: Item|None = None
+    equipped_item: item.Item|None = None
 
     @staticmethod
-    def create_fighting_bully(b:Bully, item: Item|None = None) -> "FightingBully":
+    def create_fighting_bully(b:Bully, i: item.Item|None = None) -> "FightingBully":
         fighter = FightingBully(combattant=b, pv=b.max_pv, base_stats=replace(b.stats), stats=replace(b.stats))
+        fighter.equipped_item = i
         return fighter

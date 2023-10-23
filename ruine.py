@@ -275,15 +275,15 @@ class Ruin():
 
         if (self.rarity_level == None):
             if(self.level <= 10):
-                self.rarity_level = Rarity(0)
+                self.rarity_level = Rarity.NOBODY
             elif(self.level <= 25):
-                self.rarity_level = Rarity(1)
+                self.rarity_level = Rarity.TOXIC
             elif(self.level <= 35):
-                self.rarity_level = Rarity(2)
+                self.rarity_level = Rarity.MONSTER
             elif(self.level <= 45):
-                self.rarity_level = Rarity(3)
+                self.rarity_level = Rarity.DEVASTATOR
             else:
-                self.rarity_level = Rarity(4)
+                self.rarity_level = Rarity.SUBLIME
 
         #Ajout salle boss
         self.rooms.append(BossRoom.generate(self.level, self.rarity_level))
@@ -311,10 +311,10 @@ class Ruin():
             return
 
         #On initialise les pv des bullies
-        #pv_team_joueur = [] #pv du bully n°index. Si bully n°index n'existe pas alors -1
         self.fighters_joueur = [FightingBully.create_fighting_bully(b) for b in self.player.bullies]
 
         try: 
+            # Pop removes the last item
             while not await self.rooms.pop().interact(self):
                 pass
 

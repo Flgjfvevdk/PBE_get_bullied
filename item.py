@@ -1,89 +1,102 @@
 import os
 from fighting_bully import FightingBully
+from database import Base
+from sqlalchemy.orm import Mapped, mapped_column, relationship, composite
+from sqlalchemy import ForeignKey, String
+import player_info
+from dataclasses import KW_ONLY, replace, dataclass
 
-class Item :
+from bully import Stats, Seed
 
-    def __init__(self, name = "ITEM", description="a mysterious item", is_bfr_fight = False, is_end_round = False, is_aft_fight = False, 
-                 buff_self_start = [0,0,0,0,0], buff_adv_start = [0,0,0,0,0], 
-                 buff_self_start_multiplicatif_lvl = [0,0,0,0], buff_adv_start_multiplicatif_lvl = [0,0,0,0]) :
-        '''
-        Param : 
-            - is_bfr_fight : Est ce que y'a un effet qui doit s'appliquer avant le début du combat
+@dataclass
+class ItemStats(Stats):
+    pv: int
+
+
+class Item(Base):
+    __tablename__ = "item"
+
+    id: Mapped[int] = mapped_column(primary_key=True, init=False)
+    player_id: Mapped[int] = mapped_column(ForeignKey("player.id"),init=False) 
+    player: Mapped["player_info.Player"] = relationship(back_populates="items", init=False, lazy="selectin")
+
+    name: Mapped[str] = mapped_column(String(50))
+
+    _: KW_ONLY #Marks all following fields as kw_only=true, which means that they must be explicitly specified in the init.
+    description: Mapped[str] = mapped_column(String(255), default="a mysterious item")
+
+    is_end_round: Mapped[bool] = mapped_column(default=False)
+    """Est ce que y'a un effet qui doit s'appliquer a la fin de chaque round
+                - TODO"""
+
+    is_bfr_fight: Mapped[bool] = mapped_column(default=False)
+    """Est ce que y'a un effet qui doit s'appliquer avant le début du combat
                 - buff_self = [buff_pv, buff_force, buff_agility, buff_lethality, buff_viciousness]
                 - buff_enemy = [buff_pv, buff_force, buff_agility, buff_lethality, buff_viciousness]
-            - is_end_round : Est ce que y'a un effet qui doit s'appliquer a la fin de chaque round
-                -
-            - is_aft_fight : Est ce que y'a un effet qui doit s'appliquer après la fin du combat
-                -
-        '''
-        self.name = name
-        self.description = description
-        
-        self.is_bfr_fight = is_bfr_fight
-        self.is_end_round = is_end_round
-        self.is_aft_fight = is_aft_fight
+    """
 
-        if(self.is_bfr_fight): 
-            self.buff_start_self_pv = buff_self_start[0]
-            self.buff_start_self_strength = buff_self_start[1]
-            self.buff_start_self_agility = buff_self_start[2]
-            self.buff_start_self_lethality = buff_self_start[3]
-            self.buff_start_self_viciousness = buff_self_start[4]
 
-            self.buff_start_self_mult_lvl_strength = buff_self_start_multiplicatif_lvl[0]
-            self.buff_start_self_mult_lvl_agility = buff_self_start_multiplicatif_lvl[1]
-            self.buff_start_self_mult_lvl_lethality = buff_self_start_multiplicatif_lvl[2]
-            self.buff_start_self_mult_lvl_viciousness = buff_self_start_multiplicatif_lvl[3]
+    is_aft_fight: Mapped[bool] = mapped_column(default=False)
+    """Est ce que y'a un effet qui doit s'appliquer après la fin du combat
+                - TODO"""
 
-            self.buff_start_adv_pv = buff_adv_start[0]
-            self.buff_start_adv_strength = buff_adv_start[1]
-            self.buff_start_adv_agility = buff_adv_start[2]
-            self.buff_start_adv_lethality = buff_adv_start[3]
-            self.buff_start_adv_viciousness = buff_adv_start[4]
+    buff_start_self: Mapped[ItemStats] = composite(
+        mapped_column(name="buff_self_start_strength"),
+        mapped_column(name="buff_self_start_agility"),
+        mapped_column(name="buff_self_start_lethality"),
+        mapped_column(name="buff_self_start_viciousness"),
+        mapped_column(name="buff_self_start_pv"),
+        default_factory=lambda: ItemStats(0,0,0,0,0)
+    )
 
-            self.buff_start_adv_mult_lvl_strength = buff_adv_start_multiplicatif_lvl[0]
-            self.buff_start_adv_mult_lvl_agility = buff_adv_start_multiplicatif_lvl[1]
-            self.buff_start_adv_mult_lvl_lethality = buff_adv_start_multiplicatif_lvl[2]
-            self.buff_start_adv_mult_lvl_viciousness = buff_adv_start_multiplicatif_lvl[3]
-
-        if(self.is_end_round) :
-            #Faire un truc
-            pass
-
-        if(self.is_aft_fight) : 
-            #Faire un truc 
-            pass
+    buff_start_adv: Mapped[ItemStats] = composite(
+        mapped_column(name="buff_adv_start_strength"),
+        mapped_column(name="buff_adv_start_agility"),
+        mapped_column(name="buff_adv_start_lethality"),
+        mapped_column(name="buff_adv_start_viciousness"),
+        mapped_column(name="buff_adv_start_pv"),
+        default_factory=lambda: ItemStats(0,0,0,0,0)
+    )
+    buff_start_self_mult_lvl: Mapped[Seed] = composite(
+        mapped_column(name="buff_self_start_multiplicatif_lvl_strength"),
+        mapped_column(name="buff_self_start_multiplicatif_lvl_agility"),
+        mapped_column(name="buff_self_start_multiplicatif_lvl_lethality"),
+        mapped_column(name="buff_self_start_multiplicatif_lvl_viciousness"),
+        default_factory=lambda: Seed(0,0,0,0)
+    )
+    buff_start_adv_mult_lvl: Mapped[Seed] = composite(
+        mapped_column(name="buff_adv_start_multiplicatif_lvl_strength"),
+        mapped_column(name="buff_adv_start_multiplicatif_lvl_agility"),
+        mapped_column(name="buff_adv_start_multiplicatif_lvl_lethality"),
+        mapped_column(name="buff_adv_start_multiplicatif_lvl_viciousness"),
+        default_factory=lambda: Seed(0,0,0,0)
+    )
 
     def effect_before_fight(self, fighting_bully_self:FightingBully, fighting_bully_adv:FightingBully) -> None:
         if(self.is_bfr_fight) :
-            fighting_bully_self.pv += self.buff_start_self_pv
+            stat_self = replace(fighting_bully_self.base_stats)
+            fighting_bully_self.pv += self.buff_start_self.pv
             lvl_self = fighting_bully_self.combattant.lvl
-            buff_self_str = self.buff_start_self_strength + round(lvl_self * self.buff_start_self_mult_lvl_strength)
-            buff_self_agi = self.buff_start_self_agility + round(lvl_self * self.buff_start_self_mult_lvl_agility)
-            buff_self_leth = self.buff_start_self_lethality + round(lvl_self * self.buff_start_self_mult_lvl_lethality)
-            buff_self_vicious = self.buff_start_self_viciousness + round(lvl_self * self.buff_start_self_mult_lvl_viciousness)
-            #stat_self = [stat_self[0] + self.buff_start_self_strength, stat_self[1] + self.buff_start_self_agility, stat_self[2] + self.buff_start_self_lethality, stat_self[3] + self.buff_start_self_viciousness]
-            stat_self = fighting_bully_self.base_stat.copy()
-            stat_self = [stat_self[0] + buff_self_str, stat_self[1] + buff_self_agi, stat_self[2] + buff_self_leth, stat_self[3] + buff_self_vicious]
+            stat_self.strength += self.buff_start_self.strength + round(lvl_self * self.buff_start_self_mult_lvl.strength)
+            stat_self.agility += self.buff_start_self.agility + round(lvl_self * self.buff_start_self_mult_lvl.agility)
+            stat_self.lethality += self.buff_start_self.lethality + round(lvl_self * self.buff_start_self_mult_lvl.lethality)
+            stat_self.viciousness += self.buff_start_self.viciousness + round(lvl_self * self.buff_start_self_mult_lvl.viciousness)
             
-            fighting_bully_self.base_stat = stat_self
-            fighting_bully_self.stat = stat_self
+            fighting_bully_self.base_stats = stat_self
+            fighting_bully_self.stats = stat_self
 
-            fighting_bully_adv.pv += self.buff_start_adv_pv
+            stat_adv = replace(fighting_bully_adv.base_stats)
+            fighting_bully_adv.pv += self.buff_start_adv.pv
             lvl_adv = fighting_bully_adv.combattant.lvl
-            buff_adv_str = self.buff_start_adv_strength + round(lvl_adv * self.buff_start_adv_mult_lvl_strength)
-            buff_adv_agi = self.buff_start_adv_agility + round(lvl_adv * self.buff_start_adv_mult_lvl_agility)
-            buff_adv_leth = self.buff_start_adv_lethality + round(lvl_adv * self.buff_start_adv_mult_lvl_lethality)
-            buff_adv_vicious = self.buff_start_adv_viciousness + round(lvl_adv * self.buff_start_adv_mult_lvl_viciousness)
-            #stat_adv = [stat_adv[0] + self.buff_start_adv_strength, stat_adv[1] + self.buff_start_adv_agility, stat_adv[2] + self.buff_start_adv_lethality, stat_adv[3] + self.buff_start_adv_viciousness]
-            stat_adv = fighting_bully_adv.base_stat.copy()
-            stat_adv = [stat_adv[0] + buff_adv_str, stat_adv[1] + buff_adv_agi, stat_adv[2] + buff_adv_leth, stat_adv[3] + buff_adv_vicious]
+            stat_adv.strength = self.buff_start_adv.strength + round(lvl_adv * self.buff_start_adv_mult_lvl.strength)
+            stat_adv.agility = self.buff_start_adv.agility + round(lvl_adv * self.buff_start_adv_mult_lvl.agility)
+            stat_adv.lethality = self.buff_start_adv.lethality + round(lvl_adv * self.buff_start_adv_mult_lvl.lethality)
+            stat_adv.viciousness = self.buff_start_adv.viciousness + round(lvl_adv * self.buff_start_adv_mult_lvl.viciousness)
             
-            fighting_bully_adv.base_stat = stat_adv
-            fighting_bully_adv.stat = stat_adv
+            fighting_bully_adv.base_stats = stat_adv
+            fighting_bully_adv.stats = stat_adv
 
         return
-        #return (pv_self, stat_self, pv_adv, stat_adv)
 
     def effect_end_round(self, pv_self, stat_self, pv_adv, stat_adv, 
                         my_turn:bool = False, hit_success:bool = False, letha_success:bool = False, 
@@ -97,41 +110,31 @@ class Item :
         #Modification
         return (gold_earned, xp_earned)
 
+    # Pour gérer les print ______________________________________________
+    def print(self, compact_print = False) -> str:
+        text = ""
+        if(compact_print) :
+            text += self.name
+        else :
+            text += self.name
+            text += "\nDescription : " + self.description
+            if(self.is_bfr_fight):
+                if self.buff_start_self.pv != 0:
+                    text += "\nBonus HP : " + str(self.buff_start_self.pv)
+                for stat_name in self.buff_start_self.__dataclass_fields__:
+                    flat_buff = getattr(self.buff_start_self, stat_name)
+                    mult_buff = getattr(self.buff_start_self_mult_lvl, stat_name)
 
-    # __
-    def set_file_path(self, new_file_path) -> None:
-        self.associated_file_path = new_file_path
-        self.associated_number = os.path.splitext(os.path.basename(new_file_path))[0]
-
-    def get_print(self, compact_print = False) -> str:
-        return str_print_item(self, compact_print)
-
-
-# Pour gérer les print ______________________________________________
-def str_print_item(i:Item, compact_print = False) -> str:
-    text = ""
-    if(compact_print) :
-        text += i.name
-    else :
-        text += i.name
-        text += "\nDescription : " + i.description
-        if(i.is_bfr_fight) :
-            if i.buff_start_self_pv != 0:
-                text += "\nBonus HP : " + str(i.buff_start_self_pv)
-            if (i.buff_start_self_strength != 0 or i.buff_start_self_mult_lvl_strength != 0):
-                text += f"\nBonus Strength : {i.buff_start_self_strength} + {i.buff_start_self_mult_lvl_strength}*[LVL]"
-
-            if (i.buff_start_self_agility != 0 or i.buff_start_self_mult_lvl_agility != 0):
-                text += f"\nBonus Agility : {i.buff_start_self_agility} + {i.buff_start_self_mult_lvl_agility}*[LVL]"
-
-            if (i.buff_start_self_lethality != 0 or i.buff_start_self_mult_lvl_lethality != 0):
-                text += f"\nBonus Lethality : {i.buff_start_self_lethality} + {i.buff_start_self_mult_lvl_lethality}*[LVL]"
-
-            if (i.buff_start_self_viciousness != 0 or i.buff_start_self_mult_lvl_viciousness != 0):
-                text += f"\nBonus Viciousness : {i.buff_start_self_viciousness} + {i.buff_start_self_mult_lvl_viciousness}*[LVL]"
+                    if flat_buff != 0 or mult_buff != 0:
+                        text += f"\nBonus {stat_name.capitalize()}: "
+                        if flat_buff != 0:
+                            text += f"{flat_buff}"
+                            if mult_buff:
+                                text += " + "
+                        if mult_buff:
+                            text += f"{mult_buff}*[LVL]"
         
-
-    return text
+        return text
 
 def mise_en_forme_str(text) -> str:
     new_text = "```" + text + "```"

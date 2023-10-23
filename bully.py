@@ -3,251 +3,253 @@ import random
 import numpy as np
 import pickle
 import shutil
+from typing import Any, List, Optional, Tuple
+from dataclasses import dataclass, replace, InitVar, KW_ONLY
+from pathlib import Path
+
+import player_info
 
 from enum import Enum
-#self.rarity.name pour avoir le nom du truc
+from sqlalchemy.orm import Mapped, mapped_column, MappedAsDataclass, relationship, composite
+from sqlalchemy import String, select, ForeignKey
+from sqlalchemy.ext.asyncio.session import async_object_session
+from database import Base, new_session, DBPath
+from sqlalchemy.ext.mutable import MutableComposite
+
+
+BULLY_RARITY_POINTS = [4, 5, 6, 7, 8]
+BULLY_RARITY_LEVEL = [1, 1.1, 1.25, 1.5, 2]
+BULLY_RARITY_DEATH_EXP_COEFF = [0.5, 1, 1.25, 1.5, 2]
+BULLY_RARITY_DEATH_MIN_GOLD = [0, 40, 80, 150, 200]
+BULLY_RARITY_DEATH_MAX_GOLD = [0, 80, 150, 500, 700]
+
+BULLY_MAX_LEVEL = 50
+BULLY_MAX_BASE_HP = 10
+
 class Rarity(Enum):
+    #self.rarity.name pour avoir le nom du truc
     NOBODY = 0
     TOXIC = 1
     MONSTER = 2
     DEVASTATOR = 3
     SUBLIME = 4
 
-BULLY_RARITY_POINTS = [4, 5, 6, 7, 8]
-BULLY_RARITY_LEVEL = [1, 1.1, 1.25, 1.5, 2]
-
-BULLY_MAX_LEVEL = 50
-BULLY_MAX_BASE_HP = 10
-
-class Bully :
-    def __init__(self, name, file_path, stats=None, rarity=Rarity.NOBODY, must_load_image = True, max_pv = BULLY_MAX_BASE_HP):
-        self.name = name
-        self.set_file_path(file_path)
-        #print("associated number ", self.associated_number)
-        self.lvl = 1
-        self.exp = 0.0
-        self.rarity = rarity
-        self.max_pv = max_pv
-        self.seed = generate_seed_stat()
-        if(must_load_image):
-            self.set_image_with_path(self.new_possible_image_random())
-        #print(name + "'s seed :", self.seed)
-        if(stats is None):
-            self.strength = 1
-            self.agility = 1
-            self.lethality = 1
-            self.viciousness = 1
-            #self.increase_stat_with_seed(nb_points=5, extrem_seed=True)
-            points_bonus = BULLY_RARITY_POINTS[self.rarity.value]
-            self.increase_stat_with_seed(nb_points=points_bonus, extrem_seed=True)
-                
-        else :
-            self.strength = stats[0]
-            self.agility = stats[1]
-            self.lethality = stats[2]
-            self.viciousness = stats[3]
+    @property
+    def points_bonus(self) -> int:
+        return BULLY_RARITY_POINTS[self.value]
     
-    def __setstate__(self, state):
-        # Check if 'rarity' exists in the state
-        if 'rarity' not in state:
-            state['rarity'] = Rarity.NOBODY
-        if 'max_pv' not in state:
-            state['max_pv'] = BULLY_MAX_BASE_HP
-        self.__dict__.update(state)
+    @property
+    def level_bonus(self) -> float:
+        return BULLY_RARITY_LEVEL[self.value]
+    
+    @property
+    def death_exp_coeff(self) -> float:
+        return BULLY_RARITY_DEATH_EXP_COEFF[self.value]
+    
+    @property
+    def death_min_gold(self):
+        return BULLY_RARITY_DEATH_MAX_GOLD[self.value]
 
+    @property
+    def death_max_gold(self):
+        return BULLY_RARITY_DEATH_MIN_GOLD[self.value]
+    
+@dataclass
+class Stats(MutableComposite):
+    strength: int
+    agility: int
+    lethality: int
+    viciousness: int
 
-    def increase_stat_with_seed(self, nb_points=1, extrem_seed = False, talktative = False):
+    def __setattr__(self, __name: str, __value: Any) -> None:
+        super().__setattr__(__name, __value)
+        self.changed()
+
+    def increase_with_seed(self, seed:"Seed", *, talkative = False) -> None:
+        # Get a random stat
+        random_num = random.uniform(0, 0.9999) # Not 1 to account for possible float calculation errors.
+        cum_prob = seed.cumulative_probs()
+        stats = self.__dataclass_fields__
+        for i, field_name in enumerate(stats):
+            if random_num <= cum_prob[i]:
+                break
+        else:
+            print("ERREUR ON NE DEVRAIT PAS ARRIVER ICI ")
+            return
+        
+        # Increase the value of the attribute
+        setattr(self, field_name, getattr(self,field_name) + 1)
+        if(talkative):
+            print(f"{field_name.capitalize()} +1!")
+        return
+    
+@dataclass
+class Seed(MutableComposite):
+    strength: float
+    agility: float
+    lethality: float
+    viciousness: float
+
+    def __setattr__(self, __name: str, __value: Any) -> None:
+        super().__setattr__(__name, __value)
+        self.changed()
+
+    @staticmethod
+    def generate_seed_stat() -> "Seed":
+        seed = []
+        for _ in range(len(Seed.__dataclass_fields__)):
+            r = random.random()
+            seed.append(r)
+        seed = np.array(seed)
+        seed = seed / np.sum(seed)
+
+        return Seed(*seed)
+    
+    def extremization(self) -> "Seed":
+        seed_extreme = replace(self)
+        seed_names = seed_extreme.__dataclass_fields__
+        for name in seed_names:
+            setattr(seed_extreme, name, getattr(seed_extreme,name) ** 1.5)
+        total = sum(getattr(seed_extreme,name) for name in seed_names)
+        for name in seed_names:
+            setattr(seed_extreme, name, getattr(seed_extreme,name) / total)
+        return seed_extreme
+
+    def cumulative_probs(self) -> List[float]:
+        cumulative_sum: float = 0
+        cumulative_probs = []
+
+        # Calculate the cumulative sum of the probabilities
+        for name in self.__dataclass_fields__:
+            cumulative_sum += getattr(self, name)
+            cumulative_probs.append(cumulative_sum)
+        return cumulative_probs
+    
+
+class Bully(Base):
+    __tablename__ = "bully"
+
+    id: Mapped[int] = mapped_column(primary_key=True, init=False)
+    player_id: Mapped[int] = mapped_column(ForeignKey("player.id"),init=False) 
+    player: Mapped["player_info.Player"] = relationship(back_populates="bullies", init=False, lazy="selectin")
+
+    name: Mapped[str] = mapped_column(String(50))
+
+    _: KW_ONLY #Marks all following fields as kw_only=true, which means that they must be explicitly specified in the init.
+
+    image_file_path: Mapped[Optional[Path]] = mapped_column(type_ = DBPath, default=None, nullable=True)
+    must_load_image: InitVar[bool] = True
+    lvl: Mapped[int] = mapped_column(default = 1)
+    exp: Mapped[float] = mapped_column(default = 0.0)
+    rarity: Mapped[Rarity] = mapped_column(default=Rarity.NOBODY) #Automatic Enum mapping! neat
+    max_pv: Mapped[int] = mapped_column(default=BULLY_MAX_BASE_HP)
+    seed: Mapped[Seed] = composite(
+        mapped_column(name="seed_strength"),
+        mapped_column(name="seed_agility"),
+        mapped_column(name="seed_lethality"),
+        mapped_column(name="seed_viciousness"),
+        init=False, default_factory=Seed.generate_seed_stat
+    )
+    stats: Mapped[Stats] = composite(
+        mapped_column(name="stat_strength"),
+        mapped_column(name="stat_agility"),
+        mapped_column(name="stat_lethality"),
+        mapped_column(name="stat_viciousness"),
+        default=None
+    )
+
+    def __post_init__(self, must_load_image:bool):
+        if(must_load_image):
+            self.image_file_path = self.new_possible_image_random()
+
+        if self.stats is None or (None in self.stats.__dict__.items()):
+            self.generate_bully_stat()
+    
+
+    def generate_bully_stat(self) -> None:
+        self.stats = Stats(1,1,1,1)
+        nb_points = self.rarity.points_bonus
+        self.increase_stat_with_seed(nb_points, extrem_seed=True)
+
+    def increase_stat_with_seed(self, nb_points=1, extrem_seed = False, talkative = False):
         used_seed = self.seed
         if(extrem_seed):
             #Pour l'initialisation, on extrémise un peu la seed pour que les stats reflètent plus la seed
-            used_seed = extremisation_seed(self.seed)
+            used_seed = self.seed.extremization()
 
-        augmentations = [0,0,0,0]
-        cumulative_probs = cumulative_probs_seed(used_seed)
-        for k in range(nb_points):
-            i = random_seed_index(cumulative_probs)
-            augmentations[i] += 1
-            if(talktative):
-                match (i):
-                    case 0 :
-                        print("Strenght +1")
-                    case 1 :
-                        print("Agility +1")
-                    case 2 :
-                        print("Lethality +1")
-                    case 3 :
-                        print("Viciousness +1")
-        
-        self.strength += augmentations[0]
-        self.agility += augmentations[1]
-        self.lethality += augmentations[2]
-        self.viciousness += augmentations[3]
+        for _ in range(nb_points):
+            self.stats.increase_with_seed(used_seed, talkative=talkative)
         return
 
-    def give_exp(self, exp_recu):
+    def give_exp(self, exp_recu) -> None:
         self.exp += exp_recu
         if(self.exp >= self.lvl):
             self.level_up()
         self.exp = round(self.exp, 1)
         print("exp : ", self.exp)
-        self.save_changes()
 
     def level_up(self):
-        while self.exp >= self.lvl:
+        while self.exp >= self.lvl and self.lvl <= BULLY_MAX_LEVEL:
             self.exp -= self.lvl
             self.lvl += 1
-            self.lvl = min(self.lvl, BULLY_MAX_LEVEL)
             print("level up :", self.lvl)
             new_points = new_points_lvl_up(self.lvl, self.rarity)
-            self.increase_stat_with_seed(nb_points=new_points, talktative = True)
+            self.increase_stat_with_seed(nb_points=new_points, talkative = True)
 
     def level_up_one(self):
         self.lvl += 1
         print("level up :", self.lvl)
         new_points = new_points_lvl_up(self.lvl, self.rarity)
-        self.increase_stat_with_seed(nb_points=new_points, talktative = True)
-
-    def set_level(self, level):
-        print("/!\\ do not change stat, donc faut faire gaffe, mieux vaut enlever ça ou renommer")
-        self.lvl = level
+        self.increase_stat_with_seed(nb_points=new_points, talkative = True)
 
     def exp_give_when_die(self):
         xp = self.lvl
-        match (self.rarity.value):
-            case 0 :
-                xp = xp * 0.5
-            case 1 :
-                xp = xp * 1
-            case 2 :
-                xp = xp * 1.25
-            case 3 :
-                xp = xp * 1.5
-            case 4 :
-                xp = xp * 2
+        xp *= self.rarity.death_exp_coeff
         return round(xp, 1)
     
     def gold_give_when_die(self):
-        gold = 0
-        min_gold_gave = [0, 40, 80, 150, 200]
-        max_gold_gave = [0, 80, 150, 500, 700]
-        def f(x):
-            x = max(1, min(10, x))
-            return (x - 1) / 9
+        def lerp(start, end, x):
+            return x*end + (1-x) * start
         
-        mini = min_gold_gave[self.rarity.value]
-        maxi = max_gold_gave[self.rarity.value]
-        gold = f(self.lvl) * maxi + (1 - f(self.lvl)) * mini
+        mini = self.rarity.death_min_gold
+        maxi = self.rarity.death_max_gold
+        gold = lerp(mini, maxi, (self.lvl - 1)/9)
         return gold
 
-    # Manipulation file
-    def kill(self):
-        print("je me tue : ", self.name)
-        os.remove(self.get_file_path())
-        self.remove_image()
-    
-    def save_changes(self, forced_save = False):
-        print("Saving file")
-        try :
-            print("j'essaie de save' : ", self.name)
-            if(not os.path.exists(self.get_file_path()) and not forced_save) :
-                print("can't save the file")
-                return
-            file = open(self.get_file_path(), "wb")
-            print(file)
-            pickle.dump(self, file)
-            file.close()
-        except Exception as e :
-            print(e)
-    
-    def set_file_path(self, new_file_path):
-        self.associated_file_path = new_file_path
-        self.associated_number = os.path.splitext(os.path.basename(new_file_path))[0]
 
-    def get_file_path(self):
-        return self.associated_file_path
+    async def kill(self):
+        print("je me tue : ", self.name)
+        self.player.bullies.remove(self)
+        session = async_object_session(self)
+        if session is not None:
+            await session.delete(self)
 
     def get_print(self, compact_print = False):
         return str_print_bully(self, compact_print)
-
-    #_____
+    
 
     #Pour gérer l'image du bully
-    def get_image(self):
-        folder_path = os.path.dirname(self.associated_file_path)  # Obtenir le chemin du dossier
-        image_files = os.listdir(folder_path)
+    def get_image(self) -> Path:
+        image_path = self.image_file_path
+        if image_path is None or not image_path.exists():
+            # Si aucune image correspondante n'est trouvée, renvoie le chemin de l'image par défaut
+            image_path = Path("bully_not_found.png")
+        return image_path
 
-        for file_name in image_files:
-            if file_name.startswith(f"{self.associated_number}_"):
-                image_path = os.path.join(folder_path, file_name)
-                return image_path
-
-        # Si aucune image correspondante n'est trouvée, renvoie le chemin de l'image par défaut
-        default_image_path = "bully_not_found.png"
-        return default_image_path
-    
-    def get_image_path(self):
-        folder_path = os.path.dirname(self.associated_file_path)
-        image_files = os.listdir(folder_path)
-        for file_name in image_files:
-            if file_name.startswith(f"{self.associated_number}_"):
-                return os.path.join(folder_path, file_name)
-        default_image_path = "bully_not_found.png"
-        return default_image_path
-
-    def set_image_with_path(self, image_path):
-        if(image_path is None):
-            #print("aucune image dispo")
-            return
-        image_name = os.path.basename(image_path)
-        new_image_name = f"{self.associated_number}_{image_name}"
-        new_image_path = os.path.join(os.path.dirname(self.associated_file_path), new_image_name)
-        shutil.move(image_path, new_image_path)
-        return new_image_path
-    
-    def set_image_with_name(self, image_name):
-        folder_path = f"game_data/bully_images/{self.rarity.name}"
-        image_path = os.path.join(folder_path, image_name)
-        self.set_image_with_path(image_path)
-
-    def remove_image(self):
-        folder_path = os.path.dirname(self.associated_file_path)
-
-        for file_name in os.listdir(folder_path):
-            if file_name.startswith(f"{self.associated_number}_"):
-                image_path = os.path.join(folder_path, file_name)
-                new_image_name = file_name.replace(f"{self.associated_number}_", "")
-                new_folder_path = os.path.join("game_data/bully_images", self.rarity.name)
-                new_image_path = os.path.join(new_folder_path, new_image_name)
-
-                if not os.path.exists(new_folder_path):
-                    os.makedirs(new_folder_path)
-
-                shutil.move(image_path, new_image_path)
-                return new_image_path
-
-        return None
-    
     def new_possible_image_random(self):
-        #print("on est al")
-        folder_path = f"game_data/bully_images/{self.rarity.name}"
-        #print("folder_path : ", folder_path)
+        folder_path = Path(f"game_data/bully_images/{self.rarity.name}")
         if not os.path.isdir(folder_path):
+            print("Image dir is absent!")
             return None
 
-        image_files = os.listdir(folder_path)
-        #print("image_files : ", image_files)
-        if not image_files:
-            return None
+        image_files = list(folder_path.iterdir())
 
-        random_image_file = random.choice(image_files)
-        file_path = os.path.join(folder_path, random_image_file)
-        #print("on retourne ,", file_path)
+        file_path = random.choice(image_files)
         return file_path
-    #______
 
 
     @staticmethod
-    def clash_stat(st_actif, st_passif, neutre = None):
+    def clash_stat(st_actif: int, st_passif: int, neutre: Optional[int] = None):
         """
         return true si la st_actif réussit le challenge
         """
@@ -260,17 +262,6 @@ class Bully :
             return True
         else :
             return False
-
-    @staticmethod
-    def combat_tres_simple(b1, b2):
-        """
-        Renvoie un tuple : (bully_gagnant, bully_perdant)
-        """
-        r = random.random()
-        if( r < b1.strength / ( b1.strength + b2.strength ) ) :
-            return (b1, b2)
-        else :
-            return (b2, b1)
         
 # /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 # ________________________________________________________________________________________________________________________________________________
@@ -279,30 +270,30 @@ class Bully :
 def str_print_bully(bully:Bully, compact_print = False):
     text = ""
     if(compact_print) :
-        text += bully.name + " | lvl : " + str(bully.lvl) + " | Rarity : " + bully.rarity.name + "\n\t[" + str(bully.associated_number) + "]\t" 
-        text += " |S : "+ str(bully.strength)
-        text += " |A : "+ str(bully.agility)
-        text += " |L : "+ str(bully.lethality)
-        text += " |V : "+ str(bully.viciousness)
+        text += bully.name + " | lvl : " + str(bully.lvl) + " | Rarity : " + bully.rarity.name + "\n\t" 
+        text += " |S : "+ str(bully.stats.strength)
+        text += " |A : "+ str(bully.stats.agility)
+        text += " |L : "+ str(bully.stats.lethality)
+        text += " |V : "+ str(bully.stats.viciousness)
     else :
-        text += bully.name + "\t[" + str(bully.associated_number) + "]" + " | Rarity : " + bully.rarity.name
+        text += bully.name + "\tRarity : " + bully.rarity.name
         text += "\nlvl : " + str(bully.lvl)
         text += "\texp : " + str(bully.exp)
         #On print la force
         text += "\nStrength : - - -"
-        text += str_text_stat(bully.strength)
+        text += str_text_stat(bully.stats.strength)
         
         #On print l'agilité
         text += "\nAgility :- - - -"
-        text += str_text_stat(bully.agility)
+        text += str_text_stat(bully.stats.agility)
 
         #On print la lethalité
         text += "\nLethality :- - -"
-        text += str_text_stat(bully.lethality)
+        text += str_text_stat(bully.stats.lethality)
 
         #On print la vicieusité
         text += "\nViciousness :- -"
-        text += str_text_stat(bully.viciousness)
+        text += str_text_stat(bully.stats.viciousness)
 
     return text
 
@@ -332,48 +323,9 @@ def mise_en_forme_str(text):
 
 ##//////////////////////////////////////////////////////////////////////////////////////////////////////
 
-# Pour gérer les modifs de stat _____________________________________
-def generate_seed_stat(nb_stat = 4):
-    seed = []
-    for k in range(nb_stat):
-        r = random.random()
-        seed.append(r)
-    seed = np.array(seed)
-    seed = seed / np.sum(seed)
-    return seed
-
-def extremisation_seed(seed):
-    seed_extreme = seed.copy()
-    seed_extreme = seed_extreme**(1.5)
-    seed_extreme = seed_extreme / sum(seed_extreme)
-    return seed_extreme
-
-def cumulative_probs_seed(seed):
-    cumulative_sum = 0
-    cumulative_probs = []
-
-    # Calculate the cumulative sum of the probabilities
-    for prob in seed:
-        cumulative_sum += prob
-        cumulative_probs.append(cumulative_sum)
-    return cumulative_probs
-
-def random_seed_index(cumulative_probs):
-    # Generate a random number between 0 and 1
-    random_num = random.uniform(0, 1)
-
-    # Find the index corresponding to the random number in the cumulative probabilities
-    for i, cum_prob in enumerate(cumulative_probs):
-        if random_num <= cum_prob:
-            return i
-    
-    print("ERREUR ON NE DEVRAIT PAS ARRIVER ICI ")
-    return -1
-##//////////////////////////////////////////////////////////////////////////////////////////////////////
-
 # Pour gérer lvl up selon rareté 
-def new_points_lvl_up(lvl, rarity=Rarity.NOBODY):
-    coef_bonus = BULLY_RARITY_LEVEL[rarity.value] - 1
+def new_points_lvl_up(lvl, rarity=Rarity.NOBODY) -> int:
+    coef_bonus = rarity.level_bonus - 1
     if(coef_bonus < 0):
         raise Exception("coef_bonus n'est pas censé être négatif")
     if(coef_bonus > 1):

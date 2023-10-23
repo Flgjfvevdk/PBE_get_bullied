@@ -311,7 +311,8 @@ class Ruin():
                 pass
 
             await self.thread.send(f"Congratulation {self.user}, you beat the boss and won their item!")
-            
+        except (TimeoutError, IndexError):
+            pass
         finally:
             await self.exit()
 

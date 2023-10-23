@@ -93,6 +93,7 @@ async def print_shop(ctx: Context, bot: Bot) -> None:
             reaction, user = await bot.wait_for('reaction_add', timeout=SHOP_TIMEOUT, check=check)
             async with shop_lock:
                 await handle_shop_reaction(ctx, reaction, user, shop_msg)
+                utils.players_in_interaction.discard(ctx.author.id)
 
     except Exception as e:
         if not isinstance(e, asyncio.TimeoutError):
@@ -121,6 +122,7 @@ async def handle_shop_reaction(ctx: Context, reaction: discord.Reaction, user: d
     # Process the purchase 
     async with database.new_session() as session:
         player = await session.get(Player, user.id)
+        
         if player is None:
             await ctx.send("Please join the game first !")
             return
@@ -132,16 +134,16 @@ async def handle_shop_reaction(ctx: Context, reaction: discord.Reaction, user: d
             await ctx.channel.send(f"You can't have more than {interact_game.BULLY_NUMBER_MAX} bullies at the same time")
             return
         
+        text = bullies_in_shop_to_text()
+        await shop_msg.edit(content=text)
+        await ctx.channel.send(f"{user.mention} has purchased {b.name} for {cout_bully(b)}🩹!")
+
         money.give_money(player, - cout_bully(b))
         player.bullies.append(b)
         del bullies_in_shop[item_index]
         await session.commit()
 
-        text = bullies_in_shop_to_text()
-        await shop_msg.edit(content=text)
-        await ctx.send(f"{user.mention} has purchased {b.name} for {cout_bully(b)}🩹!")
-
-    utils.players_in_interaction.discard(ctx.author.id)
+    
 
 def new_bully_shop() -> Bully:
     rarity = random.choices(list(bully.Rarity), weights=RARITY_DROP_CHANCES)[0]

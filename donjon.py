@@ -48,7 +48,7 @@ class Dungeon():
     current_floor: int  = field(init = False, default=0)
     enemies_fighters: List[FightingBully] = field(init=False)
     fighters_joueur: list[FightingBully] = field(init=False)
-    xp_earned_bullies: dict[FightingBully, float] = field(init=False)
+    xp_earned_bullies: List[float] = field(init=False)
     thread: Thread = field(init=False)
 
     def __post_init__(self):
@@ -56,11 +56,11 @@ class Dungeon():
 
         #On initialise les pv et xp gagné par les bullies
         self.fighters_joueur: List[FightingBully] = []
-        self.xp_earned_bullies: dict[FightingBully, float] = {} #L'xp gagné par chaque bully
+        self.xp_earned_bullies: List[float] = [] #L'xp gagné par chaque bully
         for b in self.player.bullies:
             new_fighter = FightingBully.create_fighting_bully(b)
             self.fighters_joueur.append(new_fighter)
-            self.xp_earned_bullies[new_fighter] = 0
+            self.xp_earned_bullies.append(0)
 
     def generate_dungeon_team(self) -> List[FightingBully]:
         enemies_fighters:List[FightingBully] = []
@@ -123,8 +123,8 @@ class Dungeon():
             await self.thread.send(f"{self.ctx.author.name} has beaten the level {self.level} dungeon!") 
 
             #on donne la récompense d'xp aux joueurs encore en vie
-            for fighter in self.fighters_joueur:
-                xp_earned = self.xp_earned_bullies[fighter]
+            for i,fighter in enumerate(self.fighters_joueur):
+                xp_earned = self.xp_earned_bullies[i]
                 if xp_earned > 0:
                     bully_joueur_recompense = fighter.combattant
                     bully_joueur_recompense.give_exp(round(xp_earned * COEF_XP_WIN, 1))
@@ -167,7 +167,7 @@ class Dungeon():
             pretext = ""
             if (exp_earned > 0):
                 bully_joueur.give_exp(exp_earned)
-                self.xp_earned_bullies[fighting_bully_joueur] += exp_earned
+                self.xp_earned_bullies[num_bully_j] += exp_earned
                 pretext += f"{bully_joueur.name} earned {exp_earned} xp!\n"
             if (gold_earned > 0):
                 money.give_money(self.player, montant=gold_earned)
@@ -183,6 +183,7 @@ class Dungeon():
             await self.thread.send(f"{bully_joueur.name} died in terrible agony.")
             await bully_joueur.kill()
             self.fighters_joueur.pop(num_bully_j)
+            self.xp_earned_bullies.pop(num_bully_j)
 
 
 

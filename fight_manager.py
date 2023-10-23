@@ -68,13 +68,17 @@ async def manager_equip_item(ctx: Context, user_1: discord.abc.User, player_1: P
     item_2 = await interact_game.player_choose_item(ctx, user_2, player_2, bot, timeout=CHOICE_TIMEOUT)
     return item_1, item_2
 
+def apply_effect_item_before_fight(fighter_self : FightingBully):
+    i = fighter_self.equipped_item
+    if(i != None and i.is_bfr_fight):
+        i.effect_before_fight(fighting_bully_self= fighter_self)
 
 async def fight(ctx: Context, user_1: discord.abc.User, player_1: Player, user_2: discord.abc.User, player_2: Player, bot: Bot, fighting_bully_1:FightingBully, fighting_bully_2:FightingBully, 
                 for_fun = False) -> None:
-    #On initialise les variables pour le combat :
-    # max_pv_1 = fighting_bully_1.pv
-    # max_pv_2 = fighting_bully_2.pv
     
+    apply_effect_item_before_fight(fighter_self=fighting_bully_1)
+    apply_effect_item_before_fight(fighter_self=fighting_bully_2)
+
     await fight_simulation(ctx=ctx, user_1=user_1, user_2=user_2, bot=bot, 
                                         fighting_bully_1=fighting_bully_1, fighting_bully_2=fighting_bully_2)
     
@@ -131,12 +135,12 @@ async def fight_simulation(ctx, bot: Bot, fighting_bully_1:FightingBully, fighti
     tour = random.randint(0,1)
     
     #S'il y a des items, on change les valeurs des variables :
-    item_1 = fighting_bully_1.equipped_item
-    item_2 = fighting_bully_2.equipped_item
-    if(item_1 != None and item_1.is_bfr_fight) : 
-        item_1.effect_before_fight(fighting_bully_self= fighting_bully_1, fighting_bully_adv= fighting_bully_2)
-    if(item_2 != None and item_2.is_bfr_fight) : 
-        item_2.effect_before_fight(fighting_bully_self= fighting_bully_2, fighting_bully_adv= fighting_bully_1)
+    # item_1 = fighting_bully_1.equipped_item
+    # item_2 = fighting_bully_2.equipped_item
+    # if(item_1 != None and item_1.is_bfr_fight) : 
+    #     item_1.effect_before_fight(fighting_bully_self= fighting_bully_1, fighting_bully_adv= fighting_bully_2)
+    # if(item_2 != None and item_2.is_bfr_fight) : 
+    #     item_2.effect_before_fight(fighting_bully_self= fighting_bully_2, fighting_bully_adv= fighting_bully_1)
 
     max_pv_1 = fighting_bully_1.combattant.max_pv
     max_pv_2 = fighting_bully_2.combattant.max_pv

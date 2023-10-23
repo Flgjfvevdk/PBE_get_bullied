@@ -13,7 +13,7 @@ from player_info import Player
 
 from enum import Enum
 
-from typing import Any, Optional, Self, overload
+from typing import Any, Optional, overload
 from typing import List
 from dataclasses import dataclass, field, KW_ONLY
 
@@ -77,6 +77,7 @@ class EnemyRoom():
     
     async def interact(self, ruin: "Ruin") -> bool:
         #await ruin.fight_manage(self.enemy)
+        await ruin.thread.send(f"An enemy stands in your way! \n{bully.mise_en_forme_str(self.enemy.combattant.get_print(compact_print=True))}")
         while True:
             fighter = await self.fighter_choice(ruin)
             fight_won = await self.fight(ruin, fighter)
@@ -187,9 +188,11 @@ class ItemRoom():
         item_list.append(Item(name="Vic - x0.5", is_bfr_fight= True, buff_start_self=ItemStats(0,0,0,1,0), buff_start_self_mult_lvl=Seed(0, 0, 0, 0.5)))
         item_list.append(Item(name="HP - 5", is_bfr_fight= True, buff_start_self=ItemStats(0,0,0,0,5)))
         item = random.choice(item_list)
+        item = Item(name="HP + 5", is_bfr_fight= True, buff_start_self=ItemStats(0,0,0,0,5))
         return ItemRoom(item)
     
     async def interact(self, ruin: "Ruin"):
+        await ruin.thread.send(f"You found an item: {self.item.name}!")
         await interact_game.add_item_to_player(ruin.ctx, ruin.player, self.item, channel_cible=ruin.thread)
 
     
@@ -205,10 +208,15 @@ class BossRoom(EnemyRoom, ItemRoom):
             boss.level_up_one()
         boss_item = ItemRoom.generate(level, rarity).item
         boss_fighter = FightingBully.create_fighting_bully(boss, boss_item)
+
+        fight_manager.apply_effect_item_before_fight(fighter_self=boss_fighter)
+
         return BossRoom(boss_item, boss_fighter, can_switch = True) #reverse MRO for dataclasses
     
     async def interact(self, ruin: "Ruin"):
-        await super().interact(ruin) #enemy + item, in that order
+        await EnemyRoom.interact(self, ruin)
+        await ItemRoom.interact(self, ruin)
+
         return True
 
 
@@ -297,7 +305,7 @@ class Ruin():
     async def enter(self) -> None:
         message = await self.ctx.channel.send(f"{self.user.mention} enters a mysterious ruin [lvl : {self.level}]")
         try :
-            self.thread = await ctx.channel.create_thread(name=f"Ruin - Level {lvl}", message=message) #type: ignore
+            self.thread = await self.ctx.channel.create_thread(name=f"Ruin - Level {self.level}", message=message) #type: ignore
         except Exception as e:
             print(e)
             return
@@ -307,7 +315,7 @@ class Ruin():
         self.fighters_joueur = [FightingBully.create_fighting_bully(b) for b in self.player.bullies]
 
         try: 
-            while not self.rooms.pop().interact(self):
+            while not await self.rooms.pop().interact(self):
                 pass
 
             await self.thread.send(f"Congratulation {self.user}, you beat the boss and won their item!")

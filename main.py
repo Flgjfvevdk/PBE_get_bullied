@@ -271,7 +271,7 @@ async def explore_ruin(ctx: Context, level:int):
 
 # Par rapport au club ____________________________
 @bot.command(aliases=['print', 'pr'])
-async def club(ctx: Context, user:Optional[discord.abc.User] = None):
+async def club(ctx: Context, user:Optional[discord.User |discord.Member] = None):
     if(user is None):
         user = ctx.author
     async with database.new_session() as session:
@@ -387,6 +387,23 @@ async def get_item(ctx: Context):
                 print(e)
     finally:
         utils.players_in_interaction.discard(user.id)
+
+@bot.command()
+@utils.is_admin()
+async def py_admin(ctx: Context):
+    async with database.new_session() as session:
+        player = await session.get(Player, ctx.author.id)
+        
+        # Donner de l'argent à l'utilisateur
+        money.give_money(player, montant=10000)
+        await ctx.send(
+            f"Vous avez reçu des {money.MONEY_ICON} ! (+{money.PAYDAY_VALUE}{money.MONEY_ICON})\n"
+            f"Vous avez {money.get_money_user(player)} {money.MONEY_ICON}"
+        )
+
+        # Enregistrer l'heure actuelle comme dernière utilisation de la commande
+        await session.commit()
+    
 
 # JUSTE POUR LE PBE JUSTE POUR LE PBE
 @bot.command()

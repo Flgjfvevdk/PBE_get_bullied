@@ -49,14 +49,6 @@ class Item(Base):
         default_factory=lambda: ItemStats(0,0,0,0,0)
     )
 
-    buff_start_adv: Mapped[ItemStats] = composite(
-        mapped_column(name="buff_adv_start_strength"),
-        mapped_column(name="buff_adv_start_agility"),
-        mapped_column(name="buff_adv_start_lethality"),
-        mapped_column(name="buff_adv_start_viciousness"),
-        mapped_column(name="buff_adv_start_pv"),
-        default_factory=lambda: ItemStats(0,0,0,0,0)
-    )
     buff_start_self_mult_lvl: Mapped[Seed] = composite(
         mapped_column(name="buff_self_start_multiplicatif_lvl_strength"),
         mapped_column(name="buff_self_start_multiplicatif_lvl_agility"),
@@ -64,15 +56,8 @@ class Item(Base):
         mapped_column(name="buff_self_start_multiplicatif_lvl_viciousness"),
         default_factory=lambda: Seed(0,0,0,0)
     )
-    buff_start_adv_mult_lvl: Mapped[Seed] = composite(
-        mapped_column(name="buff_adv_start_multiplicatif_lvl_strength"),
-        mapped_column(name="buff_adv_start_multiplicatif_lvl_agility"),
-        mapped_column(name="buff_adv_start_multiplicatif_lvl_lethality"),
-        mapped_column(name="buff_adv_start_multiplicatif_lvl_viciousness"),
-        default_factory=lambda: Seed(0,0,0,0)
-    )
 
-    def effect_before_fight(self, fighting_bully_self:FightingBully, fighting_bully_adv:FightingBully) -> None:
+    def effect_before_fight(self, fighting_bully_self:FightingBully) -> None:
         if(self.is_bfr_fight) :
             stat_self = replace(fighting_bully_self.base_stats)
             fighting_bully_self.pv += self.buff_start_self.pv
@@ -85,16 +70,6 @@ class Item(Base):
             fighting_bully_self.base_stats = stat_self
             fighting_bully_self.stats = stat_self
 
-            stat_adv = replace(fighting_bully_adv.base_stats)
-            fighting_bully_adv.pv += self.buff_start_adv.pv
-            lvl_adv = fighting_bully_adv.combattant.lvl
-            stat_adv.strength = self.buff_start_adv.strength + round(lvl_adv * self.buff_start_adv_mult_lvl.strength)
-            stat_adv.agility = self.buff_start_adv.agility + round(lvl_adv * self.buff_start_adv_mult_lvl.agility)
-            stat_adv.lethality = self.buff_start_adv.lethality + round(lvl_adv * self.buff_start_adv_mult_lvl.lethality)
-            stat_adv.viciousness = self.buff_start_adv.viciousness + round(lvl_adv * self.buff_start_adv_mult_lvl.viciousness)
-            
-            fighting_bully_adv.base_stats = stat_adv
-            fighting_bully_adv.stats = stat_adv
 
         return
 
@@ -121,7 +96,7 @@ class Item(Base):
             if(self.is_bfr_fight):
                 if self.buff_start_self.pv != 0:
                     text += "\nBonus HP : " + str(self.buff_start_self.pv)
-                for stat_name in self.buff_start_self.__dataclass_fields__:
+                for stat_name in Stats.__dataclass_fields__:
                     flat_buff = getattr(self.buff_start_self, stat_name)
                     mult_buff = getattr(self.buff_start_self_mult_lvl, stat_name)
 

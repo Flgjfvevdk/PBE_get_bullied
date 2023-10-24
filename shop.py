@@ -31,7 +31,7 @@ SHOP_TIMEOUT = 30
 SHOP_RESTOCK_TIMEOUT = 10 * 60
 #Le temps pendant lequel le shop est fermé pendant le restockage. Les achats sont possibles mais on ne peut pas afficher un nouveau shop 
 #(permet d'éviter que quelqu'un affiche le shop alors qu'il change bientot)
-SHOP_CLOSE_WAIT_TIME = 3 #doit être > à SHOP_TIMEOUT (sinon quelqu'un pourrait acheter un truc qu'il veut pas)
+SHOP_CLOSE_WAIT_TIME = 30 #doit être > à SHOP_TIMEOUT (sinon quelqu'un pourrait acheter un truc qu'il veut pas)
 #Si c'est à True, alors la commande shop n'affiche pas le shop mais un message qui demande d'attendre.
 is_shop_restocking = False
 
@@ -83,23 +83,21 @@ async def print_shop(ctx: Context, bot: Bot) -> None:
     
     try:
         while True:
-            await asyncio.sleep(0.1)
+            #await asyncio.sleep(0.1)
             if(is_shop_restocking):
-                await shop_msg.edit(content=restock_message(), attachments=[], view=discord.ui.View())
+                await shop_msg.edit(content=restock_message(), attachments=[], view=None)
                 return
                 
-            if(event.is_set()):
-                print("ok")
-                async with shop_lock:
-                    event.clear()
-                    print("nice")
-                    await handle_shop_click(ctx=ctx, variable_pointer=var, shop_msg=shop_msg, event=event)
-                    utils.players_in_interaction.discard(ctx.author.id)
+            await asyncio.wait_for(event.wait(), timeout=SHOP_TIMEOUT)
+            event.clear()
+            async with shop_lock:
+                await handle_shop_click(ctx=ctx, variable_pointer=var, shop_msg=shop_msg, event=event)
+                utils.players_in_interaction.discard(ctx.author.id)
 
     except Exception as e:
         if not isinstance(e, asyncio.TimeoutError):
             print(e)
-        await shop_msg.edit(content="```Shop is closed. See you again!```", attachments=[], view=discord.ui.View())
+        await shop_msg.edit(content="```Shop is closed. See you again!```", attachments=[], view=None)
         return
 
 

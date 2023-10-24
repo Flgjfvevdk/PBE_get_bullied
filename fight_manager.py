@@ -13,7 +13,7 @@ import math
 
 from discord.ext.commands import Context, Bot
 from player_info import Player
-from typing import Optional
+from typing import Optional, Dict
 from dataclasses import replace
 
 
@@ -29,28 +29,49 @@ async def manager_start_fight(ctx: Context, user_1: discord.abc.User, player_1: 
     text_challenge = f"{user_1.mention} challenges {user_2.mention} !"
     if for_fun :
         text_challenge = f"{user_1.mention} challenges {user_2.mention} to a fun fight (no death, no xp)!"
-    message = await ctx.channel.send(text_challenge)
-    await message.add_reaction("✅")
-    await message.add_reaction("❌")
-    try :
-        reaction, msg = await bot.wait_for("reaction_add", check=check_reaction_yes_no(user_2, message), timeout=CHOICE_TIMEOUT)
-        if str(reaction.emoji) == "✅" :
-            await message.reply("Challenge accepted!")
-        elif str(reaction.emoji) == "❌" :
-            await message.reply("Challenge declined")
-            return
-    except Exception as e :
+
+    #On créer l'event qui sera set quand le bouton sera cliqué par user_2. La valeur du bouton (de la réponse) sera stocké dans var
+    event = asyncio.Event()
+    var:Dict[str, bool] = {"choix" : False}
+
+    #On affiche le message
+    message = await ctx.channel.send(content=text_challenge, view=interact_game.ViewYesNo(user=user_2, event=event, variable_pointer = var))
+
+    #On attend que le joueur clique sur un bouton
+    try:
+        await asyncio.wait_for(event.wait(), timeout=CHOICE_TIMEOUT)
+    except asyncio.exceptions.TimeoutError as e:
         await message.reply(f"Too late! No fight between {user_1} and {user_2}")
-        print (e)
         return
+    
+    #On récup le choix
+    challenge_accepte:bool = var["choix"]
+
+    #On affiche le choix de user_2
+    if(challenge_accepte) : 
+        await message.reply("Challenge accepted!")
+    else : 
+        await message.reply("Challenge declined")
+        return
+    
+    #On commence le combat
     await start_fight(ctx, user_1, player_1, user_2, player_2, bot, for_fun)
     return
 
 async def start_fight(ctx: Context, user_1: discord.abc.User, player_1: Player, user_2: discord.abc.User, player_2: Player, bot: Bot, for_fun = False) -> None:
     # bully_1, _ = await interact_game.player_choose_bully(ctx= ctx, user = user_1, bot= bot, timeout = CHOICE_TIMEOUT)
     # bully_2, _ = await interact_game.player_choose_bully(ctx= ctx, user = user_2, bot= bot, timeout = CHOICE_TIMEOUT)
-    fighting_bully_1, _ = await interact_game.player_choose_bully(ctx, user_1, player_1, bot, timeout = CHOICE_TIMEOUT)
-    fighting_bully_2, _ = await interact_game.player_choose_bully(ctx, user_2, player_2, bot, timeout = CHOICE_TIMEOUT)
+    try:
+        fighting_bully_1, _ = await interact_game.player_choose_bully(ctx, user_1, player_1, bot, timeout = CHOICE_TIMEOUT)
+    except asyncio.exceptions.TimeoutError as e:
+        await ctx.send(f"Timeout, choose faster next time {user_1.name}")
+        return
+    try:
+        fighting_bully_2, _ = await interact_game.player_choose_bully(ctx, user_2, player_2, bot, timeout = CHOICE_TIMEOUT)
+    except asyncio.exceptions.TimeoutError as e:
+        await ctx.send(f"Timeout, choose faster next time {user_2.name}")
+        return
+    
     
     item_1, item_2 = await manager_equip_item(ctx, user_1, player_1, user_2, player_2, bot)
     fighting_bully_1.equipped_item = item_1

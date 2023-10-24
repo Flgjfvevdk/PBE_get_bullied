@@ -144,7 +144,26 @@ async def print_shop(ctx: Context):
 async def say_thanks(ctx: Context):
     await ctx.send("Thanks to everyone who takes part in my creation!")
 
+@bot.command(aliases=['sacrifice', 'kill'])
+async def suicide(ctx: Context):
+    user = ctx.author
+    if user.id in utils.players_in_interaction:
+        await ctx.reply(f"You are already in an interaction.")
+        return
+    
+    utils.players_in_interaction.add(user.id)
+    try:
+        async with database.new_session() as session:
+            p = await session.get(Player, user.id)
+            if p is None:
+                await ctx.reply("Please join the game first !")
+                return
+            await interact_game.suicide_bully(ctx, user=user, player=p, bot=bot)
+            await session.commit()
+    finally:
+        utils.players_in_interaction.discard(user.id)
 
+    return
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -393,6 +412,9 @@ async def get_item(ctx: Context):
 async def py_admin(ctx: Context):
     async with database.new_session() as session:
         player = await session.get(Player, ctx.author.id)
+        if player is None:
+            await ctx.reply("Please join the game first !")
+            return
         
         # Donner de l'argent à l'utilisateur
         money.give_money(player, montant=10000)

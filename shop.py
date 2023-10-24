@@ -15,7 +15,7 @@ import random
 import pickle
 import asyncio
 
-from typing import Optional
+from typing import Optional, Dict
 from typing import List
 
 import discord
@@ -26,17 +26,18 @@ RARITY_PRICES = [30, 80, 200, 600, 1000]
 
 SHOP_MAX_BULLY = 5
 #Le temps pendant lequel le shop reste actif
-SHOP_TIMEOUT = 30 
+SHOP_TIMEOUT = 30
 #Le temps entre chaque restock
 SHOP_RESTOCK_TIMEOUT = 10 * 60
 #Le temps pendant lequel le shop est fermé pendant le restockage. Les achats sont possibles mais on ne peut pas afficher un nouveau shop 
 #(permet d'éviter que quelqu'un affiche le shop alors qu'il change bientot)
-SHOP_CLOSE_WAIT_TIME = 30 #doit être > à SHOP_TIMEOUT (sinon quelqu'un pourrait acheter un truc qu'il veut pas)
+SHOP_CLOSE_WAIT_TIME = 3 #doit être > à SHOP_TIMEOUT (sinon quelqu'un pourrait acheter un truc qu'il veut pas)
 #Si c'est à True, alors la commande shop n'affiche pas le shop mais un message qui demande d'attendre.
 is_shop_restocking = False
 
 # Les bullies disponibles
-bullies_in_shop: dict[int,Bully] = {}
+#bullies_in_shop: dict[int,Bully] = {}
+bullies_in_shop: List[Bully] = []
 
 # On lock le shop lors des modifs pour éviter les conflits
 shop_lock = asyncio.Lock()
@@ -45,7 +46,8 @@ async def restock_shop() -> None:
     bullies_in_shop.clear()
     for k in range(SHOP_MAX_BULLY):
         b = new_bully_shop()
-        bullies_in_shop[k] = b
+        #bullies_in_shop[k] = b
+        bullies_in_shop.append(b)
 
 async def init_shop():
     await restock_shop()
@@ -69,37 +71,81 @@ async def print_shop(ctx: Context, bot: Bot) -> None:
     
     text = bullies_in_shop_to_text()
     images = bullies_in_shop_to_images()
+
+    event = asyncio.Event()
+    var:Dict[str, Bully | discord.abc.User | None] = {"choix" : None, "user" : None}
+    list_bully: List[Bully] = bullies_in_shop
     if images:
         files = [discord.File(image) for image in images]
-        shop_msg = await ctx.channel.send(content=text, files=files)
+        shop_msg = await ctx.channel.send(content=text, files=files, view=interact_game.ViewBullyShop(event=event, list_choix=list_bully, variable_pointer = var))
     else:
         shop_msg = await ctx.channel.send(text)
     
-    # Add reaction emotes
-    for i in bullies_in_shop:
-        await shop_msg.add_reaction(str(i) + "️⃣")
-
-    def check(reaction: discord.Reaction, user: discord.abc.User):
-        return (str(reaction.emoji) in [str(i) + "️⃣" for i in range(SHOP_MAX_BULLY)] 
-                and reaction.message.id == shop_msg.id
-                and user.id != bot.user.id) #type: ignore (on sait que le bot est co TT)
-
     try:
         while True:
+            await asyncio.sleep(0.1)
             if(is_shop_restocking):
-                await shop_msg.edit(content=restock_message())
+                await shop_msg.edit(content=restock_message(), attachments=[], view=discord.ui.View())
                 return
-        
-            reaction, user = await bot.wait_for('reaction_add', timeout=SHOP_TIMEOUT, check=check)
-            async with shop_lock:
-                await handle_shop_reaction(ctx, reaction, user, shop_msg)
-                utils.players_in_interaction.discard(ctx.author.id)
+                
+            if(event.is_set()):
+                print("ok")
+                async with shop_lock:
+                    event.clear()
+                    print("nice")
+                    await handle_shop_click(ctx=ctx, variable_pointer=var, shop_msg=shop_msg, event=event)
+                    utils.players_in_interaction.discard(ctx.author.id)
 
     except Exception as e:
         if not isinstance(e, asyncio.TimeoutError):
             print(e)
-        await shop_msg.edit(content="```Shop is closed. See you again!```", attachments=[])
+        await shop_msg.edit(content="```Shop is closed. See you again!```", attachments=[], view=discord.ui.View())
         return
+
+
+async def handle_shop_click(ctx:Context, variable_pointer:Dict[str, Bully | discord.abc.User | None], shop_msg: discord.Message, event:asyncio.Event) -> None:
+    if(not isinstance(variable_pointer["choix"], Bully) or not isinstance(variable_pointer["user"], discord.abc.User)):
+        return
+    choix_bully: Bully = variable_pointer["choix"]
+    user: discord.abc.User = variable_pointer["user"]
+
+    if user.id in utils.players_in_interaction:
+        await ctx.send("You are already in an action.")
+        return
+    utils.players_in_interaction.add(user.id)
+
+    async with database.new_session() as session:
+        player = await session.get(Player, user.id)
+        
+        if player is None:
+            await ctx.send("Please join the game first !")
+            utils.players_in_interaction.discard(ctx.author.id)
+            return
+        if(money.get_money_user(player) < cout_bully(choix_bully)):
+            await ctx.send(f"You don't have enough {money.MONEY_ICON} {user} for {choix_bully.name} [cost: {cout_bully(choix_bully)}{money.MONEY_ICON}]")
+            utils.players_in_interaction.discard(ctx.author.id)
+            return
+
+        if(interact_game.nb_bully_in_team(player) >= interact_game.BULLY_NUMBER_MAX):
+            await ctx.channel.send(f"You can't have more than {interact_game.BULLY_NUMBER_MAX} bullies at the same time")
+            utils.players_in_interaction.discard(ctx.author.id)
+            return
+        
+        money.give_money(player, - cout_bully(choix_bully))
+        player.bullies.append(choix_bully)
+        bullies_in_shop.remove(choix_bully)
+        
+        variable_pointer["choix"] = None
+        variable_pointer["user"] = None
+
+        text = bullies_in_shop_to_text()
+        images = bullies_in_shop_to_images()
+        files = [discord.File(image) for image in images]
+        await shop_msg.edit(content=text, attachments=files, view=interact_game.ViewBullyShop(event=event, list_choix=bullies_in_shop, variable_pointer = variable_pointer))
+        await ctx.channel.send(f"{user.mention} has purchased {choix_bully.name} for {cout_bully(choix_bully)}🩹!")
+
+        await session.commit()
+
 
 async def handle_shop_reaction(ctx: Context, reaction: discord.Reaction, user: discord.abc.User, shop_msg: discord.Message):
     if user.id in utils.players_in_interaction:
@@ -153,7 +199,8 @@ def new_bully_shop() -> Bully:
 
 def bullies_in_shop_to_text() -> str:
     text = "Bullies in the shop : "
-    for k in bullies_in_shop :
+    #for k in bullies_in_shop :
+    for k in range(len(bullies_in_shop)) :
         b = bullies_in_shop[k]
         text += "\n___________\n"
         text += b.get_print(compact_print = True)
@@ -163,7 +210,8 @@ def bullies_in_shop_to_text() -> str:
 
 def bullies_in_shop_to_images() -> List[Path]:
     images: List[Path] = []
-    for k in bullies_in_shop :
+    #for k in bullies_in_shop :
+    for k in range(len(bullies_in_shop)) :
         b = bullies_in_shop[k]
         image_path = b.image_file_path
         if image_path is not None:

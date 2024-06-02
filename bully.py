@@ -23,6 +23,9 @@ BULLY_RARITY_DEATH_EXP_COEFF = [0.5, 1, 1.25, 1.5, 2]
 BULLY_RARITY_DEATH_MIN_GOLD = [0, 40, 80, 150, 200]
 BULLY_RARITY_DEATH_MAX_GOLD = [0, 80, 150, 500, 700]
 
+NOBODY_LEVEL_EVOLUTION = 10
+NOBODY_RARITY_EVOLUTION_CHANCES = [0, 50, 39, 10, 1]
+
 BULLY_MAX_LEVEL = 50
 BULLY_MAX_BASE_HP = 10
 
@@ -125,6 +128,10 @@ class Seed(MutableComposite):
             cumulative_probs.append(cumulative_sum)
         return cumulative_probs
     
+class LevelUpException(Exception):
+    def __init__(self, lvl, text=""):
+        self.lvl = lvl
+        super().__init__(text)
 
 class Bully(Base):
     __tablename__ = "bully"
@@ -189,18 +196,21 @@ class Bully(Base):
         print("exp : ", self.exp)
 
     def level_up(self):
-        while self.exp >= self.lvl and self.lvl <= BULLY_MAX_LEVEL:
+        while self.exp >= self.lvl and self.lvl < BULLY_MAX_LEVEL:
             self.exp -= self.lvl
             self.lvl += 1
-            print("level up :", self.lvl)
+            # print("level up :", self.lvl)
             new_points = new_points_lvl_up(self.lvl, self.rarity)
-            self.increase_stat_with_seed(nb_points=new_points, talkative = True)
+            self.increase_stat_with_seed(nb_points=new_points, talkative = False)
+
+            if(self.lvl == NOBODY_LEVEL_EVOLUTION and self.rarity == Rarity.NOBODY):
+                self.nobody_evolution()
 
     def level_up_one(self):
         self.lvl += 1
-        print("level up :", self.lvl)
+        # print("level up :", self.lvl)
         new_points = new_points_lvl_up(self.lvl, self.rarity)
-        self.increase_stat_with_seed(nb_points=new_points, talkative = True)
+        self.increase_stat_with_seed(nb_points=new_points, talkative = False)
 
     def exp_give_when_die(self):
         xp = self.lvl
@@ -215,6 +225,15 @@ class Bully(Base):
         maxi = self.rarity.death_max_gold
         gold = lerp(mini, maxi, (self.lvl - 1)/9)
         return gold
+
+    def nobody_evolution(self):
+        new_rarity:Rarity = random.choices(list(Rarity), weights=NOBODY_RARITY_EVOLUTION_CHANCES)[0]
+        
+        #On rajoute les points qu'il faut rajouter
+        difference_points = (new_rarity.points_bonus - self.rarity.points_bonus) + int(NOBODY_LEVEL_EVOLUTION * (new_rarity.level_bonus - self.rarity.level_bonus))
+        self.increase_stat_with_seed(nb_points=difference_points, talkative = False)
+
+        self.rarity = new_rarity
 
 
     async def kill(self):
@@ -334,11 +353,10 @@ def new_points_lvl_up(lvl, rarity=Rarity.NOBODY) -> int:
         return 1
     else :
         lvl_win = 1
-        print("coef_bonus : ", coef_bonus)
-        print("(1/coef_bonus) : ", (1/coef_bonus))
-        print("lvl % coef_bonus : ", lvl % (1/coef_bonus))
+        # print("coef_bonus : ", coef_bonus)
+        # print("(1/coef_bonus) : ", (1/coef_bonus))
+        # print("lvl % coef_bonus : ", lvl % (1/coef_bonus))
         if(lvl % (1/coef_bonus) < 1):
-            print("ici de fou")
             lvl_win+=1
         return lvl_win
 

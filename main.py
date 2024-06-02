@@ -102,9 +102,13 @@ async def bank(ctx: Context):
 async def patchnote(ctx: Context):
     await ctx.channel.send(
         "```\n"
-        "- leaderbord for dungeon ! Become the greatest coach by conquering the most powerful dungeons\n"
-        "- Fun fight are live ! ($$fun_challenge @username)\n"
-        "- new command : $$infos_dungeon\n"
+        "- Get bullied est (enfin) là !\n"
+        "- La commande !!help a été mise à jour\n"
+        "- Apparition des raretés pour les bullies"
+        "- Les nobodies débloquent leur potentiel au lvl 10 ...\n"
+        "- Le shop est là."
+        "- Apparition des items"
+        "- Ouverture des ruines"
         "```"
     )
 
@@ -159,6 +163,27 @@ async def suicide(ctx: Context):
                 await ctx.reply("Please join the game first !")
                 return
             await interact_game.suicide_bully(ctx, user=user, player=p, bot=bot)
+            await session.commit()
+    finally:
+        utils.players_in_interaction.discard(user.id)
+
+    return
+
+@bot.command(aliases=['destroy', 'remove_item'])
+async def destroy_item(ctx: Context):
+    user = ctx.author
+    if user.id in utils.players_in_interaction:
+        await ctx.reply(f"You are already in an interaction.")
+        return
+    
+    utils.players_in_interaction.add(user.id)
+    try:
+        async with database.new_session() as session:
+            p = await session.get(Player, user.id)
+            if p is None:
+                await ctx.reply("Please join the game first !")
+                return
+            await interact_game.remove_item(ctx, user=user, player=p, bot=bot)
             await session.commit()
     finally:
         utils.players_in_interaction.discard(user.id)
@@ -431,7 +456,7 @@ async def py_admin(ctx: Context):
 @bot.command()
 @utils.is_admin()
 #@utils.author_is_free
-async def give_lvl(ctx: Context):
+async def give_lvl(ctx: Context, nombre_lvl : Optional[int] = None ):
     if not ctx.me.display_name.startswith("PBE"):
         return
     
@@ -447,7 +472,8 @@ async def give_lvl(ctx: Context):
             if player is None:
                 await ctx.reply("Please join the game first !")
                 return
-            await interact_game.increase_all_lvl(ctx, player)
+            nb_level = 1 if nombre_lvl is None else nombre_lvl
+            await interact_game.increase_all_lvl(ctx, player, nb_level = nb_level)
             await session.commit()
     finally:
         utils.players_in_interaction.discard(user.id)

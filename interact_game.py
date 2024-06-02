@@ -23,6 +23,7 @@ import discord
 from discord.ext.commands import Context, Bot
 
 BULLY_NUMBER_MAX = 5
+ITEM_NUMBER_MAX = 8
 CHOICE_TIMEOUT = 20
 
 class ButtonChoice(discord.ui.Button):
@@ -37,14 +38,13 @@ class ButtonChoice(discord.ui.Button):
         if(interaction.user == self.user):
             self.variable_pointer["choix"] = self.valeur_assigne
             self.event.set()
-            #await interaction.response.send_message(self.label)
             await interaction.response.defer() #Le bot ne renvoie pas de réponse automatique, mais pour faire comprendre à discord que l'interaction n'a pas fail, on fait ça
 
 class ButtonShopChoice(discord.ui.Button):
     def __init__(self, event:asyncio.Event, variable_pointer:Dict[str, Bully | discord.abc.User | None ], valeur_assigne:Bully, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.event:asyncio.Event = event
-        self.variable_pointer:Dict[str, Bully | discord.abc.User | None ] = variable_pointer
+        self.variable_pointer:Dict[str, Bully | discord.abc.User| None ] = variable_pointer
         self.valeur_assigne:Bully = valeur_assigne
 
     async def callback(self, interaction):
@@ -53,8 +53,19 @@ class ButtonShopChoice(discord.ui.Button):
         self.event.set()
         await interaction.response.defer() #Le bot ne renvoie pas de réponse automatique, mais pour faire comprendre à discord que l'interaction n'a pas fail, on fait ça
 
+class ButtonClickBool(discord.ui.Button):
+    def __init__(self, user:discord.abc.User, event:asyncio.Event, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user:discord.abc.User = user
+        self.event:asyncio.Event = event
+
+    async def callback(self, interaction):
+        if(interaction.user == self.user):
+            self.event.set()
+            await interaction.response.defer() #Le bot ne renvoie pas de réponse automatique, mais pour faire comprendre à discord que l'interaction n'a pas fail, on fait ça
+
 class ViewBullyShop(discord.ui.View):
-    def __init__(self, event:asyncio.Event, list_choix:List[Bully], variable_pointer:Dict[str, Bully | discord.abc.User | None]):
+    def __init__(self, event:asyncio.Event, list_choix:List[Bully], variable_pointer:Dict[str, Bully | discord.abc.User| None]):
         super().__init__()
         self.list_choix:List[Bully] = list_choix
         for index, choix in enumerate(list_choix):
@@ -62,7 +73,7 @@ class ViewBullyShop(discord.ui.View):
             self.add_item(ButtonShopChoice(style=discord.ButtonStyle.secondary, label=label, custom_id=f"button_{index}", 
                                    event=event, variable_pointer= variable_pointer, valeur_assigne=choix))
 
-class ViewBullyChoice(discord.ui.View): # Create a class called MyView that subclasses discord.ui.View
+class ViewBullyChoice(discord.ui.View):
     def __init__(self, user:discord.abc.User, event:asyncio.Event, list_choix:List[Bully], variable_pointer:Dict[str, Bully | None]):
         super().__init__()
         self.list_choix:List[Bully] = list_choix
@@ -72,7 +83,7 @@ class ViewBullyChoice(discord.ui.View): # Create a class called MyView that subc
             self.add_item(ButtonChoice(style=discord.ButtonStyle.secondary, label=label, custom_id=f"button_{index}", 
                                    user = user, event=event, variable_pointer= variable_pointer, valeur_assigne=choix))
             
-class ViewItemChoice(discord.ui.View): # Create a class called MyView that subclasses discord.ui.View
+class ViewItemChoice(discord.ui.View): 
     def __init__(self, user:discord.abc.User, event:asyncio.Event, list_choix:List[Item], variable_pointer:Dict[str, Item | None]):
         super().__init__()
         self.list_choix:List[Item] = list_choix
@@ -82,7 +93,7 @@ class ViewItemChoice(discord.ui.View): # Create a class called MyView that subcl
             self.add_item(ButtonChoice(style=discord.ButtonStyle.secondary, label=label, custom_id=f"button_{index}", 
                                    user = user, event=event, variable_pointer= variable_pointer, valeur_assigne=choix))
 
-class ViewYesNo(discord.ui.View): # Create a class called MyView that subclasses discord.ui.View
+class ViewYesNo(discord.ui.View):
     def __init__(self, user:discord.abc.User, event:asyncio.Event, variable_pointer:Dict[str, bool]):
         super().__init__()
 
@@ -91,6 +102,14 @@ class ViewYesNo(discord.ui.View): # Create a class called MyView that subclasses
         self.add_item(ButtonChoice(style=discord.ButtonStyle.secondary, label="Decline", emoji="❌",
                                    user = user, event=event, variable_pointer= variable_pointer, valeur_assigne=False))
 
+class ViewClickBool(discord.ui.View):
+    def __init__(self, user:discord.abc.User, event:asyncio.Event, label:str, emoji:str|None = None):
+        super().__init__()
+        # emoji = "" if emoji is None else emoji
+        self.add_item(ButtonClickBool(style=discord.ButtonStyle.secondary, label=label, emoji=emoji,
+                                   user = user, event=event))
+
+## _________________________________________________________________________
 
 async def join_game(ctx: Context, session: AsyncSession, channel_cible: Optional[discord.abc.Messageable]=None) -> None:
     # Par défaut, le channel d'envoie est le channel du contexte
@@ -209,6 +228,18 @@ def str_bullies(player: Player, print_images = False) -> tuple[str, Optional[lis
         files = None
     return (text, files)
 
+def str_items(player: Player, compact_print=False) -> str:
+    text = "Items:\n"
+    for idx,item in enumerate(player.items) :
+        # text+=f"[{idx}] - {item.name}"
+        text += item.print(compact_print=compact_print)
+        if(idx % 2 == 0):
+            text+="\t\t\t\t\t"
+        else : 
+            text+="\n"
+
+    return text
+
 async def player_choose_bully(ctx: Context, user: discord.abc.User, player: Player, bot: Bot, channel_cible=None, timeout = CHOICE_TIMEOUT) -> tuple[FightingBully, int]:
     '''Il faut try catch cette méthode car elle peut raise une exception en cas de timeout !!!
     '''
@@ -291,13 +322,7 @@ async def select_item_to_equip(ctx: Context, user: discord.abc.User, player: Pla
         return None
 
     #On affiche les items accessibles
-    text = "Items:\n"
-    for idx,item in enumerate(player.items) :
-        text+=f"[{idx}] - {item.name}"
-        if(idx % 2 == 0):
-            text+="\t\t\t\t\t"
-        else : 
-            text+="\n"
+    text = str_items(player, compact_print=True)
         
     #On init les variables
     event = asyncio.Event()
@@ -325,7 +350,7 @@ async def suicide_bully(ctx: Context, user: discord.abc.User, player: Player, bo
         channel_cible.send(f"{user.mention}, you do not have any bullies!")
         raise IndexError
 
-    #Demande au joueur de choisir son combattant
+    #Demande au joueur de choisir son bully
     message_choose_suicide = await channel_cible.send(f"{user} choose a bully to suicide : ") 
 
     #On init les variables
@@ -350,6 +375,39 @@ async def suicide_bully(ctx: Context, user: discord.abc.User, player: Player, bo
     await message_choose_suicide.delete()
     await message_bullies.delete()
     
+async def remove_item(ctx: Context, user: discord.abc.User, player: Player, bot: Bot, channel_cible=None, timeout = CHOICE_TIMEOUT) -> None : 
+    if(channel_cible == None):
+        channel_cible = ctx.channel
+
+    if len(player.items) == 0:
+        channel_cible.send(f"{user.mention}, you do not have any items!")
+        raise IndexError
+    
+    #Demande au joueur de choisir son bully
+    message_choose_destroy = await channel_cible.send(f"{user} choose an item to destroy : ") 
+
+    #On init les variables
+    event = asyncio.Event()
+    var:Dict[str, Item | None] = {"choix" : None}
+    text = str_items(player, compact_print=False)
+
+    #On affiche le message
+    message_item_choix = await channel_cible.send(content=text, view=ViewItemChoice(user=user, event=event, list_choix=player.items, variable_pointer = var))
+    
+    #On attend une réponse (et on retourne une erreur si nécessaire avec le timeout)
+    await asyncio.wait_for(event.wait(), timeout=timeout)
+
+    #On sélectionne le bully et on crée un FightingBully
+    item_selected = var["choix"]
+    if(not item_selected) : 
+        raise Exception("No selected Item")
+
+    #On envoie les infos sur le bully choisit
+    await channel_cible.send(f"{user} destroy {item_selected.name}") 
+    player.items.remove(item_selected)
+    await message_choose_destroy.delete()
+    await message_item_choix.delete()
+
 
 def generate_name() -> List[str]:
     file_prenom = open("prenom_bully.txt", 'r', encoding='utf-8')
@@ -386,15 +444,15 @@ async def add_bully_custom(ctx: Context, player: Player, name_brute, stats, rari
 
     await channel_cible.send("You have a new bully : " + name_bully)
 
-async def increase_all_lvl(ctx: Context, player: Player, channel_cible=None) -> None:
+async def increase_all_lvl(ctx: Context, player: Player, nb_level:int = 1,  channel_cible=None) -> None:
 
     #Par défaut, le channel d'envoie est le channel du contexte
     if(channel_cible==None):
         channel_cible = ctx.channel
 
-    print("yep")
     for b in player.bullies:
-        b.level_up_one()
+        for k in range(nb_level):
+            b.level_up_one()
 
     
     await channel_cible.send("done")

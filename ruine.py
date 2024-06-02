@@ -179,16 +179,31 @@ class ItemRoom():
 
     @staticmethod
     def generate(level: int, rarity: Rarity) -> "ItemRoom":
-        item_list: list[Item] = []
-        item_list.append(Item(name="Str - x0.5", is_bfr_fight= True, buff_start_self=ItemStats(1,0,0,0,0), buff_start_self_mult_lvl=Seed(0.5, 0, 0, 0)))
-        item_list.append(Item(name="Str - x1", is_bfr_fight= True, buff_start_self=ItemStats(1,0,0,0,0), buff_start_self_mult_lvl=Seed(1, 0, 0, 0)))
-        item_list.append(Item(name="Agi - x0.5", is_bfr_fight= True, buff_start_self=ItemStats(0,1,0,0,0), buff_start_self_mult_lvl=Seed(0, 0.5, 0, 0)))
-        item_list.append(Item(name="Agi - x2", is_bfr_fight= True, buff_start_self=ItemStats(0,1,0,0,0), buff_start_self_mult_lvl=Seed(0, 2, 0, 0)))
-        item_list.append(Item(name="Letha - x0.5", is_bfr_fight= True, buff_start_self=ItemStats(0,0,1,0,0), buff_start_self_mult_lvl=Seed(0, 0, 0.5, 0)))
-        item_list.append(Item(name="Vic - x0.5", is_bfr_fight= True, buff_start_self=ItemStats(0,0,0,1,0), buff_start_self_mult_lvl=Seed(0, 0, 0, 0.5)))
-        item_list.append(Item(name="HP - 5", is_bfr_fight= True, buff_start_self=ItemStats(0,0,0,0,5)))
-        item = random.choice(item_list)
-        item = Item(name="HP + 5", is_bfr_fight= True, buff_start_self=ItemStats(0,0,0,0,5))
+        # item_list.append(Item(name="HP - 5", is_bfr_fight= True, buff_start_self=ItemStats(0,0,0,0,5)))
+        index_to_name = ["Strength", "Agility", "Lethality", "Viciousness"]
+        if level < 5:
+            r_ind = random.randint(0,3)
+            st_it = [1 if i == r_ind else 0 for i in range(4)]
+            item = Item(name="Rune of " + index_to_name[r_ind], is_bfr_fight= True, buff_start_self=ItemStats(st_it[0], st_it[1], st_it[2], st_it[3], 0), 
+                                                                                description="A mysterious rune that buff your bully")
+        elif level < 10:
+            r_ind = random.randint(0,3)
+            st_it = [1 if i == r_ind else 0 for i in range(4)]
+            item = Item(name="Rune of " + index_to_name[r_ind], is_bfr_fight= True, buff_start_self=ItemStats(2 * st_it[0], 2 * st_it[1], 2 * st_it[2], 2 * st_it[3], 0), 
+                                                                                description="A mysterious rune that buff your bully")
+        elif level < 20:
+            r_ind = random.randint(0,3)
+            st_it = [1 if i == r_ind else 0 for i in range(4)]
+            item = Item(name="Rune of " + index_to_name[r_ind], is_bfr_fight= True, buff_start_self=ItemStats(st_it[0], st_it[1], st_it[2], st_it[3], 0), 
+                                                                                buff_start_self_mult_lvl=Seed(0.1 * st_it[0], 0.1 * st_it[1], 0.1 * st_it[2], 0.1 * st_it[3]), 
+                                                                                description="A mysterious rune that buff your bully")
+        elif level < 50:
+            r_ind = random.randint(0,3)
+            st_it = [1 if i == r_ind else 0 for i in range(4)]
+            item = Item(name="Rune of " + index_to_name[r_ind], is_bfr_fight= True, buff_start_self=ItemStats(0, 0, 0, 0, 0), 
+                                                                                buff_start_self_mult_lvl=Seed(0.15 * st_it[0], 0.15 * st_it[1], 0.15 * st_it[2], 0.15 * st_it[3]), 
+                                                                                description="A mysterious rune that buff your bully")
+
         return ItemRoom(item)
     
     async def interact(self, ruin: "Ruin"):
@@ -274,13 +289,13 @@ class Ruin():
         nb_salle_trap = 0
 
         if (self.rarity_level == None):
-            if(self.level <= 10):
+            if(self.level < 10):
                 self.rarity_level = Rarity(0)
-            elif(self.level <= 25):
+            elif(self.level < 25):
                 self.rarity_level = Rarity(1)
-            elif(self.level <= 35):
+            elif(self.level < 35):
                 self.rarity_level = Rarity(2)
-            elif(self.level <= 45):
+            elif(self.level < 45):
                 self.rarity_level = Rarity(3)
             else:
                 self.rarity_level = Rarity(4)
@@ -311,7 +326,6 @@ class Ruin():
             return
 
         #On initialise les pv des bullies
-        #pv_team_joueur = [] #pv du bully n°index. Si bully n°index n'existe pas alors -1
         self.fighters_joueur = [FightingBully.create_fighting_bully(b) for b in self.player.bullies]
 
         try: 

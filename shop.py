@@ -18,6 +18,8 @@ import asyncio
 from typing import Optional, Dict
 from typing import List
 
+from sqlalchemy.orm import exc
+
 import discord
 from discord.ext.commands import Context, Bot
 
@@ -31,7 +33,7 @@ SHOP_TIMEOUT = 30
 SHOP_RESTOCK_TIMEOUT = 10 * 60
 #Le temps pendant lequel le shop est fermé pendant le restockage. Les achats sont possibles mais on ne peut pas afficher un nouveau shop 
 #(permet d'éviter que quelqu'un affiche le shop alors qu'il change bientot)
-SHOP_CLOSE_WAIT_TIME = 30 #doit être > à SHOP_TIMEOUT (sinon quelqu'un pourrait acheter un truc qu'il veut pas)
+SHOP_CLOSE_WAIT_TIME = 1 #30 #doit être > à SHOP_TIMEOUT (sinon quelqu'un pourrait acheter un truc qu'il veut pas)
 #Si c'est à True, alors la commande shop n'affiche pas le shop mais un message qui demande d'attendre.
 is_shop_restocking = False
 
@@ -73,7 +75,7 @@ async def print_shop(ctx: Context, bot: Bot) -> None:
     images = bullies_in_shop_to_images()
 
     event = asyncio.Event()
-    var:Dict[str, Bully | discord.abc.User | None] = {"choix" : None, "user" : None}
+    var:Dict[str, Bully | discord.abc.User| None] = {"choix" : None, "user" : None}
     list_bully: List[Bully] = bullies_in_shop
     if images:
         files = [discord.File(image) for image in images]
@@ -92,7 +94,6 @@ async def print_shop(ctx: Context, bot: Bot) -> None:
             event.clear()
             async with shop_lock:
                 await handle_shop_click(ctx=ctx, variable_pointer=var, shop_msg=shop_msg, event=event)
-                utils.players_in_interaction.discard(ctx.author.id)
 
     except Exception as e:
         if not isinstance(e, asyncio.TimeoutError):
@@ -110,23 +111,24 @@ async def handle_shop_click(ctx:Context, variable_pointer:Dict[str, Bully | disc
     if user.id in utils.players_in_interaction:
         await ctx.send("You are already in an action.")
         return
-    utils.players_in_interaction.add(user.id)
 
     async with database.new_session() as session:
+        try:
+            print(choix_bully)
+        except exc.DetachedInstanceError as e:
+            await ctx.send(f"This bully is no longer available (sorry {user.name})")
+            return
         player = await session.get(Player, user.id)
         
         if player is None:
             await ctx.send("Please join the game first !")
-            utils.players_in_interaction.discard(ctx.author.id)
             return
         if(money.get_money_user(player) < cout_bully(choix_bully)):
             await ctx.send(f"You don't have enough {money.MONEY_ICON} {user} for {choix_bully.name} [cost: {cout_bully(choix_bully)}{money.MONEY_ICON}]")
-            utils.players_in_interaction.discard(ctx.author.id)
             return
 
         if(interact_game.nb_bully_in_team(player) >= interact_game.BULLY_NUMBER_MAX):
             await ctx.channel.send(f"You can't have more than {interact_game.BULLY_NUMBER_MAX} bullies at the same time")
-            utils.players_in_interaction.discard(ctx.author.id)
             return
         
         money.give_money(player, - cout_bully(choix_bully))
@@ -231,8 +233,6 @@ async def restock_shop_automatic() -> None:
         await asyncio.sleep(SHOP_CLOSE_WAIT_TIME)
         await restock_shop()
         is_shop_restocking = False
-
-
 
 
 def restock_message() -> str:

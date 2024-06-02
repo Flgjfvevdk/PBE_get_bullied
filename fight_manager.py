@@ -59,8 +59,7 @@ async def manager_start_fight(ctx: Context, user_1: discord.abc.User, player_1: 
     return
 
 async def start_fight(ctx: Context, user_1: discord.abc.User, player_1: Player, user_2: discord.abc.User, player_2: Player, bot: Bot, for_fun = False) -> None:
-    # bully_1, _ = await interact_game.player_choose_bully(ctx= ctx, user = user_1, bot= bot, timeout = CHOICE_TIMEOUT)
-    # bully_2, _ = await interact_game.player_choose_bully(ctx= ctx, user = user_2, bot= bot, timeout = CHOICE_TIMEOUT)
+
     try:
         fighting_bully_1, _ = await interact_game.player_choose_bully(ctx, user_1, player_1, bot, timeout = CHOICE_TIMEOUT)
     except asyncio.exceptions.TimeoutError as e:
@@ -137,8 +136,11 @@ def value_to_bar_str(v:int, max_value=10) -> str:
     t = ""
     for k in range(v):
         t += "▮"
+        # t += "■"
     for k in range(max_value-v):
         t += "."
+        # t += "□"
+    
     return t
 
 
@@ -154,14 +156,6 @@ async def fight_simulation(ctx, bot: Bot, fighting_bully_1:FightingBully, fighti
 
     #On initialise les variables pour le combat :
     tour = random.randint(0,1)
-    
-    #S'il y a des items, on change les valeurs des variables :
-    # item_1 = fighting_bully_1.equipped_item
-    # item_2 = fighting_bully_2.equipped_item
-    # if(item_1 != None and item_1.is_bfr_fight) : 
-    #     item_1.effect_before_fight(fighting_bully_self= fighting_bully_1, fighting_bully_adv= fighting_bully_2)
-    # if(item_2 != None and item_2.is_bfr_fight) : 
-    #     item_2.effect_before_fight(fighting_bully_self= fighting_bully_2, fighting_bully_adv= fighting_bully_1)
 
     max_pv_1 = fighting_bully_1.combattant.max_pv
     max_pv_2 = fighting_bully_2.combattant.max_pv
@@ -179,9 +173,14 @@ async def fight_simulation(ctx, bot: Bot, fighting_bully_1:FightingBully, fighti
     emoji_recap_j2: list[str] = []
     
     #On affiche le texte
-    message = await channel_cible.send(text_combat)
-    if(is_switch_possible):
-        await message.add_reaction('🔁')
+    if(is_switch_possible and isinstance(user_1, discord.abc.User)): #Ce code n'est fait pour fonctioner que si seul le user_1 peut switch. Faut l'adapter si le user2 peut switch
+        event_click_switch = asyncio.Event()
+        message = await channel_cible.send(text_combat,  view=interact_game.ViewClickBool(user=user_1, event=event_click_switch, label="Swap Bully", emoji="🔁"))
+    else :
+        message = await channel_cible.send(text_combat)
+    # if(is_switch_possible):
+    #     await message.add_reaction('🔁')
+
     await asyncio.sleep(fight_msg_time_update)
 
     while fighting_bully_1.pv > 0 and fighting_bully_2.pv > 0 :
@@ -212,15 +211,17 @@ async def fight_simulation(ctx, bot: Bot, fighting_bully_1:FightingBully, fighti
         await message.edit(content = text_combat)
         await asyncio.sleep(fight_msg_time_update)
 
-        #On regarde si changement nécessaire : NB : pour l'instant on regarde que pour J1
-        if(is_switch_possible) : 
-            try : 
-                if(tour == 0):
-                    await test_interruption_combat_reaction(user_1, message=message, reaction_interrupt= '🔁' )
-                else : 
-                    await test_interruption_combat_reaction(user_2, message=message, reaction_interrupt= '🔁' )
-            except InterruptionCombat as erreur:
+        #On regarde si changement nécessaire 
+        if(is_switch_possible and fighting_bully_1.pv > 0 and fighting_bully_2.pv > 0) : 
+            if event_click_switch.is_set():
                 raise InterruptionCombat(fighting_bully_1.pv, fighting_bully_2.pv)
+            # try : 
+            #     if(tour == 0):
+            #         await test_interruption_combat_reaction(user_1, message=message, reaction_interrupt= '🔁' )
+            #     else : 
+            #         await test_interruption_combat_reaction(user_2, message=message, reaction_interrupt= '🔁' )
+            # except InterruptionCombat as erreur:
+            #     raise InterruptionCombat(fighting_bully_1.pv, fighting_bully_2.pv)
     return 
 
 async def test_interruption_combat_reaction(user, message, reaction_interrupt) -> None:

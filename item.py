@@ -90,6 +90,23 @@ class Item(Base):
         text = ""
         if(compact_print) :
             text += self.name
+            if(self.is_bfr_fight):
+                if self.buff_start_self.pv != 0:
+                    text += f" HP[{ str(self.buff_start_self.pv)}]"
+                for stat_name in Stats.__dataclass_fields__:
+                    flat_buff = getattr(self.buff_start_self, stat_name)
+                    mult_buff = getattr(self.buff_start_self_mult_lvl, stat_name)
+
+                    if flat_buff != 0 or mult_buff != 0:
+                        text += f" {stat_name.capitalize()[0]}["
+                        if flat_buff != 0:
+                            text += f"+{flat_buff}"
+                            if mult_buff:
+                                text += "+"
+                            else :
+                                text += "]"
+                        if mult_buff:
+                            text += f"+{mult_buff}*[LVL]]"
         else :
             text += self.name
             text += "\nDescription : " + self.description
@@ -103,11 +120,11 @@ class Item(Base):
                     if flat_buff != 0 or mult_buff != 0:
                         text += f"\nBonus {stat_name.capitalize()}: "
                         if flat_buff != 0:
-                            text += f"{flat_buff}"
+                            text += f"+{flat_buff}"
                             if mult_buff:
                                 text += " + "
                         if mult_buff:
-                            text += f"{mult_buff}*[LVL]"
+                            text += f"+{mult_buff}*[LVL]"
         
         return text
 
@@ -128,18 +145,28 @@ Il vaut mieux qu'un item ultra puissant soit par exemple +2*LVL Force, du coup Ã
 
 Niveau 1 : 
 +1 Stat
+ou
 +1 PV
 
 Niveau 5 : 
 +1 Stat + 0.2*lvl Stat
-+1 PV ?
+ou
++1 PV + 1 Stat
 
 Niveau 10 : 
 +2 Stat + 0.4*lvl Stat
-+3 PV 
+ou
++2 PV 
+
+Niveau 20 : 
++2 Stat + 0.6*lvl
+ou 
++3 Pv
+
 
 Niveau 50 : 
-+1 Stat + 2*Lvl Stat
-+7 PV
++2 Stat + 2*Lvl Stat
+ou
++6 PV
 """
 

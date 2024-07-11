@@ -7,7 +7,7 @@ from player_info import Player
 import interact_game
 import fight_manager
 import money
-import pickle
+import keys
 import asyncio
 
 import utils
@@ -19,20 +19,26 @@ from typing import List
 from discord.ext.commands import Context, Bot
 from discord.abc import User
 from discord import Thread
-import discord.ui as ui
+import discord
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 enemies_possibles_names=["Thyr O'Flan", "Grobrah Le Musclé", "Plu Didié", "Wè wè", "XxX_BOSS_XxX", "Crapcrap", "Fou Fur", "Eric", "le gars qu'on choisit en dernier en sport et qui se venge" ]
 
-DUNGEON_CHOICE_TIMEOUT = 30
-THREAD_DELETE_AFTER = 90
-COEF_XP_WIN = 0.3
+DUNGEON_CHOICE_TIMEOUT = 20
+THREAD_DELETE_AFTER = 40
+COEF_XP_WIN = 0.5
 
-ENEMIES_MIN_PV = 4
-ENEMIES_MAX_PV = 10
+# ENEMIES_MIN_PV = 4
+# ENEMIES_MAX_PV = 10
+ENEMIES_FIGHTER_PV = 8
+ENEMIES_BOSS_PV = 20
 ENEMIES_GROUP_SIZE = 5
+
+
+boss_rarity_lvl:dict[int, bully.Rarity] = {k:bully.Rarity.TOXIC for k in range(0,5)} | {k:bully.Rarity.MONSTER for k in range(5,20)} | {k:bully.Rarity.DEVASTATOR for k in range(20,35)} | {k:bully.Rarity.SUBLIME for k in range(35,50)}
+fighter_rarities_lvl:dict[int, list[bully.Rarity]] = {k:[bully.Rarity.TOXIC] for k in range(0,10)} | {k:[bully.Rarity.TOXIC, bully.Rarity.MONSTER] for k in range(10,15)} | {k:[bully.Rarity.MONSTER] for k in range(15,25)} | {k:[bully.Rarity.MONSTER, bully.Rarity.DEVASTATOR] for k in range(25,30)} | {k:[bully.Rarity.DEVASTATOR] for k in range(30,40)} | {k:[bully.Rarity.DEVASTATOR, bully.Rarity.SUBLIME] for k in range(40,45)} | {k:[bully.Rarity.SUBLIME] for k in range(45,50)}
 
 @dataclass
 class Dungeon():
@@ -45,6 +51,7 @@ class Dungeon():
 
     size: int = ENEMIES_GROUP_SIZE
 
+    user: discord.abc.User = field(init=False)
     current_floor: int  = field(init = False, default=0)
     enemies_fighters: List[FightingBully] = field(init=False)
     fighters_joueur: list[FightingBully] = field(init=False)
@@ -52,6 +59,7 @@ class Dungeon():
     thread: Thread = field(init=False)
 
     def __post_init__(self):
+        self.user = self.ctx.author
         self.enemies_fighters = self.generate_dungeon_team()
 
         #On initialise les pv et xp gagné par les bullies
@@ -64,29 +72,16 @@ class Dungeon():
 
     def generate_dungeon_team(self) -> List[FightingBully]:
         enemies_fighters:List[FightingBully] = []
-
+        fighter_rarities:list[bully.Rarity] = fighter_rarities_lvl[self.level]
+        boss_rarity:bully.Rarity = boss_rarity_lvl[self.level]
         for k in range(self.size):
-            rarity = bully.Rarity.TOXIC if random.random() < self.level/10 else bully.Rarity.NOBODY
-
-            enemy_fighter = Bully(enemies_possibles_names[k], stats=bully.Stats(1,1,1,1), rarity=rarity, must_load_image=False)
-
-            point_init = enemy_fighter.rarity.points_bonus
-            coef_point_lvl_up = enemy_fighter.rarity.level_bonus
+            rarity = random.choice(fighter_rarities) if k < self.size - 1 else boss_rarity
+            pv_enemy = ENEMIES_FIGHTER_PV if k < self.size - 1 else ENEMIES_BOSS_PV
+            lvl_enemy = self.level
+            enemy_fighter = Bully(enemies_possibles_names[k], rarity=rarity, must_load_image=False, max_pv=pv_enemy)
             
-            def lerp(start, end, x):
-                return x*end + (1-x) * start
-            
-            xp_points = self.level * coef_point_lvl_up + point_init
-            points_bonus = round(lerp(xp_points / 3, xp_points, k/self.size))
-            pv_enemy = round(lerp(ENEMIES_MIN_PV, ENEMIES_MAX_PV, k/self.size))
-            
-            lvl_enemy = round((points_bonus - 4) * pv_enemy / 10, 1) if points_bonus > 4 else (round(points_bonus / 5 * pv_enemy / 10, 1))    
-            if k==self.size:
-                lvl_enemy = self.level
-            
-            enemy_fighter.increase_stat_with_seed(points_bonus)
-            enemy_fighter.lvl = lvl_enemy # Attention, ne recalcule pas les stats
-
+            for k in range(1, lvl_enemy) :
+                enemy_fighter.level_up_one()
             new_fighter = FightingBully.create_fighting_bully(enemy_fighter)
 
             enemies_fighters.append(new_fighter)
@@ -94,6 +89,12 @@ class Dungeon():
         return enemies_fighters
 
     async def enter(self) -> None:
+        if(keys.get_keys_user(self.player) <= 0):
+            await self.ctx.send(f"You don't have any {keys.KEYS_ICON}")
+            return
+        else :
+            self.player.keys -= 1
+
         message = await self.ctx.channel.send(f"{self.ctx.author.mention} enters the dungeon lev : {self.level}")
         try :
             self.thread = await self.ctx.channel.create_thread(name=f"Dungeon - Level {self.level}", message=message) #type: ignore
@@ -104,9 +105,10 @@ class Dungeon():
         #On fait la boucle de combat
         try:
             while self.current_floor < self.size:
-                await self.handle_fight()
-
-        except TimeoutError as e:
+                await self.handle_fight(can_switch=self.current_floor == self.size - 1)
+        except interact_game.CancelChoiceException as e:
+            await self.thread.send(f"{self.ctx.author.name} cancelled the fight and left the dungeon")
+        except asyncio.exceptions.TimeoutError as e:
             await self.thread.send(f"Your team left the dungeon. Choose faster next time {self.ctx.author}.")
         except IndexError as e:
             await self.thread.send(
@@ -117,7 +119,7 @@ class Dungeon():
             print(e)
 
         else:
-            #On est plus dans le combat, le joueur à triomphé du donjon
+            #On est plus dans le combat, le joueur à vaincu le donjon
             #On écrit le message de victoire dans les 2 channels
             await self.ctx.channel.send(f"{self.ctx.author.name} has beaten the level {self.level} dungeon!") 
             await self.thread.send(f"{self.ctx.author.name} has beaten the level {self.level} dungeon!") 
@@ -127,7 +129,10 @@ class Dungeon():
                 xp_earned = self.xp_earned_bullies[i]
                 if xp_earned > 0:
                     bully_joueur_recompense = fighter.combattant
-                    bully_joueur_recompense.give_exp(round(xp_earned * COEF_XP_WIN, 1))
+                    try:
+                        bully_joueur_recompense.give_exp(round(xp_earned * COEF_XP_WIN, 1))
+                    except bully.LevelUpException as lvl_except:
+                        await self.thread.send(f"{bully_joueur_recompense.name} {lvl_except.text}")
 
             #On maj le record du joueur sur son dungeon si nécessaire
             if self.level > self.player.max_dungeon:
@@ -135,9 +140,7 @@ class Dungeon():
         finally:
             await self.exit(THREAD_DELETE_AFTER)
 
-
-
-    async def handle_fight(self):
+    async def handle_fight(self, can_switch = False):
         #On affiche le prochain ennemy
         fighting_bully_enemy = self.enemies_fighters[self.current_floor]
         text_enemy_coming = f"An enemy is coming! {fighting_bully_enemy.combattant.get_print(compact_print=True)}"
@@ -153,9 +156,22 @@ class Dungeon():
             await self.thread.send(f"Your bully is dead or do not exist. \nYour team left the dungeon.")
             raise IndexError()
         
-        await fight_manager.fight_simulation(self.ctx, bot=self.bot, 
-                                            fighting_bully_1=fighting_bully_joueur, fighting_bully_2=fighting_bully_enemy,
-                                            channel_cible=self.thread)
+        # await fight_manager.fight_simulation(self.ctx, bot=self.bot, 
+        #                                     fighting_bully_1=fighting_bully_joueur, fighting_bully_2=fighting_bully_enemy,
+        #                                     is_switch_possible=can_switch, channel_cible=self.thread)
+        
+        while True:
+            try: 
+                await fight_manager.fight_simulation(self.ctx, bot=self.bot, 
+                                            fighting_bully_1=fighting_bully_joueur, fighting_bully_2=fighting_bully_enemy, user_1=self.user,
+                                            is_switch_possible=can_switch, channel_cible=self.thread)
+                
+            #Permet de faire une interruption du combat et de changer de bully qui se bat.
+            except fight_manager.InterruptionCombat as erreur:
+                print(erreur)
+                fighting_bully_joueur = await self.fighter_change(fighting_bully_joueur)
+            else:
+                break
         
         pv_restant_joueur = fighting_bully_joueur.pv
         bully_joueur = fighting_bully_joueur.combattant
@@ -166,7 +182,11 @@ class Dungeon():
             (exp_earned, gold_earned) = fight_manager.reward_win_fight(bully_joueur, fighting_bully_enemy.combattant)
             pretext = ""
             if (exp_earned > 0):
-                bully_joueur.give_exp(exp_earned)
+                try:
+                    bully_joueur.give_exp(exp_earned)
+                except bully.LevelUpException as lvl_except:
+                    await self.thread.send(f"{bully_joueur.name} {lvl_except.text}")
+
                 self.xp_earned_bullies[num_bully_j] += exp_earned
                 pretext += f"{bully_joueur.name} earned {exp_earned} xp!\n"
             if (gold_earned > 0):
@@ -185,7 +205,17 @@ class Dungeon():
             self.fighters_joueur.pop(num_bully_j)
             self.xp_earned_bullies.pop(num_bully_j)
 
-
+    async def fighter_change(self, fighter: FightingBully) -> FightingBully:
+        try :
+            _, new_num_bully_j = await interact_game.player_choose_bully(self.ctx, self.user, self.player, self.bot, channel_cible=self.thread, timeout=DUNGEON_CHOICE_TIMEOUT)
+            fighter = self.fighters_joueur[new_num_bully_j]
+        except interact_game.CancelChoiceException:
+            await self.thread.send(f"{fighter.combattant.name} stays in fight.")
+        except asyncio.exceptions.TimeoutError:
+            await self.thread.send(f"Too slow, {fighter.combattant.name} stays in fight.")
+        except IndexError:
+            await self.thread.send(f"Error, {fighter.combattant.name} stays in fight.")
+        return fighter
 
     async def exit(self, time_bfr_close: int) -> None:
         try :

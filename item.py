@@ -49,12 +49,12 @@ class Item(Base):
         default_factory=lambda: ItemStats(0,0,0,0,0)
     )
 
-    buff_start_self_mult_lvl: Mapped[Seed] = composite(
+    buff_start_self_mult_lvl: Mapped[Stats] = composite(
         mapped_column(name="buff_self_start_multiplicatif_lvl_strength"),
         mapped_column(name="buff_self_start_multiplicatif_lvl_agility"),
         mapped_column(name="buff_self_start_multiplicatif_lvl_lethality"),
         mapped_column(name="buff_self_start_multiplicatif_lvl_viciousness"),
-        default_factory=lambda: Seed(0,0,0,0)
+        default_factory=lambda: Stats(0,0,0,0)
     )
 
     def effect_before_fight(self, fighting_bully_self:FightingBully) -> None:
@@ -62,10 +62,10 @@ class Item(Base):
             stat_self = replace(fighting_bully_self.base_stats)
             fighting_bully_self.pv += self.buff_start_self.pv
             lvl_self = fighting_bully_self.combattant.lvl
-            stat_self.strength += self.buff_start_self.strength + round(lvl_self * self.buff_start_self_mult_lvl.strength)
-            stat_self.agility += self.buff_start_self.agility + round(lvl_self * self.buff_start_self_mult_lvl.agility)
-            stat_self.lethality += self.buff_start_self.lethality + round(lvl_self * self.buff_start_self_mult_lvl.lethality)
-            stat_self.viciousness += self.buff_start_self.viciousness + round(lvl_self * self.buff_start_self_mult_lvl.viciousness)
+            stat_self.strength += self.buff_start_self.strength + lvl_self * self.buff_start_self_mult_lvl.strength
+            stat_self.agility += self.buff_start_self.agility + lvl_self * self.buff_start_self_mult_lvl.agility
+            stat_self.lethality += self.buff_start_self.lethality + lvl_self * self.buff_start_self_mult_lvl.lethality
+            stat_self.viciousness += self.buff_start_self.viciousness + lvl_self * self.buff_start_self_mult_lvl.viciousness
             
             fighting_bully_self.base_stats = stat_self
             fighting_bully_self.stats = stat_self
@@ -90,6 +90,23 @@ class Item(Base):
         text = ""
         if(compact_print) :
             text += self.name
+            if(self.is_bfr_fight):
+                if self.buff_start_self.pv != 0:
+                    text += f" HP[{ str(self.buff_start_self.pv)}]"
+                for stat_name in Stats.__dataclass_fields__:
+                    flat_buff = getattr(self.buff_start_self, stat_name)
+                    mult_buff = getattr(self.buff_start_self_mult_lvl, stat_name)
+
+                    if flat_buff != 0 or mult_buff != 0:
+                        text += f" {stat_name.capitalize()[0]}["
+                        if flat_buff != 0:
+                            text += f"+{flat_buff}"
+                            if mult_buff:
+                                text += "+"
+                            else :
+                                text += "]"
+                        if mult_buff:
+                            text += f"+{mult_buff}*[LVL]]"
         else :
             text += self.name
             text += "\nDescription : " + self.description
@@ -103,11 +120,11 @@ class Item(Base):
                     if flat_buff != 0 or mult_buff != 0:
                         text += f"\nBonus {stat_name.capitalize()}: "
                         if flat_buff != 0:
-                            text += f"{flat_buff}"
+                            text += f"+{flat_buff}"
                             if mult_buff:
                                 text += " + "
                         if mult_buff:
-                            text += f"{mult_buff}*[LVL]"
+                            text += f"+{mult_buff}*[LVL]"
         
         return text
 
@@ -128,18 +145,28 @@ Il vaut mieux qu'un item ultra puissant soit par exemple +2*LVL Force, du coup Ã
 
 Niveau 1 : 
 +1 Stat
+ou
 +1 PV
 
 Niveau 5 : 
 +1 Stat + 0.2*lvl Stat
-+1 PV ?
+ou
++1 PV + 1 Stat
 
 Niveau 10 : 
 +2 Stat + 0.4*lvl Stat
-+3 PV 
+ou
++2 PV 
+
+Niveau 20 : 
++2 Stat + 0.6*lvl
+ou 
++3 Pv
+
 
 Niveau 50 : 
-+1 Stat + 2*Lvl Stat
-+7 PV
++2 Stat + 2*Lvl Stat
+ou
++6 PV
 """
 

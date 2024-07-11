@@ -12,6 +12,7 @@ class Player(Base):
     id: Mapped[int] = mapped_column(init=False, primary_key=True)
 
     money: Mapped[int]
+    keys: Mapped[int] = mapped_column(default = 5)
     max_dungeon: Mapped[int] = mapped_column(default = 0)
     last_payday: Mapped[datetime] = mapped_column(default=datetime.utcfromtimestamp(0.0))
 

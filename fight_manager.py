@@ -2,7 +2,7 @@ import os
 import random
 
 import discord
-from bully import Bully, Stats
+from bully import Bully, Stats, LevelUpException
 from item import Item
 from fighting_bully import FightingBully
 import pickle
@@ -13,13 +13,13 @@ import math
 
 from discord.ext.commands import Context, Bot
 from player_info import Player
-from typing import Optional
+from typing import Optional, Dict
 from dataclasses import replace
 
 
 CHOICE_TIMEOUT = 20
 RECAP_MAX_EMOJI = 15
-fight_msg_time_update = 1
+FIGHT_MSG_TIME_UPDATE = 1
 
 async def proposition_fight(ctx: Context, user_1: discord.abc.User, player_1: Player, user_2: discord.abc.User, player_2: Player, bot: Bot, for_fun = False) -> None:
     await manager_start_fight(ctx, user_1, player_1, user_2, player_2, bot, for_fun)
@@ -29,33 +29,61 @@ async def manager_start_fight(ctx: Context, user_1: discord.abc.User, player_1: 
     text_challenge = f"{user_1.mention} challenges {user_2.mention} !"
     if for_fun :
         text_challenge = f"{user_1.mention} challenges {user_2.mention} to a fun fight (no death, no xp)!"
-    message = await ctx.channel.send(text_challenge)
-    await message.add_reaction("✅")
-    await message.add_reaction("❌")
-    try :
-        reaction, msg = await bot.wait_for("reaction_add", check=check_reaction_yes_no(user_2, message), timeout=CHOICE_TIMEOUT)
-        if str(reaction.emoji) == "✅" :
-            await message.reply("Challenge accepted!")
-        elif str(reaction.emoji) == "❌" :
-            await message.reply("Challenge declined")
+
+    #On créer l'event qui sera set quand le bouton sera cliqué par user_2. La valeur du bouton (de la réponse) sera stocké dans var
+    event = asyncio.Event()
+    var:Dict[str, bool] = {"choix" : False}
+
+    if(user_1 != user_2):
+        #On affiche le message
+        message = await ctx.channel.send(content=text_challenge, view=interact_game.ViewYesNo(user=user_2, event=event, variable_pointer = var))
+
+        #On attend que le joueur clique sur un bouton
+        try:
+            await asyncio.wait_for(event.wait(), timeout=CHOICE_TIMEOUT)
+        except asyncio.exceptions.TimeoutError as e:
+            await message.reply(f"Too late! No fight between {user_1} and {user_2}")
             return
-    except Exception as e :
-        await message.reply(f"Too late! No fight between {user_1} and {user_2}")
-        print (e)
+        #On récup le choix
+        challenge_accepte:bool = var["choix"]
+    else : 
+        message = await ctx.channel.send(content=text_challenge)
+        challenge_accepte = True
+
+    #On affiche le choix de user_2
+    if(challenge_accepte) : 
+        await message.reply("Challenge accepted!")
+    else : 
+        await message.reply("Challenge declined")
         return
+    
+    #On commence le combat
     await start_fight(ctx, user_1, player_1, user_2, player_2, bot, for_fun)
     return
 
 async def start_fight(ctx: Context, user_1: discord.abc.User, player_1: Player, user_2: discord.abc.User, player_2: Player, bot: Bot, for_fun = False) -> None:
-    # bully_1, _ = await interact_game.player_choose_bully(ctx= ctx, user = user_1, bot= bot, timeout = CHOICE_TIMEOUT)
-    # bully_2, _ = await interact_game.player_choose_bully(ctx= ctx, user = user_2, bot= bot, timeout = CHOICE_TIMEOUT)
-    fighting_bully_1, _ = await interact_game.player_choose_bully(ctx, user_1, player_1, bot, timeout = CHOICE_TIMEOUT)
-    fighting_bully_2, _ = await interact_game.player_choose_bully(ctx, user_2, player_2, bot, timeout = CHOICE_TIMEOUT)
+
+    try:
+        fighting_bully_1, _ = await interact_game.player_choose_bully(ctx, user_1, player_1, bot, timeout = CHOICE_TIMEOUT)
+    except asyncio.exceptions.TimeoutError as e:
+        await ctx.send(f"Timeout, choose faster next time {user_1.name}")
+        return
+    except interact_game.CancelChoiceException as e:
+        await ctx.send(f"{user_1.name} cancelled the fight")
+        return
+    try:
+        fighting_bully_2, _ = await interact_game.player_choose_bully(ctx, user_2, player_2, bot, timeout = CHOICE_TIMEOUT)
+    except asyncio.exceptions.TimeoutError as e:
+        await ctx.send(f"Timeout, choose faster next time {user_2.name}")
+        return
+    except interact_game.CancelChoiceException as e:
+        await ctx.send(f"{user_2.name} cancelled the fight")
+        return
     
     item_1, item_2 = await manager_equip_item(ctx, user_1, player_1, user_2, player_2, bot)
     fighting_bully_1.equipped_item = item_1
     fighting_bully_2.equipped_item = item_2
-    # await fight(ctx, user_1, user_2, bot, bully_1, bully_2, for_fun, item_1=item_1, item_2=item_2)
+
     await fight(ctx, user_1, player_1, user_2, player_2, bot, fighting_bully_1, fighting_bully_2, for_fun)
     
     return
@@ -101,7 +129,10 @@ async def fight(ctx: Context, user_1: discord.abc.User, player_1: Player, user_2
         (exp_earned, gold_earned) = reward_win_fight(bully_gagnant, bully_perdant)
         pretext = ""
         if (exp_earned > 0):
-            bully_gagnant.give_exp(exp_earned)
+            try :
+                bully_gagnant.give_exp(exp_earned)
+            except LevelUpException as lvl_except:
+                await ctx.channel.send(f"{bully_gagnant.name} {lvl_except.text}")
             pretext += f"{bully_gagnant.name} earned {exp_earned} xp\n"
         if (gold_earned > 0):
             user_gagnant, player_gagnant = (user_1,player_1) if bully_gagnant == fighting_bully_1.combattant else (user_2, player_2)
@@ -116,31 +147,24 @@ def value_to_bar_str(v:int, max_value=10) -> str:
     t = ""
     for k in range(v):
         t += "▮"
+        # t += "■"
     for k in range(max_value-v):
         t += "."
+        # t += "□"
+    
     return t
 
 
 # ____________________________________________________
-async def fight_simulation(ctx, bot: Bot, fighting_bully_1:FightingBully, fighting_bully_2:FightingBully,
+async def fight_simulation(ctx:Context, bot: Bot, fighting_bully_1:FightingBully, fighting_bully_2:FightingBully,
                             user_1: discord.abc.User|None = None, user_2:discord.abc.User|None = None, is_switch_possible = False,
                             channel_cible = None) -> None:    
 
-    print("fighting_bully_1.stats ", fighting_bully_1.stats)
-    print("fighting_bully_2.stats ", fighting_bully_2.stats)
     if(channel_cible == None):
         channel_cible = ctx.channel
 
     #On initialise les variables pour le combat :
     tour = random.randint(0,1)
-    
-    #S'il y a des items, on change les valeurs des variables :
-    # item_1 = fighting_bully_1.equipped_item
-    # item_2 = fighting_bully_2.equipped_item
-    # if(item_1 != None and item_1.is_bfr_fight) : 
-    #     item_1.effect_before_fight(fighting_bully_self= fighting_bully_1, fighting_bully_adv= fighting_bully_2)
-    # if(item_2 != None and item_2.is_bfr_fight) : 
-    #     item_2.effect_before_fight(fighting_bully_self= fighting_bully_2, fighting_bully_adv= fighting_bully_1)
 
     max_pv_1 = fighting_bully_1.combattant.max_pv
     max_pv_2 = fighting_bully_2.combattant.max_pv
@@ -158,10 +182,13 @@ async def fight_simulation(ctx, bot: Bot, fighting_bully_1:FightingBully, fighti
     emoji_recap_j2: list[str] = []
     
     #On affiche le texte
-    message = await channel_cible.send(text_combat)
-    if(is_switch_possible):
-        await message.add_reaction('🔁')
-    await asyncio.sleep(fight_msg_time_update)
+    if(is_switch_possible and isinstance(user_1, discord.abc.User)): #Ce code n'est fait pour fonctioner que si seul le user_1 peut switch. Faut l'adapter si le user2 peut switch
+        event_click_switch = asyncio.Event()
+        message = await channel_cible.send(text_combat,  view=interact_game.ViewClickBool(user=user_1, event=event_click_switch, label="Swap Bully", emoji="🔁"))
+    else :
+        message = await channel_cible.send(text_combat)
+
+    await asyncio.sleep(FIGHT_MSG_TIME_UPDATE)
 
     while fighting_bully_1.pv > 0 and fighting_bully_2.pv > 0 :
         #On calcule l'action
@@ -189,36 +216,110 @@ async def fight_simulation(ctx, bot: Bot, fighting_bully_1:FightingBully, fighti
         action_combat = text_action
         text_combat = "```" + text_pv_combat + "\n\n" + action_combat + "```"
         await message.edit(content = text_combat)
-        await asyncio.sleep(fight_msg_time_update)
+        await asyncio.sleep(FIGHT_MSG_TIME_UPDATE)
 
-        #On regarde si changement nécessaire : NB : pour l'instant on regarde que pour J1
-        if(is_switch_possible) : 
-            try : 
-                if(tour == 0):
-                    await test_interruption_combat_reaction(user_1, message=message, reaction_interrupt= '🔁' )
-                else : 
-                    await test_interruption_combat_reaction(user_2, message=message, reaction_interrupt= '🔁' )
-            except InterruptionCombat as erreur:
+        #On regarde si changement nécessaire 
+        if(is_switch_possible and fighting_bully_1.pv > 0 and fighting_bully_2.pv > 0) : 
+            if event_click_switch.is_set():
                 raise InterruptionCombat(fighting_bully_1.pv, fighting_bully_2.pv)
     return 
 
-async def test_interruption_combat_reaction(user, message, reaction_interrupt) -> None:
-    message = await message.channel.fetch_message(message.id)
-    user_reacted = False
-    for reaction in message.reactions:
-        if str(reaction.emoji) == reaction_interrupt :
-            async for u in reaction.users():
-                if u == user:
-                    user_reacted = True
-                    break  # No need to continue checking reactions
-            if user_reacted:
-                break
-    if(user_reacted):
-        raise InterruptionCombat(pv_1= None, pv_2= None)
 
 
 # Pour calculer l'action du tour : ///////////////////////////////////////////////////////////////////////////////////////////////////////
-#def nouvelle_action_stat(stat_base_1, stat_base_2, name_1, name_2, tour):
+# def nouvelle_action_stat(fighting_bully_1:FightingBully, fighting_bully_2:FightingBully, tour) ->tuple[str, str, str, int]:
+#     """
+#     tour est égale à 0 ou 1. Il indique le tour du bully qui devrait normalement agir maintenant. 0 = bully_1, 1 = bully_2
+#     Retourne un tuple sous la forme : 
+#     (text_action, emoji_j1, emoji_j2, tour)
+#     C4EST DEGUEUX FAIRE UNE CLASS QUI PREN TOUT 9A EN COMPTE ET TOUT BREF LA C4EST NIMP
+#     """
+#     Emotes_possibles = ["👊", "🩸", "🛡️","🔪", "💥"] # ,"💔" #C'est juste pour pouvoir copier/coller
+#     text_action = ""
+#     pv_perdu_j1 = 0
+#     pv_perdu_j2 = 0
+#     pv_perdu = 0
+#     emoji_j1=""
+#     emoji_j2=""
+    
+#     name_1 = fighting_bully_1.combattant.name
+#     name_2 = fighting_bully_2.combattant.name
+
+#     #On regarde les fourberies
+#     fourberie_j1 = challenge_viciosite_stats(fighting_bully_1.stats, fighting_bully_2.stats)
+#     fourberie_j2 = challenge_viciosite_stats(fighting_bully_2.stats, fighting_bully_1.stats)
+    
+#     #stat_j1 = replace(fighting_bully_1.stats).__dict__
+#     #stat_j2 = replace(fighting_bully_2.stats).__dict__
+#     stat_j1 = replace(fighting_bully_1.stats)
+#     stat_j2 = replace(fighting_bully_2.stats)
+    
+#     if(fourberie_j1 and not fourberie_j2):
+#         #La meilleure de j2 (hors viciosite) devient égale au minimum entre : la stat de j1-1 et sa propre stat - 1. (minimum 1)
+#         stat_j1_dict = replace(fighting_bully_1.stats).__dict__
+#         stat_j2_dict = replace(fighting_bully_2.stats).__dict__
+#         del stat_j1_dict['_parents']
+#         del stat_j2_dict['_parents']
+#         max_stat_name = max((n for n in stat_j2_dict if n != "viciousness"), key=lambda n: stat_j2_dict[n])
+#         if (stat_j2_dict[max_stat_name] <= stat_j2_dict[max_stat_name]):
+#             stat_j2_dict[max_stat_name] = max(1,stat_j2_dict[max_stat_name] - 1)
+#         else :
+#             diff = stat_j2_dict[max_stat_name] - stat_j1_dict[max_stat_name]
+#             coef_vicious = stat_j2_dict["viciousness"]/stat_j1_dict["viciousness"]
+#             stat_j2_dict[max_stat_name] = max (1,stat_j1_dict[max_stat_name] - 1 + round(diff * (1 - math.exp(-coef_vicious / 1.5)) ))
+    
+#     if(fourberie_j2 and not fourberie_j1):
+#         #La meilleure de j1 (hors viciosite) devient egale au minimum entre : la stat de j2-2 et sa propre stat - 1. (minimum 1)
+#         stat_j1_dict = replace(fighting_bully_1.stats).__dict__
+#         stat_j2_dict = replace(fighting_bully_2.stats).__dict__
+#         del stat_j1_dict['_parents']
+#         del stat_j2_dict['_parents']
+#         max_stat_name = max((n for n in stat_j1_dict if n != "viciousness"), key=lambda n: stat_j1_dict[n])
+#         if (stat_j1_dict[max_stat_name] <= stat_j2_dict[max_stat_name]):
+#             stat_j1_dict[max_stat_name] = max(1,stat_j1_dict[max_stat_name] - 1)
+#         else :
+#             diff = stat_j1_dict[max_stat_name] - stat_j2_dict[max_stat_name]
+#             coef_vicious = stat_j1_dict["viciousness"]/stat_j2_dict["viciousness"]
+#             stat_j1_dict[max_stat_name] = max (1,stat_j2_dict[max_stat_name] - 1 + round(diff * (1 - math.exp(-coef_vicious / 1.5)) ))
+
+
+#     (name_actif, stat_j_actif), (name_passif, stat_j_passif) = ((name_1, stat_j1), (name_2, stat_j2)) if tour==0 else ((name_2, stat_j2), (name_1, stat_j1))
+    
+#     if challenge_prendre_de_vitesse_stats(stat_j_passif, stat_j_actif) :
+#         #On inverse le tour
+#         tour = (tour - 1) * - 1 
+#         (name_actif, stat_j_actif), (name_passif, stat_j_passif) = ((name_1, stat_j1), (name_2, stat_j2)) if tour==0 else ((name_2, stat_j2), (name_1, stat_j1))
+        
+#         text_action += f"{name_actif} follows up with another punch. "
+#     else : 
+#         text_action += f"{name_actif} strikes. "
+        
+    
+#     if challenge_defense_stats(stat_j_actif, stat_j_passif):
+#         text_action += f"But {name_passif} block! "
+#         emoji_j1 = "👊" if tour==0 else "🛡️"
+#         emoji_j2 = "🛡️" if tour==0 else "👊"
+#     else :
+#         if challenge_coup_critique_stats(stat_j_actif, stat_j_passif) :
+#             text_action += f"The punch shatters {name_passif}!"
+#             pv_perdu = 3
+#             emoji_j1 = "🔪" if tour==0 else "💥"
+#             emoji_j2 = "💥" if tour==0 else "🔪"
+#         else :
+#             text_action += f"{name_passif} is hurt."
+#             pv_perdu = 1
+#             emoji_j1 = "👊" if tour==0 else "🩸"
+#             emoji_j2 = "🩸" if tour==0 else "👊"
+            
+#     pv_perdu_j1 = pv_perdu if (name_passif == name_1) else 0
+#     pv_perdu_j2 = pv_perdu if (name_passif == name_2) else 0
+#     tour ^= 1 
+
+#     fighting_bully_1.pv = max(0,fighting_bully_1.pv - pv_perdu_j1)
+#     fighting_bully_2.pv = max(0,fighting_bully_2.pv - pv_perdu_j2)
+    
+#     return (text_action, emoji_j1, emoji_j2, tour)
+
 def nouvelle_action_stat(fighting_bully_1:FightingBully, fighting_bully_2:FightingBully, tour) ->tuple[str, str, str, int]:
     """
     tour est égale à 0 ou 1. Il indique le tour du bully qui devrait normalement agir maintenant. 0 = bully_1, 1 = bully_2
@@ -236,67 +337,41 @@ def nouvelle_action_stat(fighting_bully_1:FightingBully, fighting_bully_2:Fighti
     
     name_1 = fighting_bully_1.combattant.name
     name_2 = fighting_bully_2.combattant.name
-
-    #On regarde les fourberies
-    fourberie_j1 = challenge_viciosite_stats(fighting_bully_1.stats, fighting_bully_2.stats)
-    fourberie_j2 = challenge_viciosite_stats(fighting_bully_2.stats, fighting_bully_1.stats)
     
-    #stat_j1 = replace(fighting_bully_1.stats).__dict__
-    #stat_j2 = replace(fighting_bully_2.stats).__dict__
-    stat_j1 = replace(fighting_bully_1.stats)
-    stat_j2 = replace(fighting_bully_2.stats)
-    
-    if(fourberie_j1 and not fourberie_j2):
-        #La meilleure de j2 (hors viciosite) devient égale au minimum entre : la stat de j1-1 et sa propre stat - 1. (minimum 1)
-        stat_j1_dict = replace(fighting_bully_1.stats).__dict__
-        stat_j2_dict = replace(fighting_bully_2.stats).__dict__
-        del stat_j1_dict['_parents']
-        del stat_j2_dict['_parents']
-        max_stat_name = max((n for n in stat_j2_dict if n != "viciousness"), key=lambda n: stat_j2_dict[n])
-        if (stat_j2_dict[max_stat_name] <= stat_j2_dict[max_stat_name]):
-            stat_j2_dict[max_stat_name] = max(1,stat_j2_dict[max_stat_name] - 1)
-        else :
-            diff = stat_j2_dict[max_stat_name] - stat_j1_dict[max_stat_name]
-            coef_vicious = stat_j2_dict["viciousness"]/stat_j1_dict["viciousness"]
-            stat_j2_dict[max_stat_name] = max (1,stat_j1_dict[max_stat_name] - 1 + round(diff * (1 - math.exp(-coef_vicious / 1.5)) ))
-    
-    if(fourberie_j2 and not fourberie_j1):
-        #La meilleure de j1 (hors viciosite) devient egale au minimum entre : la stat de j2-2 et sa propre stat - 1. (minimum 1)
-        stat_j1_dict = replace(fighting_bully_1.stats).__dict__
-        stat_j2_dict = replace(fighting_bully_2.stats).__dict__
-        del stat_j1_dict['_parents']
-        del stat_j2_dict['_parents']
-        max_stat_name = max((n for n in stat_j1_dict if n != "viciousness"), key=lambda n: stat_j1_dict[n])
-        if (stat_j1_dict[max_stat_name] <= stat_j2_dict[max_stat_name]):
-            stat_j1_dict[max_stat_name] = max(1,stat_j1_dict[max_stat_name] - 1)
-        else :
-            diff = stat_j1_dict[max_stat_name] - stat_j2_dict[max_stat_name]
-            coef_vicious = stat_j1_dict["viciousness"]/stat_j2_dict["viciousness"]
-            stat_j1_dict[max_stat_name] = max (1,stat_j2_dict[max_stat_name] - 1 + round(diff * (1 - math.exp(-coef_vicious / 1.5)) ))
+    # stat_j1 = replace(fighting_bully_1.stats)
+    # stat_j2 = replace(fighting_bully_2.stats)
+    stat_j1 = (fighting_bully_1.stats)
+    stat_j2 = (fighting_bully_2.stats)
 
-
-    #(name_actif, stat_j_actif), (name_passif, stat_j_passif) = ((name_1, stat_j1.copy()), (name_2, stat_j2.copy())) if tour==0 else ((name_2, stat_j2.copy()), (name_1, stat_j1.copy()))
     (name_actif, stat_j_actif), (name_passif, stat_j_passif) = ((name_1, stat_j1), (name_2, stat_j2)) if tour==0 else ((name_2, stat_j2), (name_1, stat_j1))
     
     if challenge_prendre_de_vitesse_stats(stat_j_passif, stat_j_actif) :
         #On inverse le tour
         tour = (tour - 1) * - 1 
-        # (name_actif, stat_j_actif), (name_passif, stat_j_passif) = ((name_1, stat_j1.copy()), (name_2, stat_j2.copy())) if tour==0 else ((name_2, stat_j2.copy()), (name_1, stat_j1.copy()))
         (name_actif, stat_j_actif), (name_passif, stat_j_passif) = ((name_1, stat_j1), (name_2, stat_j2)) if tour==0 else ((name_2, stat_j2), (name_1, stat_j1))
-        
         text_action += f"{name_actif} follows up with another punch. "
     else : 
         text_action += f"{name_actif} strikes. "
         
     
     if challenge_defense_stats(stat_j_actif, stat_j_passif):
-        text_action += f"But {name_passif} block! "
+        text_action += f"But {name_passif} blocks! "
         emoji_j1 = "👊" if tour==0 else "🛡️"
         emoji_j2 = "🛡️" if tour==0 else "👊"
+
+        if challenge_viciosite_stats(stat_j_actif, stat_j_passif):
+            text_action += f"{name_actif}'s vicious attack weakens {name_passif}. "
+            apply_viciousness(stat_j_actif, stat_j_passif, is_attack_success=False, is_attacker=True)
+        # elif challenge_viciosite_stats(stat_j_passif, stat_j_actif):
+        #     apply_viciousness(stat_j_passif, stat_j_actif, is_attack_success=False, is_attacker=False)
+
     else :
-        if challenge_coup_critique_stats(stat_j_actif, stat_j_passif) :
-            text_action += f"The punch shatters {name_passif}!"
-            pv_perdu = 3
+        lethal_buff = challenge_coup_critique_stats(stat_j_actif, stat_j_passif)
+        lethal_buff += 1 if lethal_buff > 1 else 0
+        
+        if lethal_buff > 0 :
+            text_action += f"The punch shatters {name_passif}! "
+            pv_perdu = 1 + lethal_buff
             emoji_j1 = "🔪" if tour==0 else "💥"
             emoji_j2 = "💥" if tour==0 else "🔪"
         else :
@@ -304,6 +379,10 @@ def nouvelle_action_stat(fighting_bully_1:FightingBully, fighting_bully_2:Fighti
             pv_perdu = 1
             emoji_j1 = "👊" if tour==0 else "🩸"
             emoji_j2 = "🩸" if tour==0 else "👊"
+
+        if challenge_viciosite_stats(stat_j_actif, stat_j_passif):
+            text_action += f"{name_actif}'s vicious attack weakens {name_passif}. "
+            apply_viciousness(stat_j_actif, stat_j_passif, is_attack_success=True, is_attacker=True)
             
     pv_perdu_j1 = pv_perdu if (name_passif == name_1) else 0
     pv_perdu_j2 = pv_perdu if (name_passif == name_2) else 0
@@ -313,7 +392,6 @@ def nouvelle_action_stat(fighting_bully_1:FightingBully, fighting_bully_2:Fighti
     fighting_bully_2.pv = max(0,fighting_bully_2.pv - pv_perdu_j2)
     
     return (text_action, emoji_j1, emoji_j2, tour)
-    #return (text_action, pv_perdu_j1, pv_perdu_j2, emoji_j1, emoji_j2, tour)
 
 # Pour les comparaisons de stat ____________________________________
 def challenge_prendre_de_vitesse_stats(stat_voulant_rejouer: Stats, stat_qui_attaque_normalement: Stats) -> bool:
@@ -328,19 +406,47 @@ def challenge_defense_stats(stat_attaquant: Stats, stat_defenseur: Stats) -> boo
     parade_reussie = Bully.clash_stat(st_actif = stat_def_strength, st_passif = stat_att_strength)
     return parade_reussie
 
-def challenge_coup_critique_stats(stat_attaquant: Stats, stat_defenseur: Stats) -> bool:
-    stat_att_lethality = stat_attaquant.lethality
-    stat_def_strength = stat_defenseur.strength
-    coup_critique = Bully.clash_stat(st_actif = stat_att_lethality, st_passif = stat_def_strength)
-    return coup_critique
+# def challenge_coup_critique_stats(stat_attaquant: Stats, stat_defenseur: Stats) -> bool:
+#     stat_att_lethality = stat_attaquant.lethality
+#     stat_def_strength = stat_defenseur.strength
+#     coup_critique = Bully.clash_stat(st_actif = stat_att_lethality, st_passif = stat_def_strength)
+#     return coup_critique
 
-def challenge_viciosite_stats(stat_attaquant: Stats, stat_defenseur: Stats) -> bool:
-    stat_att_vicieux = stat_attaquant.viciousness
-    stat_def_vicieux = stat_defenseur.viciousness
+def challenge_coup_critique_stats(stat_attaquant: Stats, stat_defenseur: Stats) -> int:
+    nb_succes = 0
+    nb_succes += 1 if Bully.clash_stat(st_actif = stat_attaquant.lethality, st_passif = stat_defenseur.strength) else 0
+    nb_succes += 1 if Bully.clash_stat(st_actif = stat_attaquant.lethality, st_passif = stat_defenseur.lethality) else 0
+    return nb_succes
+
+def challenge_viciosite_stats(stat_challenger: Stats, stat_defender: Stats) -> bool:
+    stat_att_vicieux = stat_challenger.viciousness
+    stat_def_vicieux = stat_defender.viciousness
     minim = min(stat_att_vicieux, stat_def_vicieux)
     fourberie = Bully.clash_stat(st_actif = stat_att_vicieux, st_passif = stat_def_vicieux, neutre=minim)
     
     return fourberie
+
+def apply_viciousness(stat_challenger:Stats, stat_defender:Stats, is_attack_success, is_attacker):
+    """Apply a permanent viciousness debuff to the defender's highest stat."""
+    max_stat_name = stat_defender.max_stat()
+    total_stat_points = stat_defender.sum_stats()
+
+    if getattr(stat_defender, max_stat_name) > getattr(stat_challenger, max_stat_name) :
+        if is_attack_success and is_attacker:
+            malus = total_stat_points * 0.13
+        elif is_attacker:
+            malus = total_stat_points * 0.10#0.07
+        else:
+            malus = total_stat_points * 0.0#0.02
+    else:
+        if is_attack_success and is_attacker:
+            malus = total_stat_points * 0.02#0.04
+        elif is_attacker:
+            malus = total_stat_points * 0.02#0.01
+        else:
+            malus = total_stat_points * 0.0#0.005
+
+    setattr(stat_defender, max_stat_name, max(1, getattr(stat_defender, max_stat_name) - malus))
 
 # __________________________________________________________________
 # ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

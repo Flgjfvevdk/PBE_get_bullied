@@ -18,3 +18,6 @@ class FightingBully():
         fighter = FightingBully(combattant=b, pv=b.max_pv, base_stats=replace(b.stats), stats=replace(b.stats))
         fighter.equipped_item = i
         return fighter
+    
+    def reset_stats(self) -> None:
+        self.stats = replace(self.base_stats)

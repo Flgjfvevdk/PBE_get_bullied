@@ -1,35 +1,16 @@
-from pathlib import Path
-from bully import Bully
-import bully
-import interact_game
-import money
-import donjon
-import utils
+
 import database
 from player_info import Player
 
 
-import os
-import random 
-import json
-import asyncio
-
-from typing import Optional, Dict
-from typing import List
-
-from sqlalchemy.orm import exc
-
-import discord
 from discord.ext import tasks
-from discord.ext.commands import Context, Bot
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 # Var payday
 KEYS_MAX = 15
 NB_KEYS_RESTOCK = 1
-GET_KEYS_COOLDOWN = 10 * 60
+GET_KEYS_COOLDOWN = 20 * 60
 
 KEYS_ICON = "🔑"
 

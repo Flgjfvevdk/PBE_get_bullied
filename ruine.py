@@ -23,6 +23,10 @@ import utils
 
 RUIN_CHOICE_TIMEOUT = 20
 THREAD_DELETE_AFTER = 40
+MAX_PV_ENEMY = 8
+COEF_XP_FIGHTER = 0.8
+COEF_GOLD_FIGHTER = 0.5
+MAX_PV_BOSS = 20
 
 class Trap :
     def __init__(self, level: int, rarity: Rarity, stat_index: int|None = None, damage = 3):
@@ -66,7 +70,7 @@ class EnemyRoom():
 
     @staticmethod
     def generate(level: int, rarity: Rarity) -> "EnemyRoom":
-        max_pv_enemy = 8
+        max_pv_enemy = MAX_PV_ENEMY
         enemy = Bully("enemy", rarity=rarity, must_load_image= False, max_pv= max_pv_enemy)
         for k in range(1, level) :
             enemy.level_up_one()
@@ -130,6 +134,7 @@ class EnemyRoom():
         Returns:
             bool: Was the enemy defeated?
         """
+        print("stats fighting bully :", fighter.stats)
         while True:
             try: 
                 await fight_manager.fight_simulation(ruin.ctx, bot=ruin.bot, 
@@ -154,6 +159,8 @@ class EnemyRoom():
 
             #On calcule les récompenses, on les affiches et on les stock
             (exp_earned, gold_earned) = fight_manager.reward_win_fight(bully_joueur, self.enemy.combattant)
+            exp_earned *= COEF_XP_FIGHTER
+            gold_earned = int(COEF_GOLD_FIGHTER * gold_earned)
             pretext = ""
             if (exp_earned > 0):
                 try:
@@ -222,7 +229,7 @@ class BossRoom(EnemyRoom, ItemRoom):
 
     @staticmethod
     def generate(level: int, rarity: Rarity) -> "BossRoom":
-        max_pv_boss:int = 20
+        max_pv_boss:int = MAX_PV_BOSS
 
         boss = Bully("BOSS", rarity=rarity, must_load_image=False, max_pv=max_pv_boss)
         for _ in range(1, level) :
@@ -305,8 +312,6 @@ class Ruin():
             else:
                 self.rarity_level = Rarity.SUBLIME
 
-        #Ajout salle boss
-        self.rooms.append(BossRoom.generate(self.level, self.rarity_level))
         #Ajout salle Enemy
         for _ in range(nb_salle_enemy):
             self.rooms.append(EnemyRoom.generate(self.level, self.rarity_level))
@@ -321,6 +326,9 @@ class Ruin():
             self.rooms.append(TrapRoom.generate(self.level, self.rarity_level))
 
         random.shuffle(self.rooms)
+
+        #Ajout salle boss à la fin
+        self.rooms.append(BossRoom.generate(self.level, self.rarity_level))
 
     async def enter(self) -> None:
         if(keys.get_keys_user(self.player) <= 0):
@@ -342,7 +350,7 @@ class Ruin():
         try: 
             # Pop removes the last item
             while not await self.rooms.pop().interact(self):
-                pass
+                self.reset_stats_bullies()# pass
 
             await self.thread.send(f"Congratulation {self.user}, you beat the boss!")
         except interact_game.CancelChoiceException as e:
@@ -357,6 +365,11 @@ class Ruin():
         finally:
             await self.exit()
 
+    def reset_stats_bullies(self) -> None:
+        for f in self.fighters_joueur :
+            print('Cuurent stat :' , f.stats)
+            f.reset_stats()
+
     async def exit(self, time_bfr_close_thread=THREAD_DELETE_AFTER) -> None:
         try:
             async def delete_thread():
@@ -366,4 +379,5 @@ class Ruin():
         except Exception as e:
             print(e)
         
+
 

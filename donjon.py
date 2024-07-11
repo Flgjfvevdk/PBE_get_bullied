@@ -28,11 +28,11 @@ enemies_possibles_names=["Thyr O'Flan", "Grobrah Le Musclé", "Plu Didié", "Wè
 
 DUNGEON_CHOICE_TIMEOUT = 20
 THREAD_DELETE_AFTER = 40
-COEF_XP_WIN = 0.5
+COEF_XP_WIN = 1
 
-# ENEMIES_MIN_PV = 4
-# ENEMIES_MAX_PV = 10
 ENEMIES_FIGHTER_PV = 8
+COEF_XP_FIGHTER = 0.8
+COEF_GOLD_FIGHTER = 0.5
 ENEMIES_BOSS_PV = 20
 ENEMIES_GROUP_SIZE = 5
 
@@ -106,6 +106,8 @@ class Dungeon():
         try:
             while self.current_floor < self.size:
                 await self.handle_fight(can_switch=self.current_floor == self.size - 1)
+                self.reset_stats_bullies()
+
         except interact_game.CancelChoiceException as e:
             await self.thread.send(f"{self.ctx.author.name} cancelled the fight and left the dungeon")
         except asyncio.exceptions.TimeoutError as e:
@@ -156,10 +158,7 @@ class Dungeon():
             await self.thread.send(f"Your bully is dead or do not exist. \nYour team left the dungeon.")
             raise IndexError()
         
-        # await fight_manager.fight_simulation(self.ctx, bot=self.bot, 
-        #                                     fighting_bully_1=fighting_bully_joueur, fighting_bully_2=fighting_bully_enemy,
-        #                                     is_switch_possible=can_switch, channel_cible=self.thread)
-        
+
         while True:
             try: 
                 await fight_manager.fight_simulation(self.ctx, bot=self.bot, 
@@ -180,6 +179,8 @@ class Dungeon():
             #Le joueur a gagné
             #On calcul les récompenses, on les affiches et on les stocks
             (exp_earned, gold_earned) = fight_manager.reward_win_fight(bully_joueur, fighting_bully_enemy.combattant)
+            exp_earned *= COEF_XP_FIGHTER
+            gold_earned = int(COEF_GOLD_FIGHTER * gold_earned)
             pretext = ""
             if (exp_earned > 0):
                 try:
@@ -216,6 +217,10 @@ class Dungeon():
         except IndexError:
             await self.thread.send(f"Error, {fighter.combattant.name} stays in fight.")
         return fighter
+    
+    def reset_stats_bullies(self) -> None:
+        for f in self.fighters_joueur :
+            f.reset_stats()
 
     async def exit(self, time_bfr_close: int) -> None:
         try :
@@ -226,6 +231,7 @@ class Dungeon():
             asyncio.create_task(delete_thread())
         except Exception as e:
             print(e)
+
 
 
 async def str_leaderboard_donjon(session: AsyncSession) -> str:

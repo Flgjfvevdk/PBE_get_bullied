@@ -327,7 +327,7 @@ def nouvelle_action_stat(fighting_bully_1:FightingBully, fighting_bully_2:Fighti
     (text_action, emoji_j1, emoji_j2, tour)
     C4EST DEGUEUX FAIRE UNE CLASS QUI PREN TOUT 9A EN COMPTE ET TOUT BREF LA C4EST NIMP
     """
-    Emotes_possibles = ["👊", "🩸", "🛡️","🔪", "💥"] # ,"💔" #C'est juste pour pouvoir copier/coller
+    Emotes_possibles = ["👊", "🩸", "🛡️","🔪", "💥","💔", "🗡️"]  #C'est juste pour pouvoir copier/coller
     text_action = ""
     pv_perdu_j1 = 0
     pv_perdu_j2 = 0
@@ -362,8 +362,11 @@ def nouvelle_action_stat(fighting_bully_1:FightingBully, fighting_bully_2:Fighti
         if challenge_viciosite_stats(stat_j_actif, stat_j_passif):
             text_action += f"{name_actif}'s vicious attack weakens {name_passif}. "
             apply_viciousness(stat_j_actif, stat_j_passif, is_attack_success=False, is_attacker=True)
+            emoji_j1 = "🗡️" if tour==0 else "🛡️"
+            emoji_j2 = "🛡️" if tour==0 else "🗡️"
         # elif challenge_viciosite_stats(stat_j_passif, stat_j_actif):
         #     apply_viciousness(stat_j_passif, stat_j_actif, is_attack_success=False, is_attacker=False)
+
 
     else :
         lethal_buff = challenge_coup_critique_stats(stat_j_actif, stat_j_passif)
@@ -383,6 +386,9 @@ def nouvelle_action_stat(fighting_bully_1:FightingBully, fighting_bully_2:Fighti
         if challenge_viciosite_stats(stat_j_actif, stat_j_passif):
             text_action += f"{name_actif}'s vicious attack weakens {name_passif}. "
             apply_viciousness(stat_j_actif, stat_j_passif, is_attack_success=True, is_attacker=True)
+            em_att = "🔪" if lethal_buff > 0 else "🗡️"
+            emoji_j1 = em_att if tour==0 else "💔"
+            emoji_j2 = "💔" if tour==0 else em_att
             
     pv_perdu_j1 = pv_perdu if (name_passif == name_1) else 0
     pv_perdu_j2 = pv_perdu if (name_passif == name_2) else 0
@@ -452,7 +458,7 @@ def apply_viciousness(stat_challenger:Stats, stat_defender:Stats, is_attack_succ
 # ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 # Les récompenses ____________________________________
-def reward_win_fight(b_win, b_lose) -> tuple[float, int]:
+def reward_win_fight(b_win:Bully, b_lose:Bully) -> tuple[float, int]:
     exp_earned = 0
     gold_earned = 0
     if(b_win.lvl >= b_lose.lvl + 5):

@@ -454,9 +454,7 @@ def generate_name() -> str:
     file_nom.close()
     return prenom + " " + nom
 
-#A SUPPRIMER
-async def add_bully_custom(ctx: Context, player: Player, name_brute, stats, rarity, channel_cible=None):
-    
+async def add_bully_custom(ctx: Context, player: Player, name_brute:str, stats:bully.Stats, rarity:bully.Rarity, channel_cible=None):
     #Par défaut, le channel d'envoie est le channel du contexte
     if(channel_cible==None):
         channel_cible = ctx.channel
@@ -485,6 +483,7 @@ async def increase_all_lvl(ctx: Context, player: Player, nb_level:int = 1,  chan
 
     
     await channel_cible.send("done")
+
 
 def nb_bully_in_team(player: Player) -> int:
     return len(player.bullies)

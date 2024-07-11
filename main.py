@@ -17,6 +17,7 @@ import bully
 import item
 import database
 from player_info import Player
+import tuto_text
 
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import sessionmaker
@@ -66,7 +67,6 @@ async def join(ctx: Context):
         
 
 @bot.command(aliases=['py', 'pay'])
-@utils.author_is_free
 async def payday(ctx: Context):
     async with database.new_session() as session:
         player = await session.get(Player, ctx.author.id)
@@ -116,12 +116,13 @@ async def patchnote(ctx: Context):
     await ctx.channel.send(
         "```\n"
         "- Get bullied est (enfin) là !\n"
-        "- La commande !!help a été mise à jour\n"
+        "- La commande !!tuto a été mise à jour\n"
         "- Apparition des raretés pour les bullies"
         "- Les nobodies débloquent leur potentiel au lvl 10 ...\n"
         "- Le shop est là."
         "- Apparition des items"
         "- Ouverture des ruines"
+        "- Mise à jour du système de combat"
         "```"
     )
 
@@ -204,70 +205,96 @@ async def destroy_item(ctx: Context):
     return
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 
+# //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#Les tutos : ___________________________________________________________
+@bot.command()
+async def tuto(ctx: Context):
+    await ctx.channel.send(tuto_text.tuto)
+@bot.command(aliases=['tuto_b'])
+async def tuto_bully(ctx: Context):
+    await ctx.channel.send(tuto_text.tuto_bully)
+@bot.command(aliases=['tuto_f'])
+async def tuto_fight(ctx: Context):
+    await ctx.channel.send(tuto_text.tuto_fight)
+@bot.command(aliases=['tuto_d', 'tuto_donjon'])
+async def tuto_dungeon(ctx: Context):
+    await ctx.channel.send(tuto_text.tuto_dungeon)
+@bot.command(aliases=['tuto_r', 'tuto_ruine'])
+async def tuto_ruin(ctx: Context):
+    await ctx.channel.send(tuto_text.tuto_ruin)
+
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #Les combats : ___________________________________________________________
-@bot.command(aliases=['ch'])
+@bot.command(aliases=['ch', 'fight'])
 #@utils.author_is_free
-async def challenge(ctx: Context, user_2:discord.Member):
+async def challenge(ctx: Context, opponent:discord.Member):
     user_1 = ctx.author
     if user_1.id in utils.players_in_interaction:
         await ctx.reply(f"You are already in an interaction.")
         return
-    if user_2.id in utils.players_in_interaction:
-        await ctx.channel.send(f"Sorry, but {user_2} is already busy!")
+    if opponent.id in utils.players_in_interaction:
+        await ctx.channel.send(f"Sorry, but {opponent} is already busy!")
         return
 
     utils.players_in_interaction.add(user_1.id)
-    utils.players_in_interaction.add(user_2.id)
+    utils.players_in_interaction.add(opponent.id)
     try:
         async with database.new_session() as session:
             p1 = await session.get(Player, user_1.id)
-            p2 = await session.get(Player, user_2.id)
+            p2 = await session.get(Player, opponent.id)
             if p1 is None:
                 await ctx.reply("Please join the game first !")
                 return
             if p2 is None:
-                await ctx.reply(f"{user_2} has not joined the game.")
+                await ctx.reply(f"{opponent} has not joined the game.")
                 return
-            await fight_manager.proposition_fight(ctx, user_1, p1, user_2, p2, bot)
+            await fight_manager.proposition_fight(ctx, user_1, p1, opponent, p2, bot)
             await session.commit()
     finally:
-        utils.players_in_interaction.discard(user_2.id)
+        utils.players_in_interaction.discard(opponent.id)
         utils.players_in_interaction.discard(user_1.id)
 
     return
 
-@bot.command(aliases=['fch'])
-async def fun_challenge(ctx: Context, user_2:discord.Member):
+@bot.command(aliases=['fch', 'fun_fight'])
+async def fun_challenge(ctx: Context, opponent:discord.Member):
     user_1 = ctx.author
     if user_1.id in utils.players_in_interaction:
         await ctx.reply(f"You are already in an interaction.")
         return
-    if user_2.id in utils.players_in_interaction:
-        await ctx.channel.send(f"Sorry, but {user_2} is already busy!")
+    if opponent.id in utils.players_in_interaction:
+        await ctx.channel.send(f"Sorry, but {opponent} is already busy!")
         return
 
     utils.players_in_interaction.add(user_1.id)
-    utils.players_in_interaction.add(user_2.id)
+    utils.players_in_interaction.add(opponent.id)
     try:
         async with database.new_session() as session:
             p1 = await session.get(Player, user_1.id)
-            p2 = await session.get(Player, user_2.id)
+            p2 = await session.get(Player, opponent.id)
             if p1 is None:
                 await ctx.reply("Please join the game first !")
                 return
             if p2 is None:
-                await ctx.reply(f"{user_2} has not joined the game.")
+                await ctx.reply(f"{opponent} has not joined the game.")
                 return
-            await fight_manager.proposition_fight(ctx, user_1, p1, user_2, p2, bot, for_fun=True)
+            await fight_manager.proposition_fight(ctx, user_1, p1, opponent, p2, bot, for_fun=True)
     finally:
-        utils.players_in_interaction.discard(user_2.id)
+        utils.players_in_interaction.discard(opponent.id)
         utils.players_in_interaction.discard(user_1.id)
 
     return
 
+@challenge.error
+@fun_challenge.error
+async def challenge_error(ctx: Context, error: commands.CommandError):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send(f"Error: Missing required argument `{error.param.name}`.")
+
+    
 @bot.command(aliases=['dungeon', 'donjon'])
 #@utils.author_is_free
 async def explore_dungeon(ctx: Context, level:int):
@@ -406,25 +433,29 @@ async def kill_all(ctx: Context):
 #Command d'admin _____________________________________________________________________________________________________
 @bot.command()
 @utils.is_admin()
-#@utils.author_is_free
-async def admin_give(ctx: Context):
-    user = ctx.author
-    if user.id in utils.players_in_interaction:
-        await ctx.reply(f"You are already in an interaction.")
-        return
+async def admin_give(ctx: Context,user: discord.User, name: str, lvl:int , strength: float, agility: float, lethality: float, viciousness: float, path_image: str = ""):
+    # # Création de l'objet Stats
+    stats = bully.Stats(strength, agility, lethality, viciousness)
+    
+    # Création de l'objet Bully
+    b = bully.Bully(name=name, rarity= bully.Rarity.NOBODY, stats=stats)
+    b.lvl = lvl
+    sum_stats = stats.sum_stats()
+    b.seed = bully.Seed(stats.strength/sum_stats, stats.agility/sum_stats, stats.lethality/sum_stats, stats.viciousness/sum_stats)
+    if path_image != "":
+        b.image_file_path=Path(path_image)
+    
+    async with database.new_session() as session:
+        player = await session.get(Player, user.id)
+        if player is None:
+            await ctx.reply("You can't use any commands if the target didn't join")
+            return
+        await interact_game.add_bully_to_player(ctx, player, b)
+        await session.commit()
 
-    utils.players_in_interaction.add(user.id)
-    try:
-        async with database.new_session() as session:
-            
-            player = await session.get(Player, ctx.author.id)
-            if player is None:
-                await ctx.reply("You can't use any commands if the target doesn't have an account")
-                return
-            await interact_game.add_bully_custom(ctx, player, ["Balez", "EZ"], [99,99,99,99], bully.Rarity.DEVASTATOR)
-            await session.commit()
-    finally:
-        utils.players_in_interaction.discard(user.id)
+    # Message de confirmation
+    await ctx.send(f"{user.mention}, vous avez reçu {b.name}")
+    
 
 @bot.command(aliases=['new_shop', 'ns'])
 @utils.is_admin()

@@ -49,12 +49,12 @@ class Item(Base):
         default_factory=lambda: ItemStats(0,0,0,0,0)
     )
 
-    buff_start_self_mult_lvl: Mapped[Seed] = composite(
+    buff_start_self_mult_lvl: Mapped[Stats] = composite(
         mapped_column(name="buff_self_start_multiplicatif_lvl_strength"),
         mapped_column(name="buff_self_start_multiplicatif_lvl_agility"),
         mapped_column(name="buff_self_start_multiplicatif_lvl_lethality"),
         mapped_column(name="buff_self_start_multiplicatif_lvl_viciousness"),
-        default_factory=lambda: Seed(0,0,0,0)
+        default_factory=lambda: Stats(0,0,0,0)
     )
 
     def effect_before_fight(self, fighting_bully_self:FightingBully) -> None:
@@ -62,10 +62,10 @@ class Item(Base):
             stat_self = replace(fighting_bully_self.base_stats)
             fighting_bully_self.pv += self.buff_start_self.pv
             lvl_self = fighting_bully_self.combattant.lvl
-            stat_self.strength += self.buff_start_self.strength + round(lvl_self * self.buff_start_self_mult_lvl.strength)
-            stat_self.agility += self.buff_start_self.agility + round(lvl_self * self.buff_start_self_mult_lvl.agility)
-            stat_self.lethality += self.buff_start_self.lethality + round(lvl_self * self.buff_start_self_mult_lvl.lethality)
-            stat_self.viciousness += self.buff_start_self.viciousness + round(lvl_self * self.buff_start_self_mult_lvl.viciousness)
+            stat_self.strength += self.buff_start_self.strength + lvl_self * self.buff_start_self_mult_lvl.strength
+            stat_self.agility += self.buff_start_self.agility + lvl_self * self.buff_start_self_mult_lvl.agility
+            stat_self.lethality += self.buff_start_self.lethality + lvl_self * self.buff_start_self_mult_lvl.lethality
+            stat_self.viciousness += self.buff_start_self.viciousness + lvl_self * self.buff_start_self_mult_lvl.viciousness
             
             fighting_bully_self.base_stats = stat_self
             fighting_bully_self.stats = stat_self

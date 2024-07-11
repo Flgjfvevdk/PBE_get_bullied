@@ -1,17 +1,16 @@
 import os
 import random
-from bully import Bully, Rarity
+from bully import Bully, Rarity, LevelUpException, Stats
 import bully
 from fighting_bully import FightingBully
 from item import Item, ItemStats, Seed
 import interact_game
 import fight_manager
 import money
-import pickle
+import keys
 import asyncio
 from player_info import Player
 
-from enum import Enum
 
 from typing import Any, Optional, overload
 from typing import List
@@ -22,9 +21,8 @@ import discord
 
 import utils
 
-RUIN_CHOICE_TIMEOUT = 30
-THREAD_DELETE_AFTER = 90
-FIGHTER_CHOICE_TIMEOUT = 20
+RUIN_CHOICE_TIMEOUT = 20
+THREAD_DELETE_AFTER = 40
 
 class Trap :
     def __init__(self, level: int, rarity: Rarity, stat_index: int|None = None, damage = 3):
@@ -68,7 +66,7 @@ class EnemyRoom():
 
     @staticmethod
     def generate(level: int, rarity: Rarity) -> "EnemyRoom":
-        max_pv_enemy = 5
+        max_pv_enemy = 8
         enemy = Bully("enemy", rarity=rarity, must_load_image= False, max_pv= max_pv_enemy)
         for k in range(1, level) :
             enemy.level_up_one()
@@ -88,8 +86,12 @@ class EnemyRoom():
     async def fighter_choice(self, ruin: "Ruin") -> FightingBully:
         try :
             _, num_bully_j = await interact_game.player_choose_bully(ruin.ctx, ruin.user, ruin.player, ruin.bot, channel_cible=ruin.thread, timeout=RUIN_CHOICE_TIMEOUT)
-        except TimeoutError:
-            await ruin.thread.send(f"Your team left the ruin. Choose faster next time {ruin.user.mention}!") 
+        
+        except interact_game.CancelChoiceException:
+            await ruin.thread.send(f"{ruin.user.name} cancelled the fight and left the ruin")
+            raise
+        except asyncio.exceptions.TimeoutError:
+            await ruin.thread.send(f"Your team left the ruin. Choose faster next time {ruin.user.name}!") 
             raise #On propage l'exception
         except IndexError:
             await ruin.thread.send(
@@ -108,11 +110,13 @@ class EnemyRoom():
     
     async def fighter_change(self, ruin: "Ruin", fighter: FightingBully) -> FightingBully:
         try :
-            _, new_num_bully_j = await interact_game.player_choose_bully(ruin.ctx, ruin.user, ruin.player, ruin.bot, channel_cible=ruin.thread, timeout=FIGHTER_CHOICE_TIMEOUT)
+            _, new_num_bully_j = await interact_game.player_choose_bully(ruin.ctx, ruin.user, ruin.player, ruin.bot, channel_cible=ruin.thread, timeout=RUIN_CHOICE_TIMEOUT)
             fighter = ruin.fighters_joueur[new_num_bully_j]
-        except TimeoutError as e:
+        except interact_game.CancelChoiceException:
+            await ruin.thread.send(f"{fighter.combattant.name} stays in fight.")
+        except asyncio.exceptions.TimeoutError:
             await ruin.thread.send(f"Too slow, {fighter.combattant.name} stays in fight.")
-        except IndexError as e:
+        except IndexError:
             await ruin.thread.send(f"Error, {fighter.combattant.name} stays in fight.")
         return fighter
     
@@ -141,7 +145,6 @@ class EnemyRoom():
                 break
         
         pv_restant_joueur = fighter.pv
-        #pv_restant_enemy = enemy.pv
         bully_joueur = fighter.combattant
 
         #On regarde qui a perdu (le joueur ou l'ennemi)
@@ -153,7 +156,10 @@ class EnemyRoom():
             (exp_earned, gold_earned) = fight_manager.reward_win_fight(bully_joueur, self.enemy.combattant)
             pretext = ""
             if (exp_earned > 0):
-                bully_joueur.give_exp(exp_earned)
+                try:
+                    bully_joueur.give_exp(exp_earned)
+                except LevelUpException as lvl_except:
+                    await ruin.thread.send(f"{bully_joueur.name} {lvl_except.text}")
                 pretext += f"{fighter.combattant.name} earned {exp_earned} xp\n"
             if (gold_earned > 0):
                 money.give_money(ruin.player, montant=gold_earned)
@@ -194,14 +200,14 @@ class ItemRoom():
         elif level < 20:
             r_ind = random.randint(0,3)
             st_it = [1 if i == r_ind else 0 for i in range(4)]
-            item = Item(name="Rune of " + index_to_name[r_ind], is_bfr_fight= True, buff_start_self=ItemStats(st_it[0], st_it[1], st_it[2], st_it[3], 0), 
-                                                                                buff_start_self_mult_lvl=Seed(0.1 * st_it[0], 0.1 * st_it[1], 0.1 * st_it[2], 0.1 * st_it[3]), 
+            item = Item(name=f"Rune of {index_to_name[r_ind]} X" , is_bfr_fight= True, buff_start_self=ItemStats(st_it[0], st_it[1], st_it[2], st_it[3], 0), 
+                                                                                buff_start_self_mult_lvl=Stats(0.1 * st_it[0], 0.1 * st_it[1], 0.1 * st_it[2], 0.1 * st_it[3]), 
                                                                                 description="A mysterious rune that buff your bully")
         elif level < 50:
             r_ind = random.randint(0,3)
             st_it = [1 if i == r_ind else 0 for i in range(4)]
-            item = Item(name="Rune of " + index_to_name[r_ind], is_bfr_fight= True, buff_start_self=ItemStats(0, 0, 0, 0, 0), 
-                                                                                buff_start_self_mult_lvl=Seed(0.15 * st_it[0], 0.15 * st_it[1], 0.15 * st_it[2], 0.15 * st_it[3]), 
+            item = Item(name=f"Rune of {index_to_name[r_ind]} XX", is_bfr_fight= True, buff_start_self=ItemStats(0, 0, 0, 0, 0), 
+                                                                                buff_start_self_mult_lvl=Stats(0.15 * st_it[0], 0.15 * st_it[1], 0.15 * st_it[2], 0.15 * st_it[3]), 
                                                                                 description="A mysterious rune that buff your bully")
 
         return ItemRoom(item)
@@ -233,7 +239,6 @@ class BossRoom(EnemyRoom, ItemRoom):
         await ItemRoom.interact(self, ruin)
 
         return True
-
 
 
 @dataclass
@@ -318,6 +323,12 @@ class Ruin():
         random.shuffle(self.rooms)
 
     async def enter(self) -> None:
+        if(keys.get_keys_user(self.player) <= 0):
+            await self.ctx.send(f"You don't have any {keys.KEYS_ICON}")
+            return
+        else :
+            self.player.keys -= 1
+
         message = await self.ctx.channel.send(f"{self.user.mention} enters a mysterious ruin [lvl : {self.level}]")
         try :
             self.thread = await self.ctx.channel.create_thread(name=f"Ruin - Level {self.level}", message=message) #type: ignore
@@ -332,9 +343,16 @@ class Ruin():
             while not await self.rooms.pop().interact(self):
                 pass
 
-            await self.thread.send(f"Congratulation {self.user}, you beat the boss and won their item!")
-        except (TimeoutError, IndexError):
-            pass
+            await self.thread.send(f"Congratulation {self.user}, you beat the boss!")
+        except interact_game.CancelChoiceException as e:
+            await self.thread.send(f"{self.ctx.author.name} cancelled the fight and left the ruin")
+        except asyncio.exceptions.TimeoutError as e:
+            await self.thread.send(f"Your team left the ruin. Choose faster next time {self.ctx.author}.")
+        except IndexError as e:
+            await self.thread.send(
+                f"[{self.ctx.author}] -> You don't have this bully.\n" #TODO: fix with ui
+                "Your team left the ruin."
+            )
         finally:
             await self.exit()
 

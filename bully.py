@@ -1,10 +1,9 @@
 import os
 import random
 import numpy as np
-import pickle
 import shutil
 from typing import Any, List, Optional, Tuple
-from dataclasses import dataclass, replace, InitVar, KW_ONLY
+from dataclasses import dataclass, replace, InitVar, KW_ONLY, fields
 from pathlib import Path
 
 import player_info
@@ -24,10 +23,13 @@ BULLY_RARITY_DEATH_MIN_GOLD = [0, 40, 80, 150, 200]
 BULLY_RARITY_DEATH_MAX_GOLD = [0, 80, 150, 500, 700]
 
 NOBODY_LEVEL_EVOLUTION = 10
-NOBODY_RARITY_EVOLUTION_CHANCES = [0, 50, 39, 10, 1]
+NOBODY_RARITY_EVOLUTION_CHANCES = [0, 45, 40, 14, 1]
 
 BULLY_MAX_LEVEL = 50
 BULLY_MAX_BASE_HP = 10
+
+
+BULLY_DEFAULT_PATH_IMAGE = Path("bully_not_found.png")
 
 class Rarity(Enum):
     #self.rarity.name pour avoir le nom du truc
@@ -59,10 +61,10 @@ class Rarity(Enum):
     
 @dataclass
 class Stats(MutableComposite):
-    strength: int
-    agility: int
-    lethality: int
-    viciousness: int
+    strength: float
+    agility: float
+    lethality: float
+    viciousness: float
 
     def __setattr__(self, __name: str, __value: Any) -> None:
         super().__setattr__(__name, __value)
@@ -70,7 +72,7 @@ class Stats(MutableComposite):
 
     def increase_with_seed(self, seed:"Seed", *, talkative = False) -> None:
         # Get a random stat
-        random_num = random.uniform(0, 0.9999) # Not 1 to account for possible float calculation errors.
+        random_num = random.uniform(0, 0.99999) # Not 1 to account for possible float calculation errors.
         cum_prob = seed.cumulative_probs()
         stats = self.__dataclass_fields__
         for i, field_name in enumerate(stats):
@@ -85,6 +87,14 @@ class Stats(MutableComposite):
         if(talkative):
             print(f"{field_name.capitalize()} +1!")
         return
+    
+    def max_stat(self) -> str:
+        stats = self.__dataclass_fields__.keys()
+        max_stat = max(stats, key=lambda stat: getattr(self, stat))
+        return max_stat
+    
+    def sum_stats(self) -> float:
+        return self.strength + self.agility + self.lethality + self.viciousness
     
 @dataclass
 class Seed(MutableComposite):
@@ -131,6 +141,7 @@ class Seed(MutableComposite):
 class LevelUpException(Exception):
     def __init__(self, lvl, text=""):
         self.lvl = lvl
+        self.text = text
         super().__init__(text)
 
 class Bully(Base):
@@ -190,25 +201,38 @@ class Bully(Base):
 
     def give_exp(self, exp_recu) -> None:
         self.exp += exp_recu
+        lvl_except:Optional[LevelUpException] = None
         if(self.exp >= self.lvl):
-            self.level_up()
+            try:
+                self.level_up()
+            except LevelUpException as l :
+                lvl_except = l
         self.exp = round(self.exp, 1)
-        print("exp : ", self.exp)
+        if lvl_except is not None :
+            raise lvl_except
+        
 
     def level_up(self):
+        lvl_except:Optional[LevelUpException] = None
+        base_lvl = self.lvl
+        nobody_evolve = False
         while self.exp >= self.lvl and self.lvl < BULLY_MAX_LEVEL:
             self.exp -= self.lvl
             self.lvl += 1
-            # print("level up :", self.lvl)
             new_points = new_points_lvl_up(self.lvl, self.rarity)
             self.increase_stat_with_seed(nb_points=new_points, talkative = False)
 
-            if(self.lvl == NOBODY_LEVEL_EVOLUTION and self.rarity == Rarity.NOBODY):
+            if not nobody_evolve:
+                lvl_except = LevelUpException(self.lvl, text=f"leveled up from {base_lvl} to {str(self.lvl)} ")
+            if(self.lvl >= NOBODY_LEVEL_EVOLUTION and self.rarity == Rarity.NOBODY):
                 self.nobody_evolution()
+                nobody_evolve = True
+                lvl_except = LevelUpException(self.lvl, text=f"unlocks its full potential and becomes . . . {self.rarity.name}!")
+        if lvl_except is not None:
+            raise lvl_except
 
     def level_up_one(self):
         self.lvl += 1
-        # print("level up :", self.lvl)
         new_points = new_points_lvl_up(self.lvl, self.rarity)
         self.increase_stat_with_seed(nb_points=new_points, talkative = False)
 
@@ -268,14 +292,13 @@ class Bully(Base):
 
 
     @staticmethod
-    def clash_stat(st_actif: int, st_passif: int, neutre: Optional[int] = None):
+    def clash_stat(st_actif: float, st_passif: float, neutre: Optional[float] = None):
         """
         return true si la st_actif réussit le challenge
         """
         if neutre is None :
             neutre = min(st_actif, st_passif)
         r = random.random()
-        #proba = st_actif / ( st_actif + st_passif + neutre )
         proba = 0.8 * st_actif / (st_actif + st_passif + neutre ) + (0.2 if (st_actif>st_passif) else 0)
         if( r < proba ) :
             return True
@@ -344,21 +367,24 @@ def mise_en_forme_str(text):
 
 # Pour gérer lvl up selon rareté 
 def new_points_lvl_up(lvl, rarity=Rarity.NOBODY) -> int:
-    coef_bonus = rarity.level_bonus - 1
-    if(coef_bonus < 0):
-        raise Exception("coef_bonus n'est pas censé être négatif")
-    if(coef_bonus > 1):
-        raise Exception("coef_bonus n'est pas censé être >1 (sinon bug)")
-    if(coef_bonus == 0):
-        return 1
-    else :
-        lvl_win = 1
-        # print("coef_bonus : ", coef_bonus)
-        # print("(1/coef_bonus) : ", (1/coef_bonus))
-        # print("lvl % coef_bonus : ", lvl % (1/coef_bonus))
-        if(lvl % (1/coef_bonus) < 1):
-            lvl_win+=1
-        return lvl_win
+    # coef_bonus = rarity.level_bonus - 1
+    # if(coef_bonus < 0):
+    #     raise Exception("coef_bonus n'est pas censé être négatif")
+    # if(coef_bonus > 1):
+    #     raise Exception("coef_bonus n'est pas censé être >1 (sinon bug)")
+    # if(coef_bonus == 0):
+    #     return 1
+    # else :
+    #     lvl_win = 1
+    #     # print("coef_bonus : ", coef_bonus)
+    #     # print("(1/coef_bonus) : ", (1/coef_bonus))
+    #     # print("lvl % coef_bonus : ", lvl % (1/coef_bonus))
+    #     if(lvl % (1/coef_bonus) < 1):
+    #         lvl_win+=1
+    #     return lvl_win
+    coeff = rarity.level_bonus
+    lvl_win = int(lvl * coeff) - int((lvl-1) * coeff)
+    return lvl_win
 
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -64,7 +64,8 @@ async def manager_start_fight(ctx: Context, user_1: discord.abc.User, player_1: 
 async def start_fight(ctx: Context, user_1: discord.abc.User, player_1: Player, user_2: discord.abc.User, player_2: Player, bot: Bot, for_fun = False) -> None:
 
     try:
-        fighting_bully_1, _ = await interact_game.player_choose_bully(ctx, user_1, player_1, bot, timeout = CHOICE_TIMEOUT)
+        bully_1, _ = await interact_game.player_choose_bully(ctx, user_1, player_1, bot, timeout = CHOICE_TIMEOUT)
+        fighting_bully_1 = FightingBully.create_fighting_bully(bully_1)
     except asyncio.exceptions.TimeoutError as e:
         await ctx.send(f"Timeout, choose faster next time {user_1.name}")
         return
@@ -72,7 +73,8 @@ async def start_fight(ctx: Context, user_1: discord.abc.User, player_1: Player, 
         await ctx.send(f"{user_1.name} cancelled the fight")
         return
     try:
-        fighting_bully_2, _ = await interact_game.player_choose_bully(ctx, user_2, player_2, bot, timeout = CHOICE_TIMEOUT)
+        bully_2, _ = await interact_game.player_choose_bully(ctx, user_2, player_2, bot, timeout = CHOICE_TIMEOUT)
+        fighting_bully_2 = FightingBully.create_fighting_bully(bully_2)
     except asyncio.exceptions.TimeoutError as e:
         await ctx.send(f"Timeout, choose faster next time {user_2.name}")
         return
@@ -173,7 +175,7 @@ async def fight_simulation(ctx:Context, bot: Bot, fighting_bully_1:FightingBully
     barre_pv_joueur = value_to_bar_str(fighting_bully_1.pv, max_value= max_pv_1)
     barre_pv_enemy = value_to_bar_str(fighting_bully_2.pv, max_value= max_pv_2)
 
-    text_pv_combat = "\t\tBully 1 : " + fighting_bully_1.combattant.name + "\nhp : " + barre_pv_joueur + "\n\n\t\t\t\tVS\n\n\t\tBully 2 : " + fighting_bully_2.combattant.name + "\nhp : " + barre_pv_enemy
+    text_pv_combat = "\t\tBully 1 : " + fighting_bully_1.combattant.name + "\nHP : " + barre_pv_joueur + "\n\n\t\t\t\tVS\n\n\t\tBully 2 : " + fighting_bully_2.combattant.name + "\nHP : " + barre_pv_enemy
     
     action_combat = "Let's get ready to rumble!"
     text_combat = "```" + text_pv_combat + "\n\n" + action_combat + "```"
@@ -207,9 +209,9 @@ async def fight_simulation(ctx:Context, bot: Bot, fighting_bully_1:FightingBully
         text_pv_combat = (
             f"\t\tBully 1 : {fighting_bully_1.combattant.name}\n"
             f"HP : {barre_pv_joueur:{barre_max_length}} ({fighting_bully_1.pv:02}/{max_pv_1:02})\n"
-            f"\t\t\t\t\t{''.join(emoji_recap_j1[-RECAP_MAX_EMOJI:])}\n"
+            f"{''.join(emoji_recap_j1[-RECAP_MAX_EMOJI:])}\n"
              "\t\t\t\tVS\n"
-            f"\t\t\t\t\t{''.join(emoji_recap_j2[-RECAP_MAX_EMOJI:])}\n"
+            f"{''.join(emoji_recap_j2[-RECAP_MAX_EMOJI:])}\n"
             f"\t\tBully 2 : {fighting_bully_2.combattant.name}\n"
             f"HP : {barre_pv_enemy:{barre_max_length}} ({fighting_bully_2.pv:02}/{max_pv_2:02})"
         )
@@ -224,101 +226,6 @@ async def fight_simulation(ctx:Context, bot: Bot, fighting_bully_1:FightingBully
                 raise InterruptionCombat(fighting_bully_1.pv, fighting_bully_2.pv)
     return 
 
-
-
-# Pour calculer l'action du tour : ///////////////////////////////////////////////////////////////////////////////////////////////////////
-# def nouvelle_action_stat(fighting_bully_1:FightingBully, fighting_bully_2:FightingBully, tour) ->tuple[str, str, str, int]:
-#     """
-#     tour est égale à 0 ou 1. Il indique le tour du bully qui devrait normalement agir maintenant. 0 = bully_1, 1 = bully_2
-#     Retourne un tuple sous la forme : 
-#     (text_action, emoji_j1, emoji_j2, tour)
-#     C4EST DEGUEUX FAIRE UNE CLASS QUI PREN TOUT 9A EN COMPTE ET TOUT BREF LA C4EST NIMP
-#     """
-#     Emotes_possibles = ["👊", "🩸", "🛡️","🔪", "💥"] # ,"💔" #C'est juste pour pouvoir copier/coller
-#     text_action = ""
-#     pv_perdu_j1 = 0
-#     pv_perdu_j2 = 0
-#     pv_perdu = 0
-#     emoji_j1=""
-#     emoji_j2=""
-    
-#     name_1 = fighting_bully_1.combattant.name
-#     name_2 = fighting_bully_2.combattant.name
-
-#     #On regarde les fourberies
-#     fourberie_j1 = challenge_viciosite_stats(fighting_bully_1.stats, fighting_bully_2.stats)
-#     fourberie_j2 = challenge_viciosite_stats(fighting_bully_2.stats, fighting_bully_1.stats)
-    
-#     #stat_j1 = replace(fighting_bully_1.stats).__dict__
-#     #stat_j2 = replace(fighting_bully_2.stats).__dict__
-#     stat_j1 = replace(fighting_bully_1.stats)
-#     stat_j2 = replace(fighting_bully_2.stats)
-    
-#     if(fourberie_j1 and not fourberie_j2):
-#         #La meilleure de j2 (hors viciosite) devient égale au minimum entre : la stat de j1-1 et sa propre stat - 1. (minimum 1)
-#         stat_j1_dict = replace(fighting_bully_1.stats).__dict__
-#         stat_j2_dict = replace(fighting_bully_2.stats).__dict__
-#         del stat_j1_dict['_parents']
-#         del stat_j2_dict['_parents']
-#         max_stat_name = max((n for n in stat_j2_dict if n != "viciousness"), key=lambda n: stat_j2_dict[n])
-#         if (stat_j2_dict[max_stat_name] <= stat_j2_dict[max_stat_name]):
-#             stat_j2_dict[max_stat_name] = max(1,stat_j2_dict[max_stat_name] - 1)
-#         else :
-#             diff = stat_j2_dict[max_stat_name] - stat_j1_dict[max_stat_name]
-#             coef_vicious = stat_j2_dict["viciousness"]/stat_j1_dict["viciousness"]
-#             stat_j2_dict[max_stat_name] = max (1,stat_j1_dict[max_stat_name] - 1 + round(diff * (1 - math.exp(-coef_vicious / 1.5)) ))
-    
-#     if(fourberie_j2 and not fourberie_j1):
-#         #La meilleure de j1 (hors viciosite) devient egale au minimum entre : la stat de j2-2 et sa propre stat - 1. (minimum 1)
-#         stat_j1_dict = replace(fighting_bully_1.stats).__dict__
-#         stat_j2_dict = replace(fighting_bully_2.stats).__dict__
-#         del stat_j1_dict['_parents']
-#         del stat_j2_dict['_parents']
-#         max_stat_name = max((n for n in stat_j1_dict if n != "viciousness"), key=lambda n: stat_j1_dict[n])
-#         if (stat_j1_dict[max_stat_name] <= stat_j2_dict[max_stat_name]):
-#             stat_j1_dict[max_stat_name] = max(1,stat_j1_dict[max_stat_name] - 1)
-#         else :
-#             diff = stat_j1_dict[max_stat_name] - stat_j2_dict[max_stat_name]
-#             coef_vicious = stat_j1_dict["viciousness"]/stat_j2_dict["viciousness"]
-#             stat_j1_dict[max_stat_name] = max (1,stat_j2_dict[max_stat_name] - 1 + round(diff * (1 - math.exp(-coef_vicious / 1.5)) ))
-
-
-#     (name_actif, stat_j_actif), (name_passif, stat_j_passif) = ((name_1, stat_j1), (name_2, stat_j2)) if tour==0 else ((name_2, stat_j2), (name_1, stat_j1))
-    
-#     if challenge_prendre_de_vitesse_stats(stat_j_passif, stat_j_actif) :
-#         #On inverse le tour
-#         tour = (tour - 1) * - 1 
-#         (name_actif, stat_j_actif), (name_passif, stat_j_passif) = ((name_1, stat_j1), (name_2, stat_j2)) if tour==0 else ((name_2, stat_j2), (name_1, stat_j1))
-        
-#         text_action += f"{name_actif} follows up with another punch. "
-#     else : 
-#         text_action += f"{name_actif} strikes. "
-        
-    
-#     if challenge_defense_stats(stat_j_actif, stat_j_passif):
-#         text_action += f"But {name_passif} block! "
-#         emoji_j1 = "👊" if tour==0 else "🛡️"
-#         emoji_j2 = "🛡️" if tour==0 else "👊"
-#     else :
-#         if challenge_coup_critique_stats(stat_j_actif, stat_j_passif) :
-#             text_action += f"The punch shatters {name_passif}!"
-#             pv_perdu = 3
-#             emoji_j1 = "🔪" if tour==0 else "💥"
-#             emoji_j2 = "💥" if tour==0 else "🔪"
-#         else :
-#             text_action += f"{name_passif} is hurt."
-#             pv_perdu = 1
-#             emoji_j1 = "👊" if tour==0 else "🩸"
-#             emoji_j2 = "🩸" if tour==0 else "👊"
-            
-#     pv_perdu_j1 = pv_perdu if (name_passif == name_1) else 0
-#     pv_perdu_j2 = pv_perdu if (name_passif == name_2) else 0
-#     tour ^= 1 
-
-#     fighting_bully_1.pv = max(0,fighting_bully_1.pv - pv_perdu_j1)
-#     fighting_bully_2.pv = max(0,fighting_bully_2.pv - pv_perdu_j2)
-    
-#     return (text_action, emoji_j1, emoji_j2, tour)
 
 def nouvelle_action_stat(fighting_bully_1:FightingBully, fighting_bully_2:FightingBully, tour) ->tuple[str, str, str, int]:
     """
@@ -412,12 +319,6 @@ def challenge_defense_stats(stat_attaquant: Stats, stat_defenseur: Stats) -> boo
     parade_reussie = Bully.clash_stat(st_actif = stat_def_strength, st_passif = stat_att_strength)
     return parade_reussie
 
-# def challenge_coup_critique_stats(stat_attaquant: Stats, stat_defenseur: Stats) -> bool:
-#     stat_att_lethality = stat_attaquant.lethality
-#     stat_def_strength = stat_defenseur.strength
-#     coup_critique = Bully.clash_stat(st_actif = stat_att_lethality, st_passif = stat_def_strength)
-#     return coup_critique
-
 def challenge_coup_critique_stats(stat_attaquant: Stats, stat_defenseur: Stats) -> int:
     nb_succes = 0
     nb_succes += 1 if Bully.clash_stat(st_actif = stat_attaquant.lethality, st_passif = stat_defenseur.strength) else 0
@@ -439,9 +340,9 @@ def apply_viciousness(stat_challenger:Stats, stat_defender:Stats, is_attack_succ
 
     if getattr(stat_defender, max_stat_name) > getattr(stat_challenger, max_stat_name) :
         if is_attack_success and is_attacker:
-            malus = total_stat_points * 0.13
+            malus = total_stat_points * 0.12
         elif is_attacker:
-            malus = total_stat_points * 0.10#0.07
+            malus = total_stat_points * 0.08#0.07
         else:
             malus = total_stat_points * 0.0#0.02
     else:
@@ -461,10 +362,12 @@ def apply_viciousness(stat_challenger:Stats, stat_defender:Stats, is_attack_succ
 def reward_win_fight(b_win:Bully, b_lose:Bully) -> tuple[float, int]:
     exp_earned = 0
     gold_earned = 0
-    if(b_win.lvl >= b_lose.lvl + 5):
+    if(b_win.lvl >= b_lose.lvl * 2 and b_win.lvl >= 10):
         gold_earned = b_lose.gold_give_when_die()
     else : 
         exp_earned = b_lose.exp_give_when_die()
+        if b_win.rarity.death_exp_coeff > 1 :
+            exp_earned /= b_win.rarity.death_exp_coeff
     return (exp_earned, int(gold_earned))
 
 # ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

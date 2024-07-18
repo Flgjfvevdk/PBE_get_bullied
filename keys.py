@@ -9,8 +9,8 @@ from sqlalchemy import select
 
 # Var payday
 KEYS_MAX = 15
-NB_KEYS_RESTOCK = 1
-GET_KEYS_COOLDOWN = 20 * 60
+NB_KEYS_RESTOCK = 15
+GET_KEYS_COOLDOWN = 1 * 60 * 60
 
 KEYS_ICON = "🔑"
 

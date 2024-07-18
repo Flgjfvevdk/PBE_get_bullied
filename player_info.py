@@ -2,6 +2,7 @@ from database import Base
 
 from typing import List
 from sqlalchemy.orm import Mapped, relationship, MappedAsDataclass, mapped_column
+from sqlalchemy import Table, Column, Integer, ForeignKey
 from datetime import datetime
 import bully
 import item
@@ -18,3 +19,9 @@ class Player(Base):
 
     bullies: Mapped[List[bully.Bully]] = relationship(back_populates="player", cascade="all, delete-orphan", default_factory=list, lazy="selectin")
     items: Mapped[List[item.Item]] = relationship(back_populates="player", cascade="all, delete-orphan", default_factory=list, lazy="selectin")
+    
+    def get_equipe(self) -> List[bully.Bully]:
+        return [b for b in self.bullies if not b.in_reserve]
+    
+    def get_reserve(self) -> List[bully.Bully]:
+        return [b for b in self.bullies if b.in_reserve]

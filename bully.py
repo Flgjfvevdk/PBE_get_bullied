@@ -18,12 +18,12 @@ from sqlalchemy.ext.mutable import MutableComposite
 
 BULLY_RARITY_POINTS = [4, 5, 6, 7, 8]
 BULLY_RARITY_LEVEL = [1, 1.1, 1.25, 1.5, 2]
-BULLY_RARITY_DEATH_EXP_COEFF = [0.5, 1, 1.25, 1.5, 2]
-BULLY_RARITY_DEATH_MIN_GOLD = [0, 40, 80, 150, 200]
-BULLY_RARITY_DEATH_MAX_GOLD = [0, 80, 150, 500, 700]
+BULLY_RARITY_DEATH_EXP_COEFF = [0.5, 1, 1.25, 1.5, 2, 2]
+BULLY_RARITY_DEATH_MIN_GOLD = [0, 10, 20, 100, 200, 0]
+BULLY_RARITY_DEATH_MAX_GOLD = [0, 40, 100, 300, 500, 0]
 
 NOBODY_LEVEL_EVOLUTION = 10
-NOBODY_RARITY_EVOLUTION_CHANCES = [0, 45, 40, 14, 1]
+NOBODY_RARITY_EVOLUTION_CHANCES = [0, 40, 45, 14, 1, 0] #Mettre 0 en proba d'avoir unique
 
 BULLY_MAX_LEVEL = 50
 BULLY_MAX_BASE_HP = 10
@@ -38,6 +38,7 @@ class Rarity(Enum):
     MONSTER = 2
     DEVASTATOR = 3
     SUBLIME = 4
+    UNIQUE = 5
 
     @property
     def points_bonus(self) -> int:
@@ -53,11 +54,11 @@ class Rarity(Enum):
     
     @property
     def death_min_gold(self):
-        return BULLY_RARITY_DEATH_MAX_GOLD[self.value]
+        return BULLY_RARITY_DEATH_MIN_GOLD[self.value]
 
     @property
     def death_max_gold(self):
-        return BULLY_RARITY_DEATH_MIN_GOLD[self.value]
+        return BULLY_RARITY_DEATH_MAX_GOLD[self.value]
     
 @dataclass
 class Stats(MutableComposite):
@@ -153,6 +154,8 @@ class Bully(Base):
 
     name: Mapped[str] = mapped_column(String(50))
 
+    in_reserve:Mapped[bool] = mapped_column(default=False)
+
     _: KW_ONLY #Marks all following fields as kw_only=true, which means that they must be explicitly specified in the init.
 
     image_file_path: Mapped[Optional[Path]] = mapped_column(type_ = DBPath, default=None, nullable=True)
@@ -166,7 +169,8 @@ class Bully(Base):
         mapped_column(name="seed_agility"),
         mapped_column(name="seed_lethality"),
         mapped_column(name="seed_viciousness"),
-        init=False, default_factory=Seed.generate_seed_stat
+        # init=False, default_factory=Seed.generate_seed_stat
+        default_factory=Seed.generate_seed_stat
     )
     stats: Mapped[Stats] = composite(
         mapped_column(name="stat_strength"),
@@ -179,18 +183,26 @@ class Bully(Base):
     def __post_init__(self, must_load_image:bool):
         if(must_load_image):
             self.image_file_path = self.new_possible_image_random()
-
         if self.stats is None or (None in self.stats.__dict__.items()):
             self.generate_bully_stat()
-    
+
 
     def generate_bully_stat(self) -> None:
         self.stats = Stats(1,1,1,1)
+        if self.rarity == Rarity.UNIQUE :
+            for k in range(4) :
+                self.stats.strength += self.seed.strength
+                self.stats.agility += self.seed.agility
+                self.stats.lethality += self.seed.lethality
+                self.stats.viciousness += self.seed.viciousness
+            return
+
         nb_points = self.rarity.points_bonus
         self.increase_stat_with_seed(nb_points, extrem_seed=True)
 
     def increase_stat_with_seed(self, nb_points=1, extrem_seed = False, talkative = False):
         used_seed = self.seed
+        
         if(extrem_seed):
             #Pour l'initialisation, on extrémise un peu la seed pour que les stats reflètent plus la seed
             used_seed = self.seed.extremization()
@@ -211,16 +223,16 @@ class Bully(Base):
         if lvl_except is not None :
             raise lvl_except
         
-
     def level_up(self):
         lvl_except:Optional[LevelUpException] = None
         base_lvl = self.lvl
         nobody_evolve = False
         while self.exp >= self.lvl and self.lvl < BULLY_MAX_LEVEL:
             self.exp -= self.lvl
-            self.lvl += 1
-            new_points = new_points_lvl_up(self.lvl, self.rarity)
-            self.increase_stat_with_seed(nb_points=new_points, talkative = False)
+            # self.lvl += 1
+            # new_points = new_points_lvl_up(self.lvl, self.rarity)
+            # self.increase_stat_with_seed(nb_points=new_points, talkative = False)
+            self.level_up_one()
 
             if not nobody_evolve:
                 lvl_except = LevelUpException(self.lvl, text=f"leveled up from {base_lvl} to {str(self.lvl)} ")
@@ -233,8 +245,15 @@ class Bully(Base):
 
     def level_up_one(self):
         self.lvl += 1
-        new_points = new_points_lvl_up(self.lvl, self.rarity)
-        self.increase_stat_with_seed(nb_points=new_points, talkative = False)
+        if self.rarity == Rarity.UNIQUE :
+            self.stats.strength += self.seed.strength
+            self.stats.agility += self.seed.agility
+            self.stats.lethality += self.seed.lethality
+            self.stats.viciousness += self.seed.viciousness
+            
+        else:
+            new_points = new_points_lvl_up(self.lvl, self.rarity)
+            self.increase_stat_with_seed(nb_points=new_points, talkative = False)
 
     def exp_give_when_die(self):
         xp = self.lvl
@@ -259,6 +278,8 @@ class Bully(Base):
 
         self.rarity = new_rarity
 
+        #On change l'image : 
+        self.image_file_path = self.new_possible_image_random()
 
     async def kill(self):
         print("je me tue : ", self.name)
@@ -267,8 +288,8 @@ class Bully(Base):
         if session is not None:
             await session.delete(self)
 
-    def get_print(self, compact_print = False):
-        return str_print_bully(self, compact_print)
+    def get_print(self, compact_print = False, current_hp:int|None = None):
+        return str_print_bully(self, compact_print, current_hp=current_hp)
     
 
     #Pour gérer l'image du bully
@@ -300,6 +321,8 @@ class Bully(Base):
             neutre = min(st_actif, st_passif)
         r = random.random()
         proba = 0.8 * st_actif / (st_actif + st_passif + neutre ) + (0.2 if (st_actif>st_passif) else 0)
+        # proba = renforce_proba_sin(proba)
+        proba = renforce_proba_atan(proba)
         if( r < proba ) :
             return True
         else :
@@ -309,37 +332,42 @@ class Bully(Base):
 # ________________________________________________________________________________________________________________________________________________
 
 # Pour gérer les print ______________________________________________
-def str_print_bully(bully:Bully, compact_print = False):
+def str_print_bully(bully:Bully, compact_print = False, current_hp:int|None = None):
     text = ""
+    hp_text = f"Max HP : {bully.max_pv}" if current_hp is None else f"HP : {current_hp}/{bully.max_pv}"
+    def good_print_float(x:float) -> float|int:
+        xf:float = float(x)
+        return int(xf) if xf.is_integer() else round(xf, 1)
     if(compact_print) :
-        text += bully.name + " | lvl : " + str(bully.lvl) + " | Rarity : " + bully.rarity.name + "\n\t" 
-        text += " |S : "+ str(bully.stats.strength)
-        text += " |A : "+ str(bully.stats.agility)
-        text += " |L : "+ str(bully.stats.lethality)
-        text += " |V : "+ str(bully.stats.viciousness)
+        text += bully.name + " | lvl : " + str(bully.lvl) + " | Rarity : " + bully.rarity.name + " | " + hp_text + "\n\t" 
+        text += " |S : "+ str(good_print_float(bully.stats.strength))
+        text += " |A : "+ str(good_print_float(bully.stats.agility))
+        text += " |L : "+ str(good_print_float(bully.stats.lethality))
+        text += " |V : "+ str(good_print_float(bully.stats.viciousness))
     else :
         text += bully.name + "\tRarity : " + bully.rarity.name
         text += "\nlvl : " + str(bully.lvl)
         text += "\texp : " + str(bully.exp)
+        text += "\t" + hp_text
         #On print la force
         text += "\nStrength : - - -"
-        text += str_text_stat(bully.stats.strength)
+        text += str_text_stat(int(bully.stats.strength))
         
         #On print l'agilité
         text += "\nAgility :- - - -"
-        text += str_text_stat(bully.stats.agility)
+        text += str_text_stat(int(bully.stats.agility))
 
         #On print la lethalité
         text += "\nLethality :- - -"
-        text += str_text_stat(bully.stats.lethality)
+        text += str_text_stat(int(bully.stats.lethality))
 
         #On print la vicieusité
         text += "\nViciousness :- -"
-        text += str_text_stat(bully.stats.viciousness)
+        text += str_text_stat(int(bully.stats.viciousness))
 
     return text
 
-def str_text_stat(value_stat):
+def str_text_stat(value_stat:int):
     """
     Retourne un truc de la forme : "04▮▮▮▮". avec "04" la valeur de la stat, et le même nombre de fois le charactère "▮"
     """
@@ -355,6 +383,7 @@ def str_text_stat(value_stat):
 
 def mise_en_forme_str(text):
     new_text = "```ansi\n" + text + "```"
+    new_text = new_text.replace("UNIQUE", "[2;35m[1;35mUn[0m[2;35m[0m[2;34m[1;34mi[0m[2;34m[0m[2;31m[1;31mq[0m[2;31m[0m[2;32m[1;32mu[0m[2;32m[0m[2;33m[1;33me[0m[2;33m[0m")
     new_text = new_text.replace("SUBLIME", "[2;35m[1;35mSublime[0m[2;35m[0m")
     new_text = new_text.replace("DEVASTATOR", "[2;34m[1;34mDevastator[0m[2;34m[0m")
     new_text = new_text.replace("MONSTER", "[2;31m[1;31mMonster[0m[2;31m[0m")
@@ -365,23 +394,8 @@ def mise_en_forme_str(text):
 
 ##//////////////////////////////////////////////////////////////////////////////////////////////////////
 
-# Pour gérer lvl up selon rareté 
+# Pour gérer buff de stat selon rareté 
 def new_points_lvl_up(lvl, rarity=Rarity.NOBODY) -> int:
-    # coef_bonus = rarity.level_bonus - 1
-    # if(coef_bonus < 0):
-    #     raise Exception("coef_bonus n'est pas censé être négatif")
-    # if(coef_bonus > 1):
-    #     raise Exception("coef_bonus n'est pas censé être >1 (sinon bug)")
-    # if(coef_bonus == 0):
-    #     return 1
-    # else :
-    #     lvl_win = 1
-    #     # print("coef_bonus : ", coef_bonus)
-    #     # print("(1/coef_bonus) : ", (1/coef_bonus))
-    #     # print("lvl % coef_bonus : ", lvl % (1/coef_bonus))
-    #     if(lvl % (1/coef_bonus) < 1):
-    #         lvl_win+=1
-    #     return lvl_win
     coeff = rarity.level_bonus
     lvl_win = int(lvl * coeff) - int((lvl-1) * coeff)
     return lvl_win
@@ -389,6 +403,27 @@ def new_points_lvl_up(lvl, rarity=Rarity.NOBODY) -> int:
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 
+def renforce_proba_atan(x, c = 1.4, v=1.25):
+    import math
+    a = 2*x - 1
+    a = a if a > -1 else a + 0.001
+    a = a if a < 1 else a - 0.001
+    r = math.atan(1/(1-a)**v - 1/(1+a)**v)
+    r /= (math.pi/2)
+    r += 1
+    r /= 2
+    r = r**c
+    return r
+
+
+def renforce_proba_sin(x, c = 1.0):
+    import math
+    a = 2*x - 1
+    r = math.sin(a * math.pi / 2)
+    r += 1
+    r /= 2
+    r = r**c
+    return r
 
 
 

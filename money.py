@@ -5,8 +5,8 @@ from utils import get_player_path
 from player_info import Player
 
 # Var payday
-PAYDAY_COOLDOWN = 10 * 60 * 60
-PAYDAY_VALUE = 100
+PAYDAY_COOLDOWN = 8 * 60 * 60
+PAYDAY_VALUE = 150
 
 MONEY_ICON = "🩹"
 MONEY_JOIN_VALUE = 400

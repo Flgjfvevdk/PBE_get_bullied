@@ -21,12 +21,16 @@ import discord
 
 import utils
 
-RUIN_CHOICE_TIMEOUT = 20
-THREAD_DELETE_AFTER = 40
+RUIN_CHOICE_TIMEOUT = 60
+THREAD_DELETE_AFTER = 60
 MAX_PV_ENEMY = 8
 COEF_XP_FIGHTER = 0.8
-COEF_GOLD_FIGHTER = 0.5
+COEF_GOLD_FIGHTER = 0.05
 MAX_PV_BOSS = 20
+
+boss_rarity_lvl:dict[int, bully.Rarity] = {k:bully.Rarity.TOXIC for k in range(0,5)} | {k:bully.Rarity.MONSTER for k in range(5,20)} | {k:bully.Rarity.DEVASTATOR for k in range(20,35)} | {k:bully.Rarity.SUBLIME for k in range(35,50)}
+fighter_rarities_lvl:dict[int, list[bully.Rarity]] = {k:[bully.Rarity.TOXIC] for k in range(0,10)} | {k:[bully.Rarity.TOXIC, bully.Rarity.MONSTER] for k in range(10,15)} | {k:[bully.Rarity.MONSTER] for k in range(15,25)} | {k:[bully.Rarity.MONSTER, bully.Rarity.DEVASTATOR] for k in range(25,30)} | {k:[bully.Rarity.DEVASTATOR] for k in range(30,40)} | {k:[bully.Rarity.DEVASTATOR, bully.Rarity.SUBLIME] for k in range(40,45)} | {k:[bully.Rarity.SUBLIME] for k in range(45,50)}
+
 
 class Trap :
     def __init__(self, level: int, rarity: Rarity, stat_index: int|None = None, damage = 3):
@@ -67,6 +71,7 @@ class Trap :
 class EnemyRoom():
     enemy: FightingBully
     can_switch: bool = False
+    # can_switch: bool = True
 
     @staticmethod
     def generate(level: int, rarity: Rarity) -> "EnemyRoom":
@@ -89,8 +94,10 @@ class EnemyRoom():
     
     async def fighter_choice(self, ruin: "Ruin") -> FightingBully:
         try :
-            _, num_bully_j = await interact_game.player_choose_bully(ruin.ctx, ruin.user, ruin.player, ruin.bot, channel_cible=ruin.thread, timeout=RUIN_CHOICE_TIMEOUT)
-        
+            # _, num_bully_j = await interact_game.player_choose_bully(ruin.ctx, ruin.user, ruin.player, ruin.bot, channel_cible=ruin.thread, timeout=RUIN_CHOICE_TIMEOUT)
+            # fighting_bully_joueur = ruin.fighters_joueur[num_bully_j]
+            fighting_bully_joueur, num_bully_j = await interact_game.player_choose_fighting_bully(ctx=ruin.ctx, fighting_bullies=ruin.fighters_joueur, user=ruin.user, player=ruin.player, bot=ruin.bot, channel_cible=ruin.thread, timeout=RUIN_CHOICE_TIMEOUT)
+
         except interact_game.CancelChoiceException:
             await ruin.thread.send(f"{ruin.user.name} cancelled the fight and left the ruin")
             raise
@@ -105,7 +112,7 @@ class EnemyRoom():
         except Exception:
             raise #On propage l'exception
 
-        fighting_bully_joueur = ruin.fighters_joueur[num_bully_j]
+        
         if (fighting_bully_joueur.pv <= 0):
             await ruin.thread.send(f"Your bully is dead or do not exist.\nYour team left the ruin.") 
             raise IndexError
@@ -114,8 +121,9 @@ class EnemyRoom():
     
     async def fighter_change(self, ruin: "Ruin", fighter: FightingBully) -> FightingBully:
         try :
-            _, new_num_bully_j = await interact_game.player_choose_bully(ruin.ctx, ruin.user, ruin.player, ruin.bot, channel_cible=ruin.thread, timeout=RUIN_CHOICE_TIMEOUT)
-            fighter = ruin.fighters_joueur[new_num_bully_j]
+            # _, new_num_bully_j = await interact_game.player_choose_bully(ruin.ctx, ruin.user, ruin.player, ruin.bot, channel_cible=ruin.thread, timeout=RUIN_CHOICE_TIMEOUT)
+            # fighter = ruin.fighters_joueur[new_num_bully_j]
+            fighter, new_num_bully_j = await interact_game.player_choose_fighting_bully(ctx=ruin.ctx, fighting_bullies=ruin.fighters_joueur, user=ruin.user, player=ruin.player, bot=ruin.bot, channel_cible=ruin.thread, timeout=RUIN_CHOICE_TIMEOUT)
         except interact_game.CancelChoiceException:
             await ruin.thread.send(f"{fighter.combattant.name} stays in fight.")
         except asyncio.exceptions.TimeoutError:
@@ -160,6 +168,7 @@ class EnemyRoom():
             #On calcule les récompenses, on les affiches et on les stock
             (exp_earned, gold_earned) = fight_manager.reward_win_fight(bully_joueur, self.enemy.combattant)
             exp_earned *= COEF_XP_FIGHTER
+            # exp_earned = COEF_XP_FIGHTER * self.enemy.combattant.lvl if exp_earned > 0 else 0
             gold_earned = int(COEF_GOLD_FIGHTER * gold_earned)
             pretext = ""
             if (exp_earned > 0):
@@ -247,6 +256,18 @@ class BossRoom(EnemyRoom, ItemRoom):
 
         return True
 
+@dataclass
+class TreasureRoom():
+    gold:int
+
+    @staticmethod
+    def generate(level: int) -> "TreasureRoom":
+        gold = int(0.3 * level**2 + 10)
+        return TreasureRoom(gold=gold)
+
+    async def interact(self, ruin: "Ruin"):
+        await ruin.thread.send(f"You find a treasure. It contains {self.gold} {money.MONEY_ICON}!")
+        money.give_money(ruin.player, montant=self.gold)
 
 @dataclass
 class TrapRoom():
@@ -271,7 +292,7 @@ class RegenRoom():
         return False
         
 
-Room = BossRoom | EnemyRoom | ItemRoom | TrapRoom | RegenRoom
+Room = BossRoom | EnemyRoom | ItemRoom | TrapRoom | RegenRoom | TreasureRoom
 
 @dataclass
 class Ruin():
@@ -296,9 +317,13 @@ class Ruin():
 
     def generate(self) -> None:
         nb_salle_enemy = 4
+        nb_salle_treasure = 1
         nb_salle_item = 0
         nb_salle_regen = 0
         nb_salle_trap = 0
+
+        fighter_rarities:list[bully.Rarity] = fighter_rarities_lvl[self.level]
+        boss_rarity:bully.Rarity = boss_rarity_lvl[self.level]
 
         if (self.rarity_level == None):
             if(self.level <= 10):
@@ -312,9 +337,17 @@ class Ruin():
             else:
                 self.rarity_level = Rarity.SUBLIME
 
+        
+        #Ajout salle boss à la fin
+        self.rooms.append(BossRoom.generate(self.level, boss_rarity))
+
+        #Ajout salle Treasure
+        for _ in range(nb_salle_treasure):
+            self.rooms.append(TreasureRoom.generate(self.level))
         #Ajout salle Enemy
         for _ in range(nb_salle_enemy):
-            self.rooms.append(EnemyRoom.generate(self.level, self.rarity_level))
+            rarity = random.choice(fighter_rarities)
+            self.rooms.append(EnemyRoom.generate(self.level, rarity))
         #Ajout salle Item
         for _ in range(nb_salle_item):
             self.rooms.append(ItemRoom.generate(self.level, self.rarity_level))
@@ -322,20 +355,18 @@ class Ruin():
         # for k in range(nb_salle_regen):
         #    Salles_ruine.append(Type_salle_ruine.REGEN)
         #Ajout salle Trap
-        for _ in range(nb_salle_trap):
-            self.rooms.append(TrapRoom.generate(self.level, self.rarity_level))
+        # for _ in range(nb_salle_trap):
+        #     self.rooms.append(TrapRoom.generate(self.level, self.rarity_level))
 
-        random.shuffle(self.rooms)
+        # random.shuffle(self.rooms)
 
-        #Ajout salle boss à la fin
-        self.rooms.append(BossRoom.generate(self.level, self.rarity_level))
 
     async def enter(self) -> None:
-        if(keys.get_keys_user(self.player) <= 0):
-            await self.ctx.send(f"You don't have any {keys.KEYS_ICON}")
-            return
-        else :
-            self.player.keys -= 1
+        # if(keys.get_keys_user(self.player) <= 0):
+        #     await self.ctx.send(f"You don't have any {keys.KEYS_ICON}")
+        #     return
+        # else :
+        #     self.player.keys -= 1
 
         message = await self.ctx.channel.send(f"{self.user.mention} enters a mysterious ruin [lvl : {self.level}]")
         try :
@@ -345,7 +376,7 @@ class Ruin():
             return
 
         #On initialise les pv des bullies
-        self.fighters_joueur = [FightingBully.create_fighting_bully(b) for b in self.player.bullies]
+        self.fighters_joueur = [FightingBully.create_fighting_bully(b) for b in self.player.get_equipe()]
 
         try: 
             # Pop removes the last item

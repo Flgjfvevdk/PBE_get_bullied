@@ -23,12 +23,12 @@ from discord.ext import tasks
 from discord.ext.commands import Context, Bot
 
 
-RARITY_DROP_CHANCES = [0, 50, 35, 14, 1]
-RARITY_PRICES = [30, 80, 200, 600, 1000]
+RARITY_DROP_CHANCES = [0, 43, 40, 15, 2, 0] #Mettre 0 en proba d'avoir unique
+RARITY_PRICES = [10, 80, 200, 600, 1000]
 
-SHOP_MAX_BULLY = 5
+SHOP_MAX_BULLY = 6
 #Le temps pendant lequel le shop reste actif
-SHOP_TIMEOUT = 30
+SHOP_TIMEOUT = 60
 #Le temps entre chaque restock
 SHOP_RESTOCK_TIMEOUT = 10 * 60
 #Le temps pendant lequel le shop est fermé pendant le restockage. Les achats sont possibles mais on ne peut pas afficher un nouveau shop 
@@ -63,6 +63,7 @@ async def restock_shop() -> None:
         for k in range(SHOP_MAX_BULLY):
             b = new_bully_shop()
             bullies_in_shop_server[server_id].append(b)
+    
 
 @tasks.loop(seconds=SHOP_RESTOCK_TIMEOUT)
 async def restock_shop_loop():
@@ -104,7 +105,6 @@ async def print_shop(ctx: Context, bot: Bot) -> None:
     
     try:
         while True:
-            #await asyncio.sleep(0.1)
             if(is_shop_restocking):
                 await shop_msg.edit(content=restock_message(), attachments=[], view=None)
                 return

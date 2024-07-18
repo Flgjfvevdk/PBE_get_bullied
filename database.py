@@ -8,6 +8,7 @@ ENGINE = create_async_engine(utils.getenv("DB_URL"))
 
 new_session = async_sessionmaker(bind=ENGINE, class_=AsyncSession)
 
+
 class Base(DeclarativeBase, MappedAsDataclass):
     pass
 

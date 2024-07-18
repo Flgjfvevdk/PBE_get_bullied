@@ -9,7 +9,7 @@ from player_info import Player
 import generate_name_tab
 
 from pathlib import Path
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, TypeVar, Generic
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
@@ -100,6 +100,21 @@ class ViewItemChoice(discord.ui.View):
             
         self.add_item(ButtonClickBool(style=discord.ButtonStyle.secondary,  label = "Cancel", user = user, event=event, emoji = "❌"))
 
+T = TypeVar('T')
+class ViewChoice(discord.ui.View, Generic[T]): 
+    def __init__(self, user:discord.abc.User, event:asyncio.Event, list_choix:List[T], list_choix_name:List[str], variable_pointer:Dict[str, T | None]):
+        super().__init__()
+        self.list_choix:List[T] = list_choix
+
+        for index, choix in enumerate(list_choix):
+            label = list_choix_name[index]
+            self.add_item(ButtonChoice(style=discord.ButtonStyle.secondary, label=label, custom_id=f"button_{index}", 
+                                   user = user, event=event, variable_pointer= variable_pointer, valeur_assigne=choix))
+            # self.add_item(ButtonShopChoice(style=discord.ButtonStyle.secondary, label=label, custom_id=f"button_{index}", 
+            #                        event=event, variable_pointer= variable_pointer, valeur_assigne=choix))
+            
+        self.add_item(ButtonClickBool(style=discord.ButtonStyle.secondary,  label = "Cancel", user = user, event=event, emoji = "❌"))
+
 class ViewYesNo(discord.ui.View):
     def __init__(self, user:discord.abc.User, event:asyncio.Event, variable_pointer:Dict[str, bool]):
         super().__init__()
@@ -133,11 +148,10 @@ async def join_game(ctx: Context, session: AsyncSession, channel_cible: Optional
                   "(if you think this is an error, please contact an administrator)")
         return
 
-    await ctx.reply("Welcome to the adventure !")
+    await ctx.reply("Welcome to the adventure ! (!!tuto)")
     return 
 
 async def add_random_bully_to_player(ctx: Context, player: Player, name_brute: str, channel_cible=None) -> None:
-
     name_bully:str = name_brute
     new_bully = Bully(name_bully)
 
@@ -148,7 +162,7 @@ async def add_bully_to_player(ctx: Context, player: Player, b: Bully, channel_ci
     if(channel_cible==None):
         channel_cible = ctx.channel
 
-    if len(player.bullies) >= BULLY_NUMBER_MAX:
+    if len(player.get_equipe()) >= BULLY_NUMBER_MAX:
         await channel_cible.send(f"You cannot have more than {BULLY_NUMBER_MAX} bullies!")
         return
     
@@ -183,16 +197,19 @@ async def print_bullies(ctx: Context, player: Player, compact_print=False, print
     text = "Your bullies:"
     images: list[Path] = []
 
-    for b in player.bullies:
+    for b in player.get_equipe():
         text += "\n___________\n"
         text += b.get_print(compact_print=compact_print)
         if print_images:
             image_path = b.image_file_path
-            if image_path is not None and os.path.isfile(image_path):
-                images.append(image_path)
+            image_path_str = str(image_path).replace("\\", "/")
+            # if image_path is not None and os.path.isfile(image_path):
+            if image_path is not None and os.path.isfile(image_path_str):
+                # images.append(image_path)
+                images.append(Path(image_path_str))
             else : 
                 images.append(bully.BULLY_DEFAULT_PATH_IMAGE)
-
+        
     try:
         text = bully.mise_en_forme_str(text)
     except Exception as e:
@@ -223,15 +240,38 @@ async def print_items(ctx: Context, player: Player, compact_print=False, channel
     await channel_cible.send(text)
     return
 
-def str_bullies(player: Player, print_images = False) -> tuple[str, Optional[list[discord.File]]]:
+def str_bullies(bullies:list[Bully], print_images = False) -> tuple[str, Optional[list[discord.File]]]:
     text = "Your bullies:"
     images: list[Path] = []
 
-    for b in player.bullies:
+    for b in bullies:
         text += "\n___________\n"
         text += b.get_print(compact_print=True)
         if print_images:
             image_path = b.image_file_path
+            if image_path is not None:
+                images.append(image_path)
+
+    try:
+        text = bully.mise_en_forme_str(text)
+    except Exception as e:
+        print(e)
+
+    if print_images and images :
+        files = [discord.File(image) for image in images]
+    else :
+        files = None
+    return (text, files)
+
+def str_fighting_bully(fighting_bully:list[FightingBully], print_images=False) -> tuple[str, Optional[list[discord.File]]]:
+    text = "Your bullies:"
+    images: list[Path] = []
+
+    for f in fighting_bully:
+        text += "\n___________\n"
+        text += f.combattant.get_print(compact_print=True, current_hp=f.pv)
+        if print_images:
+            image_path = f.combattant.image_file_path
             if image_path is not None:
                 images.append(image_path)
 
@@ -261,13 +301,15 @@ def str_items(player: Player, compact_print=False) -> str:
     text+='```'
     return text
 
-async def player_choose_bully(ctx: Context, user: discord.abc.User, player: Player, bot: Bot, channel_cible=None, timeout = CHOICE_TIMEOUT) -> tuple[FightingBully, int]:
+async def player_choose_bully(ctx: Context, user: discord.abc.User, player: Player, bot: Bot, channel_cible=None, timeout = CHOICE_TIMEOUT, from_team=True) -> tuple[Bully, int]:
     '''Il faut try catch cette méthode car elle peut raise une exception en cas de timeout !!!
     '''
     if(channel_cible == None):
         channel_cible = ctx.channel
+    
+    bullies_in:list[Bully] = player.get_equipe() if from_team else player.get_reserve()
 
-    if len(player.bullies) == 0:
+    if len(bullies_in) == 0:
         channel_cible.send(f"{user.mention}, you do not have any bullies!")
         raise IndexError
 
@@ -277,10 +319,10 @@ async def player_choose_bully(ctx: Context, user: discord.abc.User, player: Play
     #On init les variables
     event = asyncio.Event()
     var:Dict[str, Bully | None] = {"choix" : None}
-    text, _ = str_bullies(player, print_images=False)
+    text, _ = str_bullies(bullies_in, print_images=False)
 
     #On affiche le message
-    message_bullies = await channel_cible.send(content=text, view=ViewBullyChoice(user=user, event=event, list_choix=player.bullies, variable_pointer = var))
+    message_bullies = await channel_cible.send(content=text, view=ViewBullyChoice(user=user, event=event, list_choix=bullies_in, variable_pointer = var))
     
     #On attend une réponse (et on retourne une erreur si nécessaire avec le timeout)
     await asyncio.wait_for(event.wait(), timeout=timeout)
@@ -288,8 +330,46 @@ async def player_choose_bully(ctx: Context, user: discord.abc.User, player: Play
     #On sélectionne le bully et on crée un FightingBully
     bully_selected = var["choix"]
     if(bully_selected) : 
-        fighting_bully = FightingBully.create_fighting_bully(bully_selected)
-        bully_number = (player.bullies).index(bully_selected)
+        bully_number = (bullies_in).index(bully_selected)
+    else : 
+        raise CancelChoiceException("No selected bully")
+
+    #On envoie les infos sur le bully choisit
+    await channel_cible.send(f"{user} sends {bully_selected.name} to fight") 
+    
+    return bully_selected, bully_number
+
+async def player_choose_fighting_bully(ctx:Context, fighting_bullies:list[FightingBully], user: discord.abc.User, player: Player, bot: Bot, channel_cible=None, timeout = CHOICE_TIMEOUT) -> tuple[FightingBully, int]:
+    '''Il faut try catch cette méthode car elle peut raise une exception en cas de timeout !!!
+    '''
+    if(channel_cible == None):
+        channel_cible = ctx.channel
+
+    if len(fighting_bullies) == 0:
+        channel_cible.send(f"{user.name}, you do not have any bullies!")
+        raise IndexError
+
+    #Demande au joueur de choisir son combattant
+    message_choose_fighter = await channel_cible.send(f"{user} choose your fighter : ") 
+
+    #On init les variables
+    event = asyncio.Event()
+    var:Dict[str, Bully | None] = {"choix" : None}
+    text, _ = str_fighting_bully(fighting_bully=fighting_bullies, print_images=False)
+
+    bullies_available = [f.combattant for f in fighting_bullies]
+
+    #On affiche le message
+    message_bullies = await channel_cible.send(content=text, view=ViewBullyChoice(user=user, event=event, list_choix=bullies_available, variable_pointer = var))
+    
+    #On attend une réponse (et on retourne une erreur si nécessaire avec le timeout)
+    await asyncio.wait_for(event.wait(), timeout=timeout)
+
+    #On sélectionne le bully et on crée un FightingBully
+    bully_selected = var["choix"]
+    if(bully_selected) : 
+        bully_number = bullies_available.index(bully_selected)
+        fighting_bully = fighting_bullies[bully_number]
     else : 
         raise CancelChoiceException("No selected bully")
 
@@ -321,10 +401,10 @@ async def player_choose_item(ctx: Context, user: discord.abc.User, player: Playe
         return
     
     #On récup le choix
-    challenge_accepte:bool = var["choix"]
+    want_to_equip_item:bool = var["choix"]
 
     #On affiche le choix du user
-    if(challenge_accepte) : 
+    if(want_to_equip_item) : 
         await message.edit(content=f"{user.mention}, Choose an item to equip")
         item = await select_item_to_equip(ctx, user, player, bot)
     else : 
@@ -367,7 +447,7 @@ async def suicide_bully(ctx: Context, user: discord.abc.User, player: Player, bo
     if(channel_cible == None):
         channel_cible = ctx.channel
 
-    if len(player.bullies) == 0:
+    if len(player.get_equipe()) == 0:
         channel_cible.send(f"{user.mention}, you do not have any bullies!")
         raise IndexError
 
@@ -377,10 +457,10 @@ async def suicide_bully(ctx: Context, user: discord.abc.User, player: Player, bo
     #On init les variables
     event = asyncio.Event()
     var:Dict[str, Bully | None] = {"choix" : None}
-    text, _ = str_bullies(player, print_images=False)
+    text, _ = str_bullies(player.get_equipe(), print_images=False)
 
     #On affiche le message
-    message_bullies = await channel_cible.send(content=text, view=ViewBullyChoice(user=user, event=event, list_choix=player.bullies, variable_pointer = var))
+    message_bullies = await channel_cible.send(content=text, view=ViewBullyChoice(user=user, event=event, list_choix=player.get_equipe(), variable_pointer = var))
     
     try:
         #On attend une réponse (et on retourne une erreur si nécessaire avec le timeout)
@@ -394,6 +474,10 @@ async def suicide_bully(ctx: Context, user: discord.abc.User, player: Player, bo
         #On envoie les infos sur le bully choisit
         await message_choose_suicide.edit(content=f"{user} kill {bully_selected.name}")
         await bully_selected.kill()
+        money.give_money(player, montant=int(bully_selected.gold_give_when_die()))
+        await ctx.send(
+            f"Vous avez reçu des {money.MONEY_ICON} ! (+{int(bully_selected.gold_give_when_die())}{money.MONEY_ICON})"
+        )
     except Exception as e:
         await message_choose_suicide.edit(content=f"{user} didn't kill any bullies")
     finally:
@@ -454,23 +538,6 @@ def generate_name() -> str:
     file_nom.close()
     return prenom + " " + nom
 
-async def add_bully_custom(ctx: Context, player: Player, name_brute:str, stats:bully.Stats, rarity:bully.Rarity, channel_cible=None):
-    #Par défaut, le channel d'envoie est le channel du contexte
-    if(channel_cible==None):
-        channel_cible = ctx.channel
-    
-
-    if(len(player.bullies) >= 5) :
-        await channel_cible.send(f"You can't have more than 5 bullies at the same time")
-        return
-
-    name_bully = name_brute[0] + " " + name_brute[1]
-    new_bully = Bully(name_bully, stats=stats, rarity=rarity)
-
-    player.bullies.append(new_bully)
-
-    await channel_cible.send("You have a new bully : " + name_bully)
-
 async def increase_all_lvl(ctx: Context, player: Player, nb_level:int = 1,  channel_cible=None) -> None:
 
     #Par défaut, le channel d'envoie est le channel du contexte
@@ -486,7 +553,7 @@ async def increase_all_lvl(ctx: Context, player: Player, nb_level:int = 1,  chan
 
 
 def nb_bully_in_team(player: Player) -> int:
-    return len(player.bullies)
+    return len(player.get_equipe())
 
 
     

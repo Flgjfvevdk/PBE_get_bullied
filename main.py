@@ -18,6 +18,7 @@ import item
 import database
 from player_info import Player
 import tuto_text
+import lootbox
 
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import sessionmaker
@@ -27,11 +28,14 @@ import asyncio
 
 from discord.ext.commands import Bot, Context, CommandNotFound
 from discord import Embed
+import reserve
 
 TOKEN = utils.getenv("DISCORD_TOKEN")
 
 intents = discord.Intents.default()
 intents.message_content = True
+
+TEXT_JOIN_THE_GAME:str = "Please join the game first ! (!!join)"
 
 class GetBulliedBot(Bot):
     def __init__(self, *args, **kwargs):
@@ -41,7 +45,7 @@ class GetBulliedBot(Bot):
     def session(self) -> AsyncSession:
         return database.new_session()
 
-bot = GetBulliedBot(command_prefix = "!!", intents=intents)
+bot = GetBulliedBot(command_prefix = "$$", intents=intents)
 
 @bot.event
 async def on_ready():
@@ -58,7 +62,6 @@ async def on_command_error(ctx: Context, error):
         return
     
 
-
 # Command général ____________________________________________________________________________________
 @bot.command()
 async def join(ctx: Context):
@@ -71,7 +74,7 @@ async def payday(ctx: Context):
     async with database.new_session() as session:
         player = await session.get(Player, ctx.author.id)
         if player is None:
-            await ctx.reply("Please join the game first !")
+            await ctx.reply(TEXT_JOIN_THE_GAME)
             return
         
         # Vérifier si l'utilisateur a déjà fait la commande récemment
@@ -96,7 +99,7 @@ async def bank(ctx: Context):
     async with database.new_session() as session:
         player = await session.get(Player, ctx.author.id)
         if player is None:
-            await ctx.reply("Please join the game first !")
+            await ctx.reply(TEXT_JOIN_THE_GAME)
             return
         
         await ctx.send(f"You have {money.get_money_user(player)} {money.MONEY_ICON}")
@@ -106,7 +109,7 @@ async def print_key(ctx: Context):
     async with database.new_session() as session:
         player = await session.get(Player, ctx.author.id)
         if player is None:
-            await ctx.reply("Please join the game first !")
+            await ctx.reply(TEXT_JOIN_THE_GAME)
             return
         
         await ctx.send(f"You have {keys.get_keys_user(player)} {keys.KEYS_ICON}")
@@ -115,34 +118,18 @@ async def print_key(ctx: Context):
 async def patchnote(ctx: Context):
     await ctx.channel.send(
         "```\n"
-        "- Get bullied est (enfin) là !\n"
-        "- La commande !!tuto a été mise à jour\n"
-        "- Apparition des raretés pour les bullies"
-        "- Les nobodies débloquent leur potentiel au lvl 10 ...\n"
-        "- Le shop est là."
-        "- Apparition des items"
-        "- Ouverture des ruines"
-        "- Mise à jour du système de combat"
+        "- NOUVEAU : Les donjons ont été changé (Des types d'ennemies, plus d'adversaire mais moins de pv)\n"
+        "- Les raretés des ennemies dans les ruines ont été changé\n"
+        "- Les portes du donjon level 50 sont ouvertes ...\n"
         "```"
     )
 
-@bot.command(aliases=['lb', 'leader'])
+@bot.command(aliases=['leader', 'rank'])
 async def leaderboard(ctx: Context):
     async with database.new_session() as session:
         lb = Embed(title="Leaderbord Donjon", description=await donjon.str_leaderboard_donjon(session))
         await ctx.channel.send(embed=lb)
     
-@bot.command(aliases=['infdung'])
-async def infos_dungeon(ctx: Context):
-    await ctx.channel.send(
-        "```\n"
-        "Your bullies do not heal between fights\n"
-        "- The first player to defeat the lvl 10 dungeon will receive a permanent trophy!\n"
-        "- Dungeons give more xp ! (if you complete them)\n"
-        "- After each season, the leaderboard is reset and the first one receives a permanent trophy\n"
-        "```"
-    )
-
 @bot.command()
 async def commands_list(ctx: Context):
     command_list = ""
@@ -158,9 +145,17 @@ async def commands_list(ctx: Context):
 async def print_shop(ctx: Context):
     await shop.print_shop(ctx, bot)
 
+@bot.command(aliases=['lootbox', 'lb'])
+async def buy_lootbox(ctx: Context):
+    user = ctx.author
+    if user.id in utils.players_in_interaction:
+        await ctx.reply(f"You are already in an interaction.")
+        return
+    await lootbox.shop_lootbox(ctx, user=user)
+
 @bot.command(aliases=['ty', 'sayty', 'credits'])
 async def say_thanks(ctx: Context):
-    await ctx.send("Thanks to everyone who takes part in my creation!")
+    await ctx.send("Thanks to everyone who takes part in this game!")
 
 @bot.command(aliases=['sacrifice', 'kill'])
 async def suicide(ctx: Context):
@@ -174,7 +169,7 @@ async def suicide(ctx: Context):
         async with database.new_session() as session:
             p = await session.get(Player, user.id)
             if p is None:
-                await ctx.reply("Please join the game first !")
+                await ctx.reply(TEXT_JOIN_THE_GAME)
                 return
             await interact_game.suicide_bully(ctx, user=user, player=p, bot=bot)
             await session.commit()
@@ -195,7 +190,7 @@ async def destroy_item(ctx: Context):
         async with database.new_session() as session:
             p = await session.get(Player, user.id)
             if p is None:
-                await ctx.reply("Please join the game first !")
+                await ctx.reply(TEXT_JOIN_THE_GAME)
                 return
             await interact_game.remove_item(ctx, user=user, player=p)
             await session.commit()
@@ -223,7 +218,9 @@ async def tuto_dungeon(ctx: Context):
 @bot.command(aliases=['tuto_r', 'tuto_ruine'])
 async def tuto_ruin(ctx: Context):
     await ctx.channel.send(tuto_text.tuto_ruin)
-
+@bot.command(aliases=['tuto_s'])
+async def tuto_shop(ctx: Context):
+    await ctx.channel.send(tuto_text.tuto_shop)
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -246,7 +243,7 @@ async def challenge(ctx: Context, opponent:discord.Member):
             p1 = await session.get(Player, user_1.id)
             p2 = await session.get(Player, opponent.id)
             if p1 is None:
-                await ctx.reply("Please join the game first !")
+                await ctx.reply(TEXT_JOIN_THE_GAME)
                 return
             if p2 is None:
                 await ctx.reply(f"{opponent} has not joined the game.")
@@ -276,7 +273,7 @@ async def fun_challenge(ctx: Context, opponent:discord.Member):
             p1 = await session.get(Player, user_1.id)
             p2 = await session.get(Player, opponent.id)
             if p1 is None:
-                await ctx.reply("Please join the game first !")
+                await ctx.reply(TEXT_JOIN_THE_GAME)
                 return
             if p2 is None:
                 await ctx.reply(f"{opponent} has not joined the game.")
@@ -295,7 +292,7 @@ async def challenge_error(ctx: Context, error: commands.CommandError):
         await ctx.send(f"Error: Missing required argument `{error.param.name}`.")
 
     
-@bot.command(aliases=['dungeon', 'donjon'])
+@bot.command(aliases=['dungeon', 'donjon', 'dj', 'dg'])
 #@utils.author_is_free
 async def explore_dungeon(ctx: Context, level:int):
     if(level <= 0) :
@@ -304,9 +301,9 @@ async def explore_dungeon(ctx: Context, level:int):
     if(level > 50) :
         await ctx.channel.send("Level max is 50.")
         return
-    if(level == 50) :
-        await ctx.channel.send("The mysterious lvl 50 dungeon seems completly lock ... for now.")
-        return
+    # if(level == 50) :
+    #     await ctx.channel.send("The mysterious lvl 50 dungeon seems completly lock ... for now.")
+    #     return
     
     user = ctx.author
     if user.id in utils.players_in_interaction:
@@ -318,9 +315,13 @@ async def explore_dungeon(ctx: Context, level:int):
         async with database.new_session() as session:
             player = await session.get(Player, user.id)
             if player is None:
-                await ctx.reply("Please join the game first !")
+                await ctx.reply(TEXT_JOIN_THE_GAME)
                 return
-            await donjon.Dungeon(ctx, bot, player, level).enter()
+            try :
+                await donjon.Dungeon(ctx, bot, player, level).enter()
+            except Exception as e:
+                print(e)
+                raise e
             await session.commit()
             print("on a commit les changes du donjon !")
     finally:
@@ -337,7 +338,7 @@ async def explore_ruin(ctx: Context, level:int):
     if(level <= 0) :
         await ctx.channel.send("Ruin level must be greater than 0")
         return
-    if(level > 50) :
+    if(level >= 50) :
         await ctx.channel.send("50 is the maximum")
         return
     
@@ -351,7 +352,7 @@ async def explore_ruin(ctx: Context, level:int):
         async with database.new_session() as session:
             player = await session.get(Player, user.id)
             if player is None:
-                await ctx.reply("Please join the game first !")
+                await ctx.reply(TEXT_JOIN_THE_GAME)
                 return
             try:
                 await ruine.Ruin(ctx, bot, player, level).enter()
@@ -371,16 +372,28 @@ async def explore_ruin_error(ctx: Context, error: commands.CommandError):
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 # Par rapport au club ____________________________
-@bot.command(aliases=['print', 'pr', 'bullies'])
+@bot.command(aliases=['print', 'pr', 'bullies', 'team'])
 async def club(ctx: Context, user:Optional[discord.User |discord.Member] = None):
     if(user is None):
         user = ctx.author
     async with database.new_session() as session:
         player = await session.get(Player, user.id)
         if player is None:
-            await ctx.reply("Please join the game first !")
+            await ctx.reply(TEXT_JOIN_THE_GAME)
             return
         await interact_game.print_bullies(ctx, player, print_images = True)
+
+@bot.command(aliases=['reserve'])
+async def print_reserve(ctx: Context, user:Optional[discord.User |discord.Member] = None):
+    if(user is None):
+        user = ctx.author
+    async with database.new_session() as session:
+        player = await session.get(Player, user.id)
+        if player is None:
+            await ctx.reply(TEXT_JOIN_THE_GAME)
+            return
+        await reserve.print_reserve(ctx, user, player, bot, session=session, print_images = True)
+        
 
 @bot.command(aliases=['h'])
 #@utils.author_is_free
@@ -395,7 +408,7 @@ async def hire(ctx: Context):
         async with database.new_session() as session:
             player = await session.get(Player, ctx.author.id)
             if player is None:
-                await ctx.reply("Please join the game first !")
+                await ctx.reply(TEXT_JOIN_THE_GAME)
                 return
             await interact_game.add_random_bully_to_player(ctx, player, interact_game.generate_name())
             await session.commit()
@@ -409,7 +422,7 @@ async def show_item(ctx: Context, user:Optional[discord.abc.User] = None):
     async with database.new_session() as session:
         player = await session.get(Player, user.id)
         if player is None:
-            await ctx.reply("Please join the game first !")
+            await ctx.reply(TEXT_JOIN_THE_GAME)
             return
         await interact_game.print_items(ctx, player)
 
@@ -419,7 +432,7 @@ async def kill_all(ctx: Context):
     async with database.new_session() as session:
         player = await session.get(Player, user.id)
         if player is None:
-            await ctx.reply("Please join the game first !")
+            await ctx.reply(TEXT_JOIN_THE_GAME)
             return
         for b in player.bullies:
             if isinstance(b, bully.Bully):
@@ -433,17 +446,29 @@ async def kill_all(ctx: Context):
 #Command d'admin _____________________________________________________________________________________________________
 @bot.command()
 @utils.is_admin()
-async def admin_give(ctx: Context,user: discord.User, name: str, lvl:int , strength: float, agility: float, lethality: float, viciousness: float, path_image: str = ""):
+async def admin_give(ctx: Context,user: discord.User, name: str, lvl:int, rarity:str , strength: float, agility: float, lethality: float, viciousness: float, path_image: str = "", seed_str:str = "", max_pv:int|None = None):
     # # Création de l'objet Stats
     stats = bully.Stats(strength, agility, lethality, viciousness)
     
     # Création de l'objet Bully
-    b = bully.Bully(name=name, rarity= bully.Rarity.NOBODY, stats=stats)
+    b = bully.Bully(name=name, rarity= bully.Rarity[rarity], stats=stats)
     b.lvl = lvl
-    sum_stats = stats.sum_stats()
-    b.seed = bully.Seed(stats.strength/sum_stats, stats.agility/sum_stats, stats.lethality/sum_stats, stats.viciousness/sum_stats)
+    sum_stats = stats.sum_stats() 
+    if seed_str == "" :
+        b.seed = bully.Seed(stats.strength/sum_stats, stats.agility/sum_stats, stats.lethality/sum_stats, stats.viciousness/sum_stats)
+    else : 
+        s_strength, s_agility, s_lethality, s_viciousness = map(float, seed_str.split(","))
+        if bully.Rarity[rarity] != bully.Rarity.UNIQUE : 
+            tot = s_strength + s_agility + s_lethality + s_viciousness
+            b.seed = bully.Seed(s_strength/tot, s_agility/tot, s_lethality/tot, s_viciousness/tot)
+        else : 
+            b.seed = bully.Seed(s_strength, s_agility, s_lethality, s_viciousness)
+            
     if path_image != "":
         b.image_file_path=Path(path_image)
+
+    if max_pv is not None:
+        b.max_pv = max_pv
     
     async with database.new_session() as session:
         player = await session.get(Player, user.id)
@@ -497,7 +522,7 @@ async def get_item(ctx: Context):
         async with database.new_session() as session:
             player = await session.get(Player, ctx.author.id)
             if player is None:
-                await ctx.reply("Please join the game first !")
+                await ctx.reply(TEXT_JOIN_THE_GAME)
                 return
             try:
                 new_item = item.Item(name="Str - x0.5", is_bfr_fight=True, buff_start_self=item.ItemStats(1,0,0,0,pv=4), buff_start_self_mult_lvl=item.Stats(0.5, 0, 0, 0))
@@ -515,7 +540,7 @@ async def py_admin(ctx: Context):
     async with database.new_session() as session:
         player = await session.get(Player, ctx.author.id)
         if player is None:
-            await ctx.reply("Please join the game first !")
+            await ctx.reply(TEXT_JOIN_THE_GAME)
             return
         
         # Donner de l'argent à l'utilisateur
@@ -547,7 +572,7 @@ async def give_lvl(ctx: Context, nombre_lvl : Optional[int] = None ):
         async with database.new_session() as session:
             player = await session.get(Player, ctx.author.id)
             if player is None:
-                await ctx.reply("Please join the game first !")
+                await ctx.reply(TEXT_JOIN_THE_GAME)
                 return
             nb_level = 1 if nombre_lvl is None else nombre_lvl
             await interact_game.increase_all_lvl(ctx, player, nb_level = nb_level)
@@ -555,7 +580,8 @@ async def give_lvl(ctx: Context, nombre_lvl : Optional[int] = None ):
     finally:
         utils.players_in_interaction.discard(user.id)
 
+
 bot.run(TOKEN)
-#asyncio.run(database.init_models())
+# asyncio.run(database.init_models())
 
 

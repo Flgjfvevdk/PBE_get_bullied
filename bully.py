@@ -5,6 +5,7 @@ import shutil
 from typing import Any, List, Optional, Tuple
 from dataclasses import dataclass, replace, InitVar, KW_ONLY, fields
 from pathlib import Path
+import color_str
 
 import player_info
 
@@ -16,17 +17,18 @@ from database import Base, new_session, DBPath
 from sqlalchemy.ext.mutable import MutableComposite
 
 
-BULLY_RARITY_POINTS = [4, 5, 6, 7, 8]
+BULLY_RARITY_BASE_POINTS = [15, 17, 19, 21, 23]
 BULLY_RARITY_LEVEL = [1, 1.1, 1.25, 1.5, 2]
 BULLY_RARITY_DEATH_EXP_COEFF = [0.5, 1, 1.25, 1.5, 2, 2]
 BULLY_RARITY_DEATH_MIN_GOLD = [0, 10, 20, 100, 200, 0]
 BULLY_RARITY_DEATH_MAX_GOLD = [0, 40, 100, 300, 500, 0]
 
-NOBODY_LEVEL_EVOLUTION = 10
-NOBODY_RARITY_EVOLUTION_CHANCES = [0, 40, 45, 14, 1, 0] #Mettre 0 en proba d'avoir unique
+NOBODY_LEVEL_EVOLUTION = 15
+NOBODY_RARITY_EVOLUTION_CHANCES = [0, 30, 30, 30, 10, 0] #Mettre 0 en proba d'avoir unique
 
 BULLY_MAX_LEVEL = 50
 BULLY_MAX_BASE_HP = 10
+BULLY_ASCENDED_MAX_BASE_HP = 13
 
 
 BULLY_DEFAULT_PATH_IMAGE = Path("bully_not_found.png")
@@ -41,11 +43,11 @@ class Rarity(Enum):
     UNIQUE = 5
 
     @property
-    def points_bonus(self) -> int:
-        return BULLY_RARITY_POINTS[self.value]
+    def base_points(self) -> int:
+        return BULLY_RARITY_BASE_POINTS[self.value]
     
     @property
-    def level_bonus(self) -> float:
+    def coef_level_points(self) -> float:
         return BULLY_RARITY_LEVEL[self.value]
     
     @property
@@ -71,9 +73,9 @@ class Stats(MutableComposite):
         super().__setattr__(__name, __value)
         self.changed()
 
-    def increase_with_seed(self, seed:"Seed", *, talkative = False) -> None:
+    def increase_with_seed(self, seed:"Seed", *, talkative = False, valeur:float=1.0) -> None:
         # Get a random stat
-        random_num = random.uniform(0, 0.99999) # Not 1 to account for possible float calculation errors.
+        random_num = random.uniform(0.0, 0.999999) # Not 1 to account for possible float calculation errors.
         cum_prob = seed.cumulative_probs()
         stats = self.__dataclass_fields__
         for i, field_name in enumerate(stats):
@@ -84,9 +86,9 @@ class Stats(MutableComposite):
             return
         
         # Increase the value of the attribute
-        setattr(self, field_name, getattr(self,field_name) + 1)
+        setattr(self, field_name, getattr(self,field_name) + valeur)
         if(talkative):
-            print(f"{field_name.capitalize()} +1!")
+            print(f"{field_name.capitalize()} +{valeur}!")
         return
     
     def max_stat(self) -> str:
@@ -96,6 +98,15 @@ class Stats(MutableComposite):
     
     def sum_stats(self) -> float:
         return self.strength + self.agility + self.lethality + self.viciousness
+    
+    def to_str_color(self)-> str:
+        import math
+        txt_s = f"{color_str.blue(str(round(self.strength, max(0,2-round(math.log10(self.strength))))))}"
+        txt_a = f"{color_str.yellow(str(round(self.agility, max(0,2-round(math.log10(self.agility))))))}"
+        txt_l = f"{color_str.red(str(round(self.lethality, max(0,2-round(math.log10(self.lethality))))))}"
+        txt_v = f"{color_str.green(str(round(self.viciousness, max(0,2-round(math.log10(self.viciousness))))))}"
+        
+        return f"|{txt_s}|{txt_a}|{txt_l}|{txt_v}|"
     
 @dataclass
 class Seed(MutableComposite):
@@ -138,12 +149,16 @@ class Seed(MutableComposite):
             cumulative_sum += getattr(self, name)
             cumulative_probs.append(cumulative_sum)
         return cumulative_probs
-    
+
+    def sum_val_seed(self) -> float:
+        return self.strength + self.agility + self.lethality + self.viciousness
+
 class LevelUpException(Exception):
     def __init__(self, lvl, text=""):
         self.lvl = lvl
         self.text = text
         super().__init__(text)
+
 
 class Bully(Base):
     __tablename__ = "bully"
@@ -197,10 +212,10 @@ class Bully(Base):
                 self.stats.viciousness += self.seed.viciousness
             return
 
-        nb_points = self.rarity.points_bonus
+        nb_points = self.rarity.base_points
         self.increase_stat_with_seed(nb_points, extrem_seed=True)
 
-    def increase_stat_with_seed(self, nb_points=1, extrem_seed = False, talkative = False):
+    def increase_stat_with_seed(self, nb_points=1, valeur:float=1.0, extrem_seed = False, talkative = False):
         used_seed = self.seed
         
         if(extrem_seed):
@@ -208,7 +223,18 @@ class Bully(Base):
             used_seed = self.seed.extremization()
 
         for _ in range(nb_points):
-            self.stats.increase_with_seed(used_seed, talkative=talkative)
+            self.stats.increase_with_seed(used_seed, talkative=talkative, valeur=valeur)
+        return
+    
+    def increase_stat_unique_rarity(self, nb_points):
+        if self.rarity != Rarity.UNIQUE:
+            raise Exception("This is not a UNIQUE bully")
+
+        for _ in range(nb_points):
+            self.stats.strength += self.seed.strength
+            self.stats.agility += self.seed.agility
+            self.stats.lethality += self.seed.lethality
+            self.stats.viciousness += self.seed.viciousness
         return
 
     def give_exp(self, exp_recu) -> None:
@@ -229,9 +255,6 @@ class Bully(Base):
         nobody_evolve = False
         while self.exp >= self.lvl and self.lvl < BULLY_MAX_LEVEL:
             self.exp -= self.lvl
-            # self.lvl += 1
-            # new_points = new_points_lvl_up(self.lvl, self.rarity)
-            # self.increase_stat_with_seed(nb_points=new_points, talkative = False)
             self.level_up_one()
 
             if not nobody_evolve:
@@ -240,20 +263,20 @@ class Bully(Base):
                 self.nobody_evolution()
                 nobody_evolve = True
                 lvl_except = LevelUpException(self.lvl, text=f"unlocks its full potential and becomes . . . {self.rarity.name}!")
+                
         if lvl_except is not None:
             raise lvl_except
 
     def level_up_one(self):
         self.lvl += 1
         if self.rarity == Rarity.UNIQUE :
-            self.stats.strength += self.seed.strength
-            self.stats.agility += self.seed.agility
-            self.stats.lethality += self.seed.lethality
-            self.stats.viciousness += self.seed.viciousness
+            self.increase_stat_unique_rarity(self.lvl)
             
         else:
-            new_points = new_points_lvl_up(self.lvl, self.rarity)
-            self.increase_stat_with_seed(nb_points=new_points, talkative = False)
+            # new_points = new_points_lvl_up(self.lvl, self.rarity)
+            new_points = self.lvl
+            valeur = self.rarity.coef_level_points
+            self.increase_stat_with_seed(nb_points=new_points, talkative = False, valeur=valeur)
 
     def exp_give_when_die(self):
         xp = self.lvl
@@ -273,10 +296,17 @@ class Bully(Base):
         new_rarity:Rarity = random.choices(list(Rarity), weights=NOBODY_RARITY_EVOLUTION_CHANCES)[0]
         
         #On rajoute les points qu'il faut rajouter
-        difference_points = (new_rarity.points_bonus - self.rarity.points_bonus) + int(NOBODY_LEVEL_EVOLUTION * (new_rarity.level_bonus - self.rarity.level_bonus))
-        self.increase_stat_with_seed(nb_points=difference_points, talkative = False)
+        # difference_points = (new_rarity.points_bonus - self.rarity.points_bonus) + int(NOBODY_LEVEL_EVOLUTION * (new_rarity.level_bonus - self.rarity.level_bonus))
+        # self.increase_stat_with_seed(nb_points=difference_points, talkative = False)
+        difference_points = nb_points_tot_rarity(self.lvl, new_rarity) - self.stats.sum_stats()
+        nb_points:int = round(self.lvl * (self.lvl + 1) / 2)
+        val = difference_points/nb_points
+        self.increase_stat_with_seed(nb_points=nb_points, valeur=val, talkative = False)
 
         self.rarity = new_rarity
+
+        #On change les pv max
+        self.max_pv = BULLY_ASCENDED_MAX_BASE_HP
 
         #On change l'image : 
         self.image_file_path = self.new_possible_image_random()
@@ -377,12 +407,21 @@ def str_text_stat(value_stat:int):
     else :
         text_stat += ("0" + str(value_stat))
 
-    for k in range(value_stat):
+    while value_stat >= 1000:
+        value_stat -= 1000
+        text_stat += "⭐"
+    while value_stat >= 100:
+        value_stat -= 100
+        text_stat +="*"
+    while value_stat >= 10:
+        value_stat-= 10
         text_stat += "▮"
+    for k in range(value_stat):
+        text_stat += "."
     return text_stat
 
 def mise_en_forme_str(text):
-    new_text = "```ansi\n" + text + "```"
+    new_text:str = "```ansi\n" + text + "```"
     new_text = new_text.replace("UNIQUE", "[2;35m[1;35mUn[0m[2;35m[0m[2;34m[1;34mi[0m[2;34m[0m[2;31m[1;31mq[0m[2;31m[0m[2;32m[1;32mu[0m[2;32m[0m[2;33m[1;33me[0m[2;33m[0m")
     new_text = new_text.replace("SUBLIME", "[2;35m[1;35mSublime[0m[2;35m[0m")
     new_text = new_text.replace("DEVASTATOR", "[2;34m[1;34mDevastator[0m[2;34m[0m")
@@ -396,9 +435,26 @@ def mise_en_forme_str(text):
 
 # Pour gérer buff de stat selon rareté 
 def new_points_lvl_up(lvl, rarity=Rarity.NOBODY) -> int:
-    coeff = rarity.level_bonus
+    coeff = rarity.coef_level_points
     lvl_win = int(lvl * coeff) - int((lvl-1) * coeff)
     return lvl_win
+
+def nb_points_tot_rarity(lvl, rarity=Rarity.NOBODY) -> float:
+    if rarity != Rarity.UNIQUE:
+        base = rarity.base_points
+        coef = rarity.coef_level_points
+        tot:float = base + 4
+        for l in range(1 +1, lvl +1):
+            tot += l*coef
+    else :
+        print(f"Le bully est unique et ne peux pas être mis à jour comme ça.")
+    # elif coef_unique is not None :
+    #     for l in range(1 +1, lvl +1):
+    #         tot += l * coef_unique
+    # else : 
+    #     raise Exception("Unique coef seed must be provided")
+    
+    return tot
 
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -424,6 +480,5 @@ def renforce_proba_sin(x, c = 1.0):
     r /= 2
     r = r**c
     return r
-
 
 

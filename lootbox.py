@@ -19,7 +19,7 @@ from dataclasses import dataclass, field, KW_ONLY
 from typing import Dict
 
 CHOICE_TIMEOUT = 20
-RARITY_DROP_CHANCES = [0, 35, 50, 10, 5, 0] #Mettre 0 en proba d'avoir unique
+RARITY_DROP_CHANCES = [0, 35, 45, 15, 5, 0] #Mettre 0 en proba d'avoir unique
 PRIX_BASE = 80
 
 

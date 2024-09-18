@@ -205,14 +205,6 @@ class Dungeon():
         fighting_bully_enemy = self.enemies_fighters[self.current_floor]
         text_enemy_coming = f"An enemy is coming! {fighting_bully_enemy.combattant.get_print(compact_print=True, current_hp=fighting_bully_enemy.pv)}"
         await self.thread.send(f"{bully.mise_en_forme_str(text_enemy_coming)}") 
-
-        #Le player choisit son bully
-        # _, num_bully_j = await interact_game.player_choose_bully(self.ctx, self.ctx.author, self.player, self.bot, channel_cible=self.thread, timeout=DUNGEON_CHOICE_TIMEOUT)
-        # Les pv sont maj dans la class fightingBully
-        # fighting_bully_joueur = self.fighters_joueur[num_bully_j]
-        # if(fighting_bully_joueur.pv <= 0):
-        #     await self.thread.send(f"Your bully is dead or do not exist. \nYour team left the dungeon.")
-        #     raise IndexError()
         
         fighting_bully_joueur, num_bully_j = await interact_game.player_choose_fighting_bully(ctx=self.ctx, fighting_bullies=self.fighters_joueur, user=self.ctx.author, player=self.player, bot=self.bot, channel_cible=self.thread, timeout=DUNGEON_CHOICE_TIMEOUT)
 
@@ -267,8 +259,6 @@ class Dungeon():
 
     async def fighter_change(self, fighter: FightingBully) -> FightingBully:
         try :
-            # _, new_num_bully_j = await interact_game.player_choose_bully(self.ctx, self.user, self.player, self.bot, channel_cible=self.thread, timeout=DUNGEON_CHOICE_TIMEOUT)
-            # fighter = self.fighters_joueur[new_num_bully_j]
             fighter, new_num_bully_j = await interact_game.player_choose_fighting_bully(ctx=self.ctx, fighting_bullies=self.fighters_joueur, user=self.ctx.author, player=self.player, bot=self.bot, channel_cible=self.thread, timeout=DUNGEON_CHOICE_TIMEOUT)
 
         except interact_game.CancelChoiceException:

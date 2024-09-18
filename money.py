@@ -6,7 +6,7 @@ from player_info import Player
 
 # Var payday
 PAYDAY_COOLDOWN = 8 * 60 * 60
-PAYDAY_VALUE = 150
+PAYDAY_VALUE = 250
 
 MONEY_ICON = "🩹"
 MONEY_JOIN_VALUE = 400

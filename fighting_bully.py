@@ -2,7 +2,7 @@ from __future__ import annotations # Replace type hints to their string form (It
                                    # WARNING: Should only be used for type hints
 from dataclasses import dataclass, replace
 from bully import Bully, Stats
-import item
+# import item
 
 @dataclass
 class FightingBully():
@@ -11,13 +11,15 @@ class FightingBully():
     base_stats: Stats
     stats: Stats
 
-    equipped_item: item.Item|None = None
+    # equipped_item: item.Item|None = None
 
     @staticmethod
-    def create_fighting_bully(b:Bully, i: item.Item|None = None) -> "FightingBully":
+    # def create_fighting_bully(b:Bully, i: item.Item|None = None) -> "FightingBully":
+    def create_fighting_bully(b:Bully) -> "FightingBully":
         fighter = FightingBully(combattant=b, pv=b.max_pv, base_stats=replace(b.stats), stats=replace(b.stats))
-        fighter.equipped_item = i
+        # fighter.equipped_item = i
         return fighter
+    
     
     def reset_stats(self) -> None:
         self.stats = replace(self.base_stats)

@@ -3,7 +3,9 @@ import random
 from bully import Bully, Rarity, LevelUpException, Stats
 import bully
 from fighting_bully import FightingBully
-from item import Item, ItemStats, Seed
+# from item import Item, ItemStats, Seed
+import consommable
+from consommable import Consommable
 import interact_game
 import fight_manager
 import money
@@ -12,8 +14,7 @@ import asyncio
 from player_info import Player
 
 
-from typing import Any, Optional, overload
-from typing import List
+from typing import Any, Optional, overload, Type
 from dataclasses import dataclass, field, KW_ONLY
 
 from discord.ext.commands import Context, Bot
@@ -25,7 +26,7 @@ RUIN_CHOICE_TIMEOUT = 60
 THREAD_DELETE_AFTER = 60
 MAX_PV_ENEMY = 8
 COEF_XP_FIGHTER = 0.8
-COEF_GOLD_FIGHTER = 0.05
+COEF_GOLD_FIGHTER = 0.1
 MAX_PV_BOSS = 20
 
 boss_rarity_lvl:dict[int, bully.Rarity] = {k:bully.Rarity.TOXIC for k in range(0,5)} | {k:bully.Rarity.MONSTER for k in range(5,20)} | {k:bully.Rarity.DEVASTATOR for k in range(20,35)} | {k:bully.Rarity.SUBLIME for k in range(35,50)}
@@ -34,8 +35,8 @@ fighter_rarities_lvl:dict[int, list[bully.Rarity]] = {k:[bully.Rarity.TOXIC] for
 
 class Trap :
     def __init__(self, level: int, rarity: Rarity, stat_index: int|None = None, damage = 3):
-        init_R = rarity.points_bonus
-        coef_R = rarity.level_bonus
+        init_R = rarity.base_points
+        coef_R = rarity.coef_level_points
 
         self.difficulty = round((init_R + coef_R *level) /4) + 1
         if(stat_index == None):
@@ -195,46 +196,64 @@ class EnemyRoom():
 
         return is_success
 
+# @dataclass
+# class ItemRoom():
+#     item: Item
+
+#     @staticmethod
+#     def generate(level: int, rarity: Rarity) -> "ItemRoom":
+#         # item_list.append(Item(name="HP - 5", is_bfr_fight= True, buff_start_self=ItemStats(0,0,0,0,5)))
+#         index_to_name = ["Strength", "Agility", "Lethality", "Viciousness"]
+#         if level < 5:
+#             r_ind = random.randint(0,3)
+#             st_it = [1 if i == r_ind else 0 for i in range(4)]
+#             item = Item(name="Rune of " + index_to_name[r_ind], is_bfr_fight= True, buff_start_self=ItemStats(st_it[0], st_it[1], st_it[2], st_it[3], 0), 
+#                                                                                 description="A mysterious rune that buff your bully")
+#         elif level < 10:
+#             r_ind = random.randint(0,3)
+#             st_it = [1 if i == r_ind else 0 for i in range(4)]
+#             item = Item(name="Rune of " + index_to_name[r_ind], is_bfr_fight= True, buff_start_self=ItemStats(2 * st_it[0], 2 * st_it[1], 2 * st_it[2], 2 * st_it[3], 0), 
+#                                                                                 description="A mysterious rune that buff your bully")
+#         elif level < 20:
+#             r_ind = random.randint(0,3)
+#             st_it = [1 if i == r_ind else 0 for i in range(4)]
+#             item = Item(name=f"Rune of {index_to_name[r_ind]} X" , is_bfr_fight= True, buff_start_self=ItemStats(st_it[0], st_it[1], st_it[2], st_it[3], 0), 
+#                                                                                 buff_start_self_mult_lvl=Stats(0.1 * st_it[0], 0.1 * st_it[1], 0.1 * st_it[2], 0.1 * st_it[3]), 
+#                                                                                 description="A mysterious rune that buff your bully")
+#         elif level < 50:
+#             r_ind = random.randint(0,3)
+#             st_it = [1 if i == r_ind else 0 for i in range(4)]
+#             item = Item(name=f"Rune of {index_to_name[r_ind]} XX", is_bfr_fight= True, buff_start_self=ItemStats(0, 0, 0, 0, 0), 
+#                                                                                 buff_start_self_mult_lvl=Stats(0.15 * st_it[0], 0.15 * st_it[1], 0.15 * st_it[2], 0.15 * st_it[3]), 
+#                                                                                 description="A mysterious rune that buff your bully")
+
+#         return ItemRoom(item)
+    
+#     async def interact(self, ruin: "Ruin"):
+#         await ruin.thread.send(f"You found an item: {self.item.name}!")
+#         await interact_game.add_item_to_player(ruin.ctx, ruin.player, self.item, channel_cible=ruin.thread)
+
 @dataclass
-class ItemRoom():
-    item: Item
+class ConsoRoom():
+    conso: Consommable
 
     @staticmethod
-    def generate(level: int, rarity: Rarity) -> "ItemRoom":
-        # item_list.append(Item(name="HP - 5", is_bfr_fight= True, buff_start_self=ItemStats(0,0,0,0,5)))
-        index_to_name = ["Strength", "Agility", "Lethality", "Viciousness"]
-        if level < 5:
-            r_ind = random.randint(0,3)
-            st_it = [1 if i == r_ind else 0 for i in range(4)]
-            item = Item(name="Rune of " + index_to_name[r_ind], is_bfr_fight= True, buff_start_self=ItemStats(st_it[0], st_it[1], st_it[2], st_it[3], 0), 
-                                                                                description="A mysterious rune that buff your bully")
-        elif level < 10:
-            r_ind = random.randint(0,3)
-            st_it = [1 if i == r_ind else 0 for i in range(4)]
-            item = Item(name="Rune of " + index_to_name[r_ind], is_bfr_fight= True, buff_start_self=ItemStats(2 * st_it[0], 2 * st_it[1], 2 * st_it[2], 2 * st_it[3], 0), 
-                                                                                description="A mysterious rune that buff your bully")
-        elif level < 20:
-            r_ind = random.randint(0,3)
-            st_it = [1 if i == r_ind else 0 for i in range(4)]
-            item = Item(name=f"Rune of {index_to_name[r_ind]} X" , is_bfr_fight= True, buff_start_self=ItemStats(st_it[0], st_it[1], st_it[2], st_it[3], 0), 
-                                                                                buff_start_self_mult_lvl=Stats(0.1 * st_it[0], 0.1 * st_it[1], 0.1 * st_it[2], 0.1 * st_it[3]), 
-                                                                                description="A mysterious rune that buff your bully")
-        elif level < 50:
-            r_ind = random.randint(0,3)
-            st_it = [1 if i == r_ind else 0 for i in range(4)]
-            item = Item(name=f"Rune of {index_to_name[r_ind]} XX", is_bfr_fight= True, buff_start_self=ItemStats(0, 0, 0, 0, 0), 
-                                                                                buff_start_self_mult_lvl=Stats(0.15 * st_it[0], 0.15 * st_it[1], 0.15 * st_it[2], 0.15 * st_it[3]), 
-                                                                                description="A mysterious rune that buff your bully")
-
-        return ItemRoom(item)
+    def generate(level: int, rarity: Rarity) -> "ConsoRoom":
+        valeur = level * rarity.coef_level_points 
+        # conso = random.choice(consommable.aliments)(value=valeur).construct()
+        aliment = random.choice(consommable.aliments)
+        # if isinstance(aliment,Type(consommable.Gigot)|Type(consommable.Banane)|Type(consommable.Creme)|Type(consommable.Piment)|Type(consommable.Chocolat)|Type(consommable.Meringue)|Type(consommable.Bonbon)|Type(consommable.Merguez)|Type(consommable.Citron)|Type(consommable.Bierre)|Type(consommable.Beurre)|Type(consommable.Yaourt)):
+        conso = aliment(value=valeur)
+        return ConsoRoom(conso)
     
     async def interact(self, ruin: "Ruin"):
-        await ruin.thread.send(f"You found an item: {self.item.name}!")
-        await interact_game.add_item_to_player(ruin.ctx, ruin.player, self.item, channel_cible=ruin.thread)
+        await ruin.thread.send(f"You found an consommable item: {self.conso.name}!")
+        await consommable.add_conso_to_player(ruin.ctx, ruin.player, self.conso, channel_cible=ruin.thread)
 
-    
+
 @dataclass
-class BossRoom(EnemyRoom, ItemRoom): 
+# class BossRoom(EnemyRoom, ItemRoom, ConsoRoom): 
+class BossRoom(EnemyRoom, ConsoRoom): 
 
     @staticmethod
     def generate(level: int, rarity: Rarity) -> "BossRoom":
@@ -243,16 +262,19 @@ class BossRoom(EnemyRoom, ItemRoom):
         boss = Bully("BOSS", rarity=rarity, must_load_image=False, max_pv=max_pv_boss)
         for _ in range(1, level) :
             boss.level_up_one()
-        boss_item = ItemRoom.generate(level, rarity).item
-        boss_fighter = FightingBully.create_fighting_bully(boss, boss_item)
+        boss_conso = ConsoRoom.generate(level, rarity).conso
+        # boss_item = ItemRoom.generate(level, rarity).item
+        boss_fighter = FightingBully.create_fighting_bully(boss)
 
-        fight_manager.apply_effect_item_before_fight(fighter_self=boss_fighter)
+        # fight_manager.apply_effect_item_before_fight(fighter_self=boss_fighter)
 
-        return BossRoom(boss_item, boss_fighter, can_switch = True) #reverse MRO for dataclasses
+        # return BossRoom(boss_conso, boss_item, boss_fighter, can_switch = True) #reverse MRO for dataclasses
+        return BossRoom(boss_conso, boss_fighter, can_switch = True) #reverse MRO for dataclasses
     
     async def interact(self, ruin: "Ruin"):
         await EnemyRoom.interact(self, ruin)
-        await ItemRoom.interact(self, ruin)
+        # await ItemRoom.interact(self, ruin)
+        await ConsoRoom.interact(self, ruin)
 
         return True
 
@@ -266,7 +288,7 @@ class TreasureRoom():
         return TreasureRoom(gold=gold)
 
     async def interact(self, ruin: "Ruin"):
-        await ruin.thread.send(f"You find a treasure. It contains {self.gold} {money.MONEY_ICON}!")
+        await ruin.thread.send(f"You find a **treasure**. It contains **{self.gold}** {money.MONEY_ICON}!")
         money.give_money(ruin.player, montant=self.gold)
 
 @dataclass
@@ -292,7 +314,8 @@ class RegenRoom():
         return False
         
 
-Room = BossRoom | EnemyRoom | ItemRoom | TrapRoom | RegenRoom | TreasureRoom
+# Room = BossRoom | EnemyRoom | ItemRoom | TrapRoom | RegenRoom | TreasureRoom |ConsoRoom
+Room = BossRoom | EnemyRoom | TrapRoom | RegenRoom | TreasureRoom |ConsoRoom
 
 @dataclass
 class Ruin():
@@ -324,18 +347,18 @@ class Ruin():
 
         fighter_rarities:list[bully.Rarity] = fighter_rarities_lvl[self.level]
         boss_rarity:bully.Rarity = boss_rarity_lvl[self.level]
-
-        if (self.rarity_level == None):
-            if(self.level <= 10):
-                self.rarity_level = Rarity.NOBODY
-            elif(self.level <= 25):
-                self.rarity_level = Rarity.TOXIC
-            elif(self.level <= 35):
-                self.rarity_level = Rarity.MONSTER
-            elif(self.level <= 45):
-                self.rarity_level = Rarity.DEVASTATOR
-            else:
-                self.rarity_level = Rarity.SUBLIME
+        self.rarity_level = boss_rarity
+        # if (self.rarity_level == None):
+        #     if(self.level <= 10):
+        #         self.rarity_level = Rarity.NOBODY
+        #     elif(self.level <= 25):
+        #         self.rarity_level = Rarity.TOXIC
+        #     elif(self.level <= 35):
+        #         self.rarity_level = Rarity.MONSTER
+        #     elif(self.level <= 45):
+        #         self.rarity_level = Rarity.DEVASTATOR
+        #     else:
+        #         self.rarity_level = Rarity.SUBLIME
 
         
         #Ajout salle boss à la fin
@@ -348,9 +371,9 @@ class Ruin():
         for _ in range(nb_salle_enemy):
             rarity = random.choice(fighter_rarities)
             self.rooms.append(EnemyRoom.generate(self.level, rarity))
-        #Ajout salle Item
-        for _ in range(nb_salle_item):
-            self.rooms.append(ItemRoom.generate(self.level, self.rarity_level))
+        # #Ajout salle Item
+        # for _ in range(nb_salle_item):
+        #     self.rooms.append(ItemRoom.generate(self.level, self.rarity_level))
         # #Ajout salle Regen
         # for k in range(nb_salle_regen):
         #    Salles_ruine.append(Type_salle_ruine.REGEN)
@@ -398,7 +421,7 @@ class Ruin():
 
     def reset_stats_bullies(self) -> None:
         for f in self.fighters_joueur :
-            print('Cuurent stat :' , f.stats)
+            # print('Current stat :' , f.stats)
             f.reset_stats()
 
     async def exit(self, time_bfr_close_thread=THREAD_DELETE_AFTER) -> None:

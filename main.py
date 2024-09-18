@@ -14,15 +14,15 @@ import money
 import keys
 import shop
 import bully
-import item
+# import item
 import database
 from player_info import Player
 import tuto_text
 import lootbox
+import consommable
 
-from sqlalchemy import Engine, create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
 import asyncio
 
@@ -116,13 +116,7 @@ async def print_key(ctx: Context):
 
 @bot.command(aliases=['patch', 'update'])
 async def patchnote(ctx: Context):
-    await ctx.channel.send(
-        "```\n"
-        "- NOUVEAU : Les donjons ont été changé (Des types d'ennemies, plus d'adversaire mais moins de pv)\n"
-        "- Les raretés des ennemies dans les ruines ont été changé\n"
-        "- Les portes du donjon level 50 sont ouvertes ...\n"
-        "```"
-    )
+    await ctx.channel.send(tuto_text.patchnote)
 
 @bot.command(aliases=['leader', 'rank'])
 async def leaderboard(ctx: Context):
@@ -178,26 +172,26 @@ async def suicide(ctx: Context):
 
     return
 
-@bot.command(aliases=['destroy', 'remove_item'])
-async def destroy_item(ctx: Context):
-    user = ctx.author
-    if user.id in utils.players_in_interaction:
-        await ctx.reply(f"You are already in an interaction.")
-        return
+# @bot.command(aliases=['destroy', 'remove_item'])
+# async def destroy_item(ctx: Context):
+#     user = ctx.author
+#     if user.id in utils.players_in_interaction:
+#         await ctx.reply(f"You are already in an interaction.")
+#         return
     
-    utils.players_in_interaction.add(user.id)
-    try:
-        async with database.new_session() as session:
-            p = await session.get(Player, user.id)
-            if p is None:
-                await ctx.reply(TEXT_JOIN_THE_GAME)
-                return
-            await interact_game.remove_item(ctx, user=user, player=p)
-            await session.commit()
-    finally:
-        utils.players_in_interaction.discard(user.id)
+#     utils.players_in_interaction.add(user.id)
+#     try:
+#         async with database.new_session() as session:
+#             p = await session.get(Player, user.id)
+#             if p is None:
+#                 await ctx.reply(TEXT_JOIN_THE_GAME)
+#                 return
+#             await interact_game.remove_item(ctx, user=user, player=p)
+#             await session.commit()
+#     finally:
+#         utils.players_in_interaction.discard(user.id)
 
-    return
+#     return
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -221,6 +215,9 @@ async def tuto_ruin(ctx: Context):
 @bot.command(aliases=['tuto_s'])
 async def tuto_shop(ctx: Context):
     await ctx.channel.send(tuto_text.tuto_shop)
+@bot.command(aliases=['tuto_lb', 'tuto_l'])
+async def tuto_lootbox(ctx: Context):
+    await ctx.channel.send(tuto_text.tuto_lootbox)
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -284,6 +281,36 @@ async def fun_challenge(ctx: Context, opponent:discord.Member):
         utils.players_in_interaction.discard(user_1.id)
 
     return
+
+@bot.command(aliases=['tch', 'teamfight', 'team_fight'])
+async def team_challenge(ctx: Context, opponent:discord.Member):
+    user_1 = ctx.author
+    if user_1.id in utils.players_in_interaction:
+        await ctx.reply(f"You are already in an interaction.")
+        return
+    if opponent.id in utils.players_in_interaction:
+        await ctx.channel.send(f"Sorry, but {opponent} is already busy!")
+        return
+
+    utils.players_in_interaction.add(user_1.id)
+    utils.players_in_interaction.add(opponent.id)
+    try:
+        async with database.new_session() as session:
+            p1 = await session.get(Player, user_1.id)
+            p2 = await session.get(Player, opponent.id)
+            if p1 is None:
+                await ctx.reply(TEXT_JOIN_THE_GAME)
+                return
+            if p2 is None:
+                await ctx.reply(f"{opponent} has not joined the game.")
+                return
+            await fight_manager.manager_start_team_fight(ctx, user_1, p1, opponent, p2, bot)
+    finally:
+        utils.players_in_interaction.discard(opponent.id)
+        utils.players_in_interaction.discard(user_1.id)
+
+    return
+
 
 @challenge.error
 @fun_challenge.error
@@ -415,16 +442,16 @@ async def hire(ctx: Context):
     finally:
         utils.players_in_interaction.discard(user.id)
 
-@bot.command(aliases=['item', 'items'])
-async def show_item(ctx: Context, user:Optional[discord.abc.User] = None):
-    if(user is None):
-        user = ctx.author
-    async with database.new_session() as session:
-        player = await session.get(Player, user.id)
-        if player is None:
-            await ctx.reply(TEXT_JOIN_THE_GAME)
-            return
-        await interact_game.print_items(ctx, player)
+# @bot.command(aliases=['item', 'items'])
+# async def show_item(ctx: Context, user:Optional[discord.abc.User] = None):
+#     if(user is None):
+#         user = ctx.author
+#     async with database.new_session() as session:
+#         player = await session.get(Player, user.id)
+#         if player is None:
+#             await ctx.reply(TEXT_JOIN_THE_GAME)
+#             return
+#         await interact_game.print_items(ctx, player)
 
 @bot.command()
 async def kill_all(ctx: Context):
@@ -439,6 +466,37 @@ async def kill_all(ctx: Context):
                 await b.kill()
         await session.commit()
     
+
+@bot.command(aliases=['use_c', 'use_conso', 'use_consommables'])
+async def use_consommable(ctx: Context):
+    user = ctx.author
+    if user.id in utils.players_in_interaction:
+        await ctx.reply(f"You are already in an interaction.")
+        return
+
+    utils.players_in_interaction.add(user.id)
+    try:
+        async with database.new_session() as session:
+            player = await session.get(Player, ctx.author.id)
+            if player is None:
+                await ctx.reply(TEXT_JOIN_THE_GAME)
+                return
+            await consommable.use_consommable(ctx=ctx, user=user, player=player, session=session, bot=bot)
+            await session.commit()
+    finally:
+        utils.players_in_interaction.discard(user.id)
+
+@bot.command(aliases=['show_consommable', 'consommable', 'print_consommable', 'consommables', 'print_consommables', 'print_c'])
+async def show_consommables(ctx: Context):
+    user = ctx.author
+
+    async with database.new_session() as session:
+        player = await session.get(Player, ctx.author.id)
+        if player is None:
+            await ctx.reply(TEXT_JOIN_THE_GAME)
+            return
+        await ctx.channel.send(consommable.str_consommables(player=player))
+        # await consommable.print_consommables(ctx, player)
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -508,31 +566,30 @@ async def admin_open_shop(ctx: Context):
         await ctx.send(f'Server {ctx.guild.name} is already saved.')
 
 
-@bot.command()
-@utils.is_admin()
-#@utils.author_is_free
-async def get_item(ctx: Context):
-    user = ctx.author
-    if user.id in utils.players_in_interaction:
-        await ctx.reply(f"You are already in an interaction.")
-        return
+# @bot.command()
+# @utils.is_admin()
+# async def get_item(ctx: Context):
+#     user = ctx.author
+#     if user.id in utils.players_in_interaction:
+#         await ctx.reply(f"You are already in an interaction.")
+#         return
 
-    utils.players_in_interaction.add(user.id)
-    try:
-        async with database.new_session() as session:
-            player = await session.get(Player, ctx.author.id)
-            if player is None:
-                await ctx.reply(TEXT_JOIN_THE_GAME)
-                return
-            try:
-                new_item = item.Item(name="Str - x0.5", is_bfr_fight=True, buff_start_self=item.ItemStats(1,0,0,0,pv=4), buff_start_self_mult_lvl=item.Stats(0.5, 0, 0, 0))
-                await interact_game.add_item_to_player(ctx, player, new_item)
-                await session.commit()
-            except Exception as e:
-                print("on est la en fait")
-                print(e)
-    finally:
-        utils.players_in_interaction.discard(user.id)
+#     utils.players_in_interaction.add(user.id)
+#     try:
+#         async with database.new_session() as session:
+#             player = await session.get(Player, ctx.author.id)
+#             if player is None:
+#                 await ctx.reply(TEXT_JOIN_THE_GAME)
+#                 return
+#             try:
+#                 new_item = item.Item(name="Str - x0.5", is_bfr_fight=True, buff_start_self=item.ItemStats(1,0,0,0,pv=4), buff_start_self_mult_lvl=item.Stats(0.5, 0, 0, 0))
+#                 await interact_game.add_item_to_player(ctx, player, new_item)
+#                 await session.commit()
+#             except Exception as e:
+#                 print("on est la en fait")
+#                 print(e)
+#     finally:
+#         utils.players_in_interaction.discard(user.id)
 
 @bot.command()
 @utils.is_admin()
@@ -579,6 +636,60 @@ async def give_lvl(ctx: Context, nombre_lvl : Optional[int] = None ):
             await session.commit()
     finally:
         utils.players_in_interaction.discard(user.id)
+
+
+@bot.command()
+@utils.is_admin()
+async def add_c(ctx: Context):
+    user = ctx.author
+    if user.id in utils.players_in_interaction:
+        await ctx.reply(f"You are already in an interaction.")
+        return
+
+    async with database.new_session() as session:
+        player = await session.get(Player, ctx.author.id)
+        if player is None:
+            await ctx.reply(TEXT_JOIN_THE_GAME)
+            return
+        c = consommable.Gigot(2)
+        print(c.get_print())
+        # player.consommables.append(consommable.Gigot(2).construct())
+        player.consommables.append(consommable.Gigot(2))
+        print("player.consommables : ", player.consommables[0].get_print())
+        await session.commit()
+
+        print("player.consommables : ", player.consommables[0].get_print())
+
+@bot.command()
+@utils.is_admin()
+async def del_c(ctx: Context):
+    user = ctx.author
+    if user.id in utils.players_in_interaction:
+        await ctx.reply(f"You are already in an interaction.")
+        return
+
+    async with database.new_session() as session:
+        player = await session.get(Player, ctx.author.id)
+        if player is None:
+            await ctx.reply(TEXT_JOIN_THE_GAME)
+            return
+        player.consommables = []
+        await session.commit()
+
+@bot.command()
+@utils.is_admin()
+async def bully_maj(ctx:Context):
+    async with database.new_session() as session:
+        result = await session.execute(select(bully.Bully))  # Remplace Bully par ta classe qui mappe la table BULLY
+        bullies = result.scalars().all()
+        for b in bullies:
+            difference_points = bully.nb_points_tot_rarity(b.lvl, b.rarity) - b.stats.sum_stats()
+            print(f"{b.name}- diff:{difference_points}")
+            nb_points:int = round(b.lvl * (b.lvl + 1) / 2)
+            val = difference_points/nb_points
+            b.increase_stat_with_seed(nb_points=nb_points, valeur=val, talkative = False)
+        await session.commit() 
+    
 
 
 bot.run(TOKEN)

@@ -3,9 +3,8 @@ import random
 
 import discord
 from bully import Bully, Stats, LevelUpException
-from item import Item
+# from item import Item
 from fighting_bully import FightingBully
-import pickle
 import interact_game
 import money
 import asyncio
@@ -15,9 +14,9 @@ from discord.ext.commands import Context, Bot
 from player_info import Player
 from typing import Optional, Dict
 from dataclasses import replace
+import color_str
 
-
-CHOICE_TIMEOUT = 20
+CHOICE_TIMEOUT = 30
 RECAP_MAX_EMOJI = 15
 FIGHT_MSG_TIME_UPDATE = 1
 
@@ -82,32 +81,33 @@ async def start_fight(ctx: Context, user_1: discord.abc.User, player_1: Player, 
         await ctx.send(f"{user_2.name} cancelled the fight")
         return
     
-    item_1, item_2 = await manager_equip_item(ctx, user_1, player_1, user_2, player_2, bot)
-    fighting_bully_1.equipped_item = item_1
-    fighting_bully_2.equipped_item = item_2
+    # item_1, item_2 = await manager_equip_item(ctx, user_1, player_1, user_2, player_2, bot)
+    # item_1, item_2 = None, None
+    # fighting_bully_1.equipped_item = item_1
+    # fighting_bully_2.equipped_item = item_2
 
     await fight(ctx, user_1, player_1, user_2, player_2, bot, fighting_bully_1, fighting_bully_2, for_fun)
     
     return
 
-async def manager_equip_item(ctx: Context, user_1: discord.abc.User, player_1: Player, user_2: discord.abc.User, player_2: Player, bot: Bot) -> tuple[Optional[Item], Optional[Item]]:
-    item_1:Optional[Item] = None
-    item_2:Optional[Item] = None
+# async def manager_equip_item(ctx: Context, user_1: discord.abc.User, player_1: Player, user_2: discord.abc.User, player_2: Player, bot: Bot) -> tuple[Optional[Item], Optional[Item]]:
+#     item_1:Optional[Item] = None
+#     item_2:Optional[Item] = None
 
-    item_1 = await interact_game.player_choose_item(ctx, user_1, player_1, bot, timeout=CHOICE_TIMEOUT)
-    item_2 = await interact_game.player_choose_item(ctx, user_2, player_2, bot, timeout=CHOICE_TIMEOUT)
-    return item_1, item_2
+#     item_1 = await interact_game.player_choose_item(ctx, user_1, player_1, bot, timeout=CHOICE_TIMEOUT)
+#     item_2 = await interact_game.player_choose_item(ctx, user_2, player_2, bot, timeout=CHOICE_TIMEOUT)
+#     return item_1, item_2
 
-def apply_effect_item_before_fight(fighter_self : FightingBully):
-    i = fighter_self.equipped_item
-    if(i != None and i.is_bfr_fight):
-        i.effect_before_fight(fighting_bully_self= fighter_self)
+# def apply_effect_item_before_fight(fighter_self : FightingBully):
+#     i = fighter_self.equipped_item
+#     if(i != None and i.is_bfr_fight):
+#         i.effect_before_fight(fighting_bully_self= fighter_self)
 
 async def fight(ctx: Context, user_1: discord.abc.User, player_1: Player, user_2: discord.abc.User, player_2: Player, bot: Bot, fighting_bully_1:FightingBully, fighting_bully_2:FightingBully, 
                 for_fun = False) -> None:
     
-    apply_effect_item_before_fight(fighter_self=fighting_bully_1)
-    apply_effect_item_before_fight(fighter_self=fighting_bully_2)
+    # apply_effect_item_before_fight(fighter_self=fighting_bully_1)
+    # apply_effect_item_before_fight(fighter_self=fighting_bully_2)
 
     await fight_simulation(ctx=ctx, user_1=user_1, user_2=user_2, bot=bot, 
                                         fighting_bully_1=fighting_bully_1, fighting_bully_2=fighting_bully_2)
@@ -156,6 +156,77 @@ def value_to_bar_str(v:int, max_value=10) -> str:
     
     return t
 
+async def manager_start_team_fight(ctx: Context, user_1: discord.abc.User, player_1: Player, user_2: discord.abc.User, player_2: Player, bot: Bot) -> None:
+    text_challenge = f"{user_1.mention} challenges {user_2.mention} to a fun team fight (no death, team vs team)!"
+
+    #On créer l'event qui sera set quand le bouton sera cliqué par user_2. La valeur du bouton (de la réponse) sera stocké dans var
+    event = asyncio.Event()
+    var:Dict[str, bool] = {"choix" : False}
+
+    if(user_1 != user_2):
+        #On affiche le message
+        message = await ctx.channel.send(content=text_challenge, view=interact_game.ViewYesNo(user=user_2, event=event, variable_pointer = var))
+
+        #On attend que le joueur clique sur un bouton
+        try:
+            await asyncio.wait_for(event.wait(), timeout=CHOICE_TIMEOUT)
+        except asyncio.exceptions.TimeoutError as e:
+            await message.reply(f"Too late! No fight between {user_1} and {user_2}")
+            return
+        #On récup le choix
+        challenge_accepte:bool = var["choix"]
+    else : 
+        message = await ctx.channel.send(content=text_challenge)
+        challenge_accepte = True
+
+    #On affiche le choix de user_2
+    if(challenge_accepte) : 
+        await message.reply("Challenge accepted!")
+    else : 
+        await message.reply("Challenge declined")
+        return
+    
+    #On commence le combat
+    await team_fight(ctx, user_1, player_1, user_2, player_2, bot)
+    return
+
+async def team_fight(ctx: Context, user_1: discord.abc.User, player_1: Player, user_2: discord.abc.User, player_2: Player, bot: Bot) -> None:
+    #On initialise fighters_bully des joueurs
+    fighters_joueur_1: list[FightingBully] = [FightingBully.create_fighting_bully(b) for b in player_1.get_equipe()]
+    fighters_joueur_2: list[FightingBully] = [FightingBully.create_fighting_bully(b) for b in player_2.get_equipe()]
+    f_bully_1 = None
+    f_bully_2 = None
+
+    while len(fighters_joueur_1) > 0 and len(fighters_joueur_2) > 0:
+        if f_bully_1 == None:
+            try:
+                f_bully_1, _ = await interact_game.player_choose_fighting_bully(ctx=ctx, fighting_bullies=fighters_joueur_1, user=user_1, player=player_1, bot=bot, timeout=CHOICE_TIMEOUT)
+            except Exception as e:
+                await ctx.send(f"{user_1.name} give up the fight")
+                return
+        if f_bully_2 == None:
+            try:
+                f_bully_2, _ = await interact_game.player_choose_fighting_bully(ctx=ctx, fighting_bullies=fighters_joueur_2, user=user_2, player=player_2, bot=bot, timeout=CHOICE_TIMEOUT)
+            except Exception as e:
+                await ctx.send(f"{user_1.name} give up the fight")
+                return
+        
+        await fight_simulation(ctx, bot=bot, fighting_bully_1=f_bully_1, fighting_bully_2=f_bully_2, user_1=user_1, user_2=user_2)
+        if f_bully_1.pv <= 0:
+            fighters_joueur_1.remove(f_bully_1)
+            await ctx.send(f"{f_bully_1.combattant.name} is defeated.")
+            f_bully_1 = None
+            
+        if f_bully_2.pv <= 0:
+            fighters_joueur_2.remove(f_bully_2)
+            await ctx.send(f"{f_bully_2.combattant.name} is defeated.")
+            f_bully_2 = None
+        
+    if len(fighters_joueur_1) > 0 :
+        await ctx.send(f"{user_1.name} wins the teamfight!")
+    if len(fighters_joueur_2) > 0 :
+        await ctx.send(f"{user_2.name} wins the teamfight!")
+
 
 # ____________________________________________________
 async def fight_simulation(ctx:Context, bot: Bot, fighting_bully_1:FightingBully, fighting_bully_2:FightingBully,
@@ -174,11 +245,10 @@ async def fight_simulation(ctx:Context, bot: Bot, fighting_bully_1:FightingBully
     #On calcul le texte
     barre_pv_joueur = value_to_bar_str(fighting_bully_1.pv, max_value= max_pv_1)
     barre_pv_enemy = value_to_bar_str(fighting_bully_2.pv, max_value= max_pv_2)
-
-    text_pv_combat = "\t\tBully 1 : " + fighting_bully_1.combattant.name + "\nHP : " + barre_pv_joueur + "\n\n\t\t\t\tVS\n\n\t\tBully 2 : " + fighting_bully_2.combattant.name + "\nHP : " + barre_pv_enemy
-    
+    # text_pv_combat = "\t\tBully 1 : " + fighting_bully_1.combattant.name + "\nHP : " + barre_pv_joueur + "\n\n\t\t\t\tVS\n\n\t\tBully 2 : " + fighting_bully_2.combattant.name + "\nHP : " + barre_pv_enemy
+    text_base_combat = f_text_base_combat(fighting_bully_1, fighting_bully_2, max_pv_1, max_pv_2, "", "")
     action_combat = "Let's get ready to rumble!"
-    text_combat = "```" + text_pv_combat + "\n\n" + action_combat + "```"
+    text_combat = "```ansi\n" + text_base_combat + "\n\n" + action_combat + "```"
 
     emoji_recap_j1: list[str] = []
     emoji_recap_j2: list[str] = []
@@ -205,18 +275,11 @@ async def fight_simulation(ctx:Context, bot: Bot, fighting_bully_1:FightingBully
         barre_pv_enemy = value_to_bar_str(fighting_bully_2.pv, max_value= max_pv_2)
         barre_max_length = max(max_pv_1, max_pv_2)
 
-        #On fait visuellement la modif de pv : 
-        text_pv_combat = (
-            f"\t\tBully 1 : {fighting_bully_1.combattant.name}\n"
-            f"HP : {barre_pv_joueur:{barre_max_length}} ({fighting_bully_1.pv:02}/{max_pv_1:02})\n"
-            f"{''.join(emoji_recap_j1[-RECAP_MAX_EMOJI:])}\n"
-             "\t\t\t\tVS\n"
-            f"{''.join(emoji_recap_j2[-RECAP_MAX_EMOJI:])}\n"
-            f"\t\tBully 2 : {fighting_bully_2.combattant.name}\n"
-            f"HP : {barre_pv_enemy:{barre_max_length}} ({fighting_bully_2.pv:02}/{max_pv_2:02})"
-        )
+        #On fait visuellement la modif du texte de combat : 
+        text_base_combat = f_text_base_combat(fighting_bully_1, fighting_bully_2, max_pv_1, max_pv_2, emoji_recap_j1, emoji_recap_j2)
+
         action_combat = text_action
-        text_combat = "```" + text_pv_combat + "\n\n" + action_combat + "```"
+        text_combat = "```ansi\n" + text_base_combat + "\n\n" + action_combat + "```"
         await message.edit(content = text_combat)
         await asyncio.sleep(FIGHT_MSG_TIME_UPDATE)
 
@@ -226,6 +289,20 @@ async def fight_simulation(ctx:Context, bot: Bot, fighting_bully_1:FightingBully
                 raise InterruptionCombat(fighting_bully_1.pv, fighting_bully_2.pv)
     return 
 
+def f_text_base_combat(fighting_bully_1:FightingBully, fighting_bully_2:FightingBully, max_pv_1:int, max_pv_2:int, emoji_recap_j1, emoji_recap_j2):
+    barre_pv_joueur = value_to_bar_str(fighting_bully_1.pv, max_value= max_pv_1)
+    barre_pv_enemy = value_to_bar_str(fighting_bully_2.pv, max_value= max_pv_2)
+    barre_max_length = max(max_pv_1, max_pv_2)
+    text_combat = (
+            f"\t\tBully 1 : {fighting_bully_1.combattant.name}\n"
+            f"HP : {barre_pv_joueur:{barre_max_length}} ({fighting_bully_1.pv:02}/{max_pv_1:02}) \t{fighting_bully_1.stats.to_str_color()}\n"
+            f"{''.join(emoji_recap_j1[-RECAP_MAX_EMOJI:])}\n"
+             "\t\t\t\tVS\n"
+            f"{''.join(emoji_recap_j2[-RECAP_MAX_EMOJI:])}\n"
+            f"\t\tBully 2 : {fighting_bully_2.combattant.name}\n"
+            f"HP : {barre_pv_enemy:{barre_max_length}} ({fighting_bully_2.pv:02}/{max_pv_2:02}) \t{fighting_bully_2.stats.to_str_color()}"
+        )
+    return text_combat
 
 def nouvelle_action_stat(fighting_bully_1:FightingBully, fighting_bully_2:FightingBully, tour) ->tuple[str, str, str, int]:
     """

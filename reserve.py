@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 import asyncio
 import utils
 
-MAX_BULLY_RESERVE = 3
+MAX_BULLY_RESERVE = 10
 TIMEOUT_RESERVE_MODIF = 60
 
 
@@ -23,8 +23,8 @@ async def add_bully_reserve(ctx: Context, player: Player, b: Bully, channel_cibl
     if(channel_cible==None):
         channel_cible = ctx.channel
         
-    if len(player.get_reserve()) >= 3:
-        await channel_cible.send(f"You cannot have more than {3} bullies!")
+    if len(player.get_reserve()) >= MAX_BULLY_RESERVE:
+        await channel_cible.send(f"You cannot have more than {MAX_BULLY_RESERVE} bullies!")
         return
     b.in_reserve = True
     player.bullies.append(b)
@@ -106,6 +106,8 @@ async def print_reserve(ctx: Context, user: discord.abc.User, player: Player, bo
                 bully_reserve.in_reserve = False
                 await channel_cible.send(f"{bully_team.name} and {bully_reserve.name} switched")  
             await session.commit()
+        except IndexError as e:
+            await channel_cible.send(f"Your team or reserve is empty")  
         except Exception as e:
             await message_reserve.edit(view=None)
         finally:

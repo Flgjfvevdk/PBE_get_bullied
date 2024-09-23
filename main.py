@@ -496,7 +496,7 @@ async def show_consommables(ctx: Context):
         if player is None:
             await ctx.reply(TEXT_JOIN_THE_GAME)
             return
-        await ctx.channel.send(consommable.str_consommables(player=player))
+        await ctx.channel.send(consommable.str_consommables(player=player).str())
         # await consommable.print_consommables(ctx, player)
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////

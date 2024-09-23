@@ -38,6 +38,13 @@ class Consommable(Base):
     name: Mapped[str] = mapped_column(String(50))
     type: Mapped[str] = mapped_column(init=False)
 
+    def apply(self, b:Bully):
+        raise Exception("Must be implemented")
+
+    def get_print(self) -> CText:
+        raise Exception("Must be implemented")
+
+
 @dataclass(eq=True, frozen=True)
 class AlimentType():
     stat_buff: str
@@ -87,13 +94,13 @@ class ConsommableAliment(Consommable):
             current_buff_value = getattr(b.stats, stat_buff)
             setattr(b.stats, stat_buff, current_buff_value + actual_buff)
             
-    def get_print(self) -> str:
+    def get_print(self) -> CText:
         return (
             CText("f{self.name} : on use, debuff ")
             .red(self.aliment.value.stat_nerf)
-            .txt(f"up to {self.value} (min 1) and buff ")
+            .txt(f" up to {self.value} (min 1) and buff ")
             .blue(self.aliment.value.stat_buff)
-            .txt("by the same amount.")
+            .txt(" by the same amount.")
         )
 
 #_______________________________________________________________________
@@ -163,7 +170,7 @@ async def select_consommable(ctx: Context, user: discord.abc.User, player: 'play
     list_choix_name:list[str] = [c.name for c in player.consommables]
 
     view = interact_game.ViewChoice(user=user, event=event, list_choix=player.consommables, list_choix_name=list_choix_name, variable_pointer=var)
-    message_consommable_choix = await channel_cible.send(content=text, view=view)
+    message_consommable_choix = await channel_cible.send(content=text.str(), view=view)
 
     #On attend une réponse (et on retourne une erreur si nécessaire avec le timeout)
     try:

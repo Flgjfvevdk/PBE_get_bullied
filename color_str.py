@@ -5,7 +5,7 @@ class CText:
 
     text = ""
 
-    def __init__(self, text: [str|None] = None):
+    def __init__(self, text: str|None = None):
         if text:
             self.text += text
 

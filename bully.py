@@ -1,6 +1,5 @@
 import os
 import random
-import numpy as np
 import shutil
 from typing import Any, List, Optional, Tuple
 from dataclasses import dataclass, replace, InitVar, KW_ONLY, fields
@@ -125,8 +124,8 @@ class Seed(MutableComposite):
         for _ in range(len(Seed.__dataclass_fields__)):
             r = random.random()
             seed.append(r)
-        seed = np.array(seed)
-        seed = seed / np.sum(seed)
+        total = sum(seed)
+        seed = [val/total for val in seed]
 
         return Seed(*seed)
     

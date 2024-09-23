@@ -3,22 +3,10 @@ from discord import User
 from functools import wraps
 from discord.ext import commands
 import json
+from dotenv import load_dotenv
+import os
 
-def get_player_path(user_id: int) -> Path:
-    path_player_data = Path("game_data/player_data")
-    user_player_path = path_player_data / str(user_id)
-    return user_player_path
-
-def _user_has_joined(user_id: int):
-    path = get_player_path(user_id)
-    return path.exists()
-
-def has_joined():
-    """ Command decorator to check if the message author has joined the game.
-    """
-    async def predicate(ctx: commands.Context):
-        return _user_has_joined(ctx.author.id)
-    return commands.check(predicate)
+load_dotenv()
 
 try:
     with Path("config/admins.txt").open("r") as f:
@@ -35,10 +23,6 @@ def is_admin():
     async def predicate(ctx: commands.Context):
         return ctx.author.id in ADMIN_LIST
     return commands.check(predicate)
-
-from dotenv import load_dotenv
-load_dotenv()
-import os
 
 
 def getenv(name:str) -> str:

@@ -1,7 +1,6 @@
 
 import os
 from datetime import datetime, timezone, timedelta
-from utils import get_player_path
 from player_info import Player
 
 # Var payday

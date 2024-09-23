@@ -3,9 +3,9 @@ class CText:
     Class used to create colorized text
     '''
 
-    text = "```ansi\n"
+    text = ""
 
-    def __init__(self, text: [str|None]):
+    def __init__(self, text: [str|None] = None):
         if text:
             self.text += text
 
@@ -32,7 +32,7 @@ class CText:
         return str(self)
 
     def __str__(self):
-        return "```ansi\n" + self.text
+        return "```ansi\n" + self.text+"\n```"
     def __add__(self, other):
         return CText(self.text + other.text)
     def __iadd__(self, other):

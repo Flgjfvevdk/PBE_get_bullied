@@ -19,7 +19,7 @@ class Player(Base):
     last_payday: Mapped[datetime] = mapped_column(default=datetime.utcfromtimestamp(0.0))
 
     bullies: Mapped[List[bully.Bully]] = relationship(back_populates="player", cascade="all, delete-orphan", default_factory=list, lazy="selectin")
-    consommables: Mapped[List[consommable.Consommable]] = relationship(back_populates="player", cascade="all, delete-orphan", default_factory=list, lazy="joined")
+    consommables: Mapped[List[consommable.Consommable]] = relationship(back_populates="player", cascade="all, delete-orphan", default_factory=list, lazy="selectin")
     # items: Mapped[List[item.Item]] = relationship(back_populates="player", cascade="all, delete-orphan", default_factory=list, lazy="selectin")
     
     def get_equipe(self) -> List[bully.Bully]:

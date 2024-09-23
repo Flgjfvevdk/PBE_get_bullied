@@ -23,6 +23,7 @@ import consommable
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.orm import configure_mappers
 
 import asyncio
 
@@ -653,12 +654,9 @@ async def add_c(ctx: Context):
             return
         c = consommable.AlimentEnum.Gigot.new_conso(2)
         print(c.get_print())
-        # player.consommables.append(consommable.Gigot(2).construct())
         player.consommables.append(c)
         print("player.consommables : ", player.consommables[0].get_print())
         await session.commit()
-
-        print("player.consommables : ", player.consommables[0].get_print())
 
 @bot.command()
 @utils.is_admin()
@@ -690,9 +688,8 @@ async def bully_maj(ctx:Context):
             b.increase_stat_with_seed(nb_points=nb_points, valeur=val, talkative = False)
         await session.commit() 
     
-
-
+configure_mappers()
+asyncio.run(database.init_models())
 bot.run(TOKEN)
-# asyncio.run(database.init_models())
 
 

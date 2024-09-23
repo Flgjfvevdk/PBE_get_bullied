@@ -1,5 +1,6 @@
 import utils
 from sqlalchemy.orm import DeclarativeBase, MappedAsDataclass
+from sqlalchemy.ext.declarative import AbstractConcreteBase
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession, async_scoped_session
 import sqlalchemy.types as types
 from pathlib import Path
@@ -8,11 +9,14 @@ ENGINE = create_async_engine(utils.getenv("DB_URL"))
 
 new_session = async_sessionmaker(bind=ENGINE, class_=AsyncSession)
 
-
-class Base(DeclarativeBase, MappedAsDataclass):
+class Base(MappedAsDataclass, DeclarativeBase):
     pass
 
+
 class DBPath(types.TypeDecorator):
+    """
+    Implementation of a representation of Path objects in the DB
+    """
     impl = types.String
 
     cache_ok = True

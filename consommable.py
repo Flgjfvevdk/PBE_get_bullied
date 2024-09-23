@@ -12,7 +12,8 @@ from dataclasses import KW_ONLY, replace, dataclass
 import abc
 from color_str import CText
 from sqlalchemy import ForeignKey, Column, Integer, String, Float
-from sqlalchemy.orm import Mapped, mapped_column, relationship, composite, declarative_base
+from sqlalchemy.orm import Mapped, mapped_column, relationship, composite, declarative_base, configure_mappers, DeclarativeBase, MappedAsDataclass
+from sqlalchemy.ext.declarative import AbstractConcreteBase
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.ext.asyncio.session import async_object_session
 import enum
@@ -22,17 +23,20 @@ CONSO_NUMBER_MAX = 10
     
 
 class Consommable(Base):
+    strict_attrs = True
     __mapper_args__ = {
-        "polymorphic_abstract": True, # Il n'y a pas de table associée, c'est juste une type de base je pense
-        "polymorphic_on": "type"
+        "polymorphic_on": "type",
+        "polymorphic_identity": "consommable"
     }
-    #__tablename__ = "consommable"
+    __tablename__ = "consommable"
 
     id: Mapped[int] = mapped_column(primary_key=True, init=False)
+
+    player_id: Mapped[int] = mapped_column(ForeignKey("player.id"), init=False)
     player: Mapped["player_info.Player"] = relationship(back_populates="consommables", init=False, lazy="selectin")
 
     name: Mapped[str] = mapped_column(String(50))
-    type: Mapped[str]
+    type: Mapped[str] = mapped_column(init=False)
 
 @dataclass(eq=True, frozen=True)
 class AlimentType():
@@ -59,9 +63,12 @@ class AlimentEnum(enum.Enum):
 
 class ConsommableAliment(Consommable):
     __mapper_args__ = {
-        "polymorphic_identity": "aliment"
+        "polymorphic_identity": "aliment",
+        "polymorphic_load": "selectin"
     }
+    __tablename__ = "aliment"
 
+    id: Mapped[int] = mapped_column(ForeignKey("consommable.id"), init=False, primary_key=True)
     aliment: Mapped[AlimentEnum]
     value: Mapped[float]
 
@@ -83,9 +90,9 @@ class ConsommableAliment(Consommable):
     def get_print(self) -> str:
         return (
             CText("f{self.name} : on use, debuff ")
-            .red(self.aliment.stat_nerf)
+            .red(self.aliment.value.stat_nerf)
             .txt(f"up to {self.value} (min 1) and buff ")
-            .blue(self.aliment.stat_buff)
+            .blue(self.aliment.value.stat_buff)
             .txt("by the same amount.")
         )
 
@@ -145,10 +152,10 @@ async def select_consommable(ctx: Context, user: discord.abc.User, player: 'play
 
     #On affiche les items accessibles
     # text = str_items(player, compact_print=True)
-    text = "```ansi\n Select a consommable to use " + (f"on {bully_selected.name}" if bully_selected is not None else "")
+    text = CText("Select a consommable to use " + (f"on {bully_selected.name}" if bully_selected is not None else ""))
     for c in player.consommables:
-        text+= "\n- " + c.get_print()
-    text+="```"
+        text.txt("\n  - ")
+        text += c.get_print()
         
     #On init les variables
     event = asyncio.Event()

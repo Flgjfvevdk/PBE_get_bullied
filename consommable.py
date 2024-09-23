@@ -36,24 +36,23 @@ class Consommable(Base):
 
 @dataclass(eq=True, frozen=True)
 class AlimentType():
-    name: str
     stat_buff: str
     stat_nerf: str
 
 
 class AlimentEnum(enum.Enum):  
-    Gigot = AlimentType("gigot", "strength", "agility")
-    Banane = AlimentType("banane", "strength", "lethality")
-    Creme = AlimentType("creme", "strength", "viciousness")
-    Piment = AlimentType("piment", "agility", "strength")
-    Chocolat = AlimentType("chocolat", "agility", "lethality")
-    Meringue = AlimentType("meringue", "agility", "viciousness")
-    Bonbon = AlimentType("bonbon", "lethality", "strength")
-    Merguez = AlimentType("merguez", "lethality", "agility")
-    Citron = AlimentType("citron", "lethality", "viciousness")
-    Bierre = AlimentType("bierre", "viciousness", "strength")
-    Beurre = AlimentType("beurre", "viciousness", "agility")
-    Yaourt = AlimentType("yaourt", "viciousness", "lethality")
+    Gigot = AlimentType("strength", "agility")
+    Banane = AlimentType("strength", "lethality")
+    Creme = AlimentType("strength", "viciousness")
+    Piment = AlimentType("agility", "strength")
+    Chocolat = AlimentType("agility", "lethality")
+    Meringue = AlimentType("agility", "viciousness")
+    Bonbon = AlimentType("lethality", "strength")
+    Merguez = AlimentType("lethality", "agility")
+    Citron = AlimentType("lethality", "viciousness")
+    Bierre = AlimentType("viciousness", "strength")
+    Beurre = AlimentType("viciousness", "agility")
+    Yaourt = AlimentType("viciousness", "lethality")
 
     def new_conso(self, value: int) -> "ConsommableAliment":
         return ConsommableAliment(self.name, self, value)
@@ -67,8 +66,8 @@ class ConsommableAliment(Consommable):
     value: Mapped[float]
 
     def apply(self, b:Bully):
-        stat_nerf = self.aliment.stat_nerf
-        stat_buff = self.aliment.stat_buff
+        stat_nerf = self.aliment.value.stat_nerf
+        stat_buff = self.aliment.value.stat_buff
         # Calculate actual debuff ensuring it doesn't drop below 1
         current_debuffed_stat = getattr(b.stats, stat_nerf)
         actual_buff = min(self.value, current_debuffed_stat - 1)

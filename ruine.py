@@ -240,10 +240,8 @@ class ConsoRoom():
     @staticmethod
     def generate(level: int, rarity: Rarity) -> "ConsoRoom":
         valeur = level * rarity.coef_level_points 
-        # conso = random.choice(consommable.aliments)(value=valeur).construct()
-        aliment = random.choice(consommable.aliments)
-        # if isinstance(aliment,Type(consommable.Gigot)|Type(consommable.Banane)|Type(consommable.Creme)|Type(consommable.Piment)|Type(consommable.Chocolat)|Type(consommable.Meringue)|Type(consommable.Bonbon)|Type(consommable.Merguez)|Type(consommable.Citron)|Type(consommable.Bierre)|Type(consommable.Beurre)|Type(consommable.Yaourt)):
-        conso = aliment(value=valeur)
+        aliment = random.choice(list(consommable.AlimentEnum))
+        conso = aliment.new_conso(value=valeur)
         return ConsoRoom(conso)
     
     async def interact(self, ruin: "Ruin"):

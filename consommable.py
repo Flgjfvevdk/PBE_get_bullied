@@ -40,8 +40,6 @@ class AlimentType():
     stat_buff: str
     stat_nerf: str
 
-    def new(self, value: int) -> "ConsommableAliment":
-        return ConsommableAliment(self.name, self, value)
 
 class AlimentEnum(enum.Enum):  
     Gigot = AlimentType("gigot", "strength", "agility")
@@ -57,6 +55,8 @@ class AlimentEnum(enum.Enum):
     Beurre = AlimentType("beurre", "viciousness", "agility")
     Yaourt = AlimentType("yaourt", "viciousness", "lethality")
 
+    def new_conso(self, value: int) -> "ConsommableAliment":
+        return ConsommableAliment(self.name, self, value)
 
 class ConsommableAliment(Consommable):
     __mapper_args__ = {
@@ -196,11 +196,13 @@ async def remove_consommable(ctx: Context, user: discord.abc.User, player: 'play
 #     await channel_cible.send(text)
 
 
-def str_consommables(player:'player_info.Player'):
+def str_consommables(player:'player_info.Player') -> CText:
     if len(player.consommables) <= 0:
-        text = CText("```You don't have any consommables. Do ruin to have one```")
-        return text.str()
-    text = CText("Your consommables :\n")
-    text += "\n".join(c.get_print() for c in player.consommables)
-    text+="\n\n(Use !!use_consommable to use one)```"
-    return text.str()
+        text = CText("You don't have any consommables. Do ruin to have one")
+        return text
+    text = CText("Your consommables :")
+    for c in player.consommables:
+        text.txt("\n")
+        text += c.get_print()
+    text.txt("\n\n(Use !!use_consommable to use one)")
+    return text

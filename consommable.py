@@ -10,174 +10,85 @@ import asyncio
 import player_info
 from dataclasses import KW_ONLY, replace, dataclass
 import abc
-import color_str
+from color_str import CText
 from sqlalchemy import ForeignKey, Column, Integer, String, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship, composite, declarative_base
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.ext.asyncio.session import async_object_session
+import enum
 
 CHOICE_TIMEOUT = 60
 CONSO_NUMBER_MAX = 10
-
+    
 
 class Consommable(Base):
-    __tablename__ = 'consommable'
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    __mapper_args__ = {
+        "polymorphic_abstract": True, # Il n'y a pas de table associée, c'est juste une type de base je pense
+        "polymorphic_on": "type"
+    }
+    #__tablename__ = "consommable"
+
+    id: Mapped[int] = mapped_column(primary_key=True, init=False)
+    player: Mapped["player_info.Player"] = relationship(back_populates="consommables", init=False, lazy="selectin")
 
     name: Mapped[str] = mapped_column(String(50))
-    type: Mapped[str] = mapped_column(String)
+    type: Mapped[str]
 
-    player_id: Mapped[int] = mapped_column(ForeignKey("player.id"),init=False) 
-    player: Mapped["player_info.Player"] = relationship(back_populates="consommables", init=False, lazy="selectin")
-    
+@dataclass(eq=True, frozen=True)
+class AlimentType():
+    name: str
+    stat_buff: str
+    stat_nerf: str
+
+    def new(self, value: int) -> "ConsommableAliment":
+        return ConsommableAliment(self.name, self, value)
+
+class AlimentEnum(enum.Enum):  
+    Gigot = AlimentType("gigot", "strength", "agility")
+    Banane = AlimentType("banane", "strength", "lethality")
+    Creme = AlimentType("creme", "strength", "viciousness")
+    Piment = AlimentType("piment", "agility", "strength")
+    Chocolat = AlimentType("chocolat", "agility", "lethality")
+    Meringue = AlimentType("meringue", "agility", "viciousness")
+    Bonbon = AlimentType("bonbon", "lethality", "strength")
+    Merguez = AlimentType("merguez", "lethality", "agility")
+    Citron = AlimentType("citron", "lethality", "viciousness")
+    Bierre = AlimentType("bierre", "viciousness", "strength")
+    Beurre = AlimentType("beurre", "viciousness", "agility")
+    Yaourt = AlimentType("yaourt", "viciousness", "lethality")
+
+
+class ConsommableAliment(Consommable):
     __mapper_args__ = {
-        'polymorphic_identity': 'consommable',
-        'polymorphic_on': type
+        "polymorphic_identity": "aliment"
     }
 
-    def apply(self, b: Bully):
-        raise NotImplementedError("Subclasses should implement this!")
-    
-    def get_print(self) -> str:
-        raise NotImplementedError("Subclasses should implement get_print!")
-    
+    aliment: Mapped[AlimentEnum]
+    value: Mapped[float]
 
-class Aliment(Consommable):
-    __tablename__ = 'aliment'
-    id: Mapped[int] = mapped_column(ForeignKey('consommable.id'), init=False, primary_key=True)
-    stat_buff: Mapped[str] = mapped_column(String(50))
-    stat_debuff: Mapped[str] = mapped_column(String(50))
-    value: Mapped[float] = mapped_column(Float)
-
-    __mapper_args__ = {
-        'polymorphic_identity': 'aliment',
-        'inherit_condition': id == Consommable.id,
-    }
-
-    def apply(self, b: Bully):
-        current_debuffed_stat = getattr(b.stats, self.stat_debuff)
+    def apply(self, b:Bully):
+        stat_nerf = self.aliment.stat_nerf
+        stat_buff = self.aliment.stat_buff
+        # Calculate actual debuff ensuring it doesn't drop below 1
+        current_debuffed_stat = getattr(b.stats, stat_nerf)
         actual_buff = min(self.value, current_debuffed_stat - 1)
+
         if actual_buff > 0:
-            setattr(b.stats, self.stat_debuff, current_debuffed_stat - actual_buff)
-            current_buff_value = getattr(b.stats, self.stat_buff)
-            setattr(b.stats, self.stat_buff, current_buff_value + actual_buff)
-
+            # Apply the debuff
+            setattr(b.stats, stat_nerf, current_debuffed_stat - actual_buff)
+            
+            # Apply the buff with the actual debuff value as its maximum
+            current_buff_value = getattr(b.stats, stat_buff)
+            setattr(b.stats, stat_buff, current_buff_value + actual_buff)
+            
     def get_print(self) -> str:
-        return f"{self.name} : on use, debuff {color_str.red(self.stat_debuff)} up to {self.value} (min 1) and buff {color_str.blue(self.stat_buff)} by the same amount."
-
-class Gigot(Aliment):
-    __mapper_args__ = {
-        'polymorphic_identity': 'gigot'
-    }
-    def __init__(self, value: float):
-        super().__init__(name=f'Gigot[{value}]', stat_buff='strength', stat_debuff='agility', value=value, type='gigot') 
-
-class Banane(Aliment):
-    __mapper_args__ = {
-        'polymorphic_identity': 'banane'
-    }
-
-    def __init__(self, value: float):
-        # super().__init__(name=f'Banane[{value}]', stat_buff='strength', stat_debuff='lethality', value=value)
-        super().__init__(name=f'Banane[{value}]', stat_buff='strength', stat_debuff='lethality', value=value, type='banane')
-
-class Creme(Aliment):
-    __mapper_args__ = {
-        'polymorphic_identity': 'creme'
-    }
-
-    def __init__(self, value: float):
-        super().__init__(name=f'Creme[{value}]', stat_buff='strength', stat_debuff='viciousness', value=value, type='creme')
-
-class Piment(Aliment):
-    __mapper_args__ = {
-        'polymorphic_identity': 'piment'
-    }
-
-    def __init__(self, value: float):
-        super().__init__(name=f'Piment[{value}]', stat_buff='agility', stat_debuff='strength', value=value, type='piment')
-
-class Chocolat(Aliment):
-    __mapper_args__ = {
-        'polymorphic_identity': 'chocolat'
-    }
-
-    def __init__(self, value: float):
-        super().__init__(name=f'Chocolat[{value}]', stat_buff='agility', stat_debuff='lethality', value=value, type='chocolat')
-
-class Meringue(Aliment):
-    __mapper_args__ = {
-        'polymorphic_identity': 'meringue'
-    }
-
-    def __init__(self, value: float):
-        super().__init__(name=f'Meringue[{value}]', stat_buff='agility', stat_debuff='viciousness', value=value, type='meringue')
-
-class Bonbon(Aliment):
-    __mapper_args__ = {
-        'polymorphic_identity': 'bonbon'
-    }
-
-    def __init__(self, value: float):
-        super().__init__(name=f'Bonbon[{value}]', stat_buff='lethality', stat_debuff='strength', value=value, type='bonbon')
-
-class Merguez(Aliment):
-    __mapper_args__ = {
-        'polymorphic_identity': 'merguez'
-    }
-
-    def __init__(self, value: float):
-        super().__init__(name=f'Merguez[{value}]', stat_buff='lethality', stat_debuff='agility', value=value, type='merguez')
-
-class Citron(Aliment):
-    __mapper_args__ = {
-        'polymorphic_identity': 'citron'
-    }
-
-    def __init__(self, value: float):
-        super().__init__(name=f'Citron[{value}]', stat_buff='lethality', stat_debuff='viciousness', value=value, type='citron')
-
-class Bierre(Aliment):
-    __mapper_args__ = {
-        'polymorphic_identity': 'bierre'
-    }
-
-    def __init__(self, value: float):
-        super().__init__(name=f'Bierre[{value}]', stat_buff='viciousness', stat_debuff='strength', value=value, type='bierre')
-
-class Beurre(Aliment):
-    __mapper_args__ = {
-        'polymorphic_identity': 'beurre'
-    }
-
-    def __init__(self, value: float):
-        super().__init__(name=f'Beurre[{value}]', stat_buff='viciousness', stat_debuff='agility', value=value, type='beurre')
-
-class Yaourt(Aliment):
-    __mapper_args__ = {
-        'polymorphic_identity': 'yaourt'
-    }
-
-    def __init__(self, value: float):
-        super().__init__(name=f'Yaourt[{value}]', stat_buff='viciousness', stat_debuff='lethality', value=value, type='yaourt')
-
-
-
-# class OtherConso(Consommable):
-#     __tablename__ = 'other_conso'
-#     id = Column(Integer, ForeignKey('consommables.id'), primary_key=True)
-
-#     __mapper_args__ = {
-#         'polymorphic_identity': 'other_conso',
-#         'inherit_condition': id == Consommable.id,
-#     }
-
-#     def apply(self, b: Bully):
-#         print(f"{self.name} has a unique effect on {b.name}")
-
-aliments: list[Type[Aliment]] = [
-    Gigot, Banane, Creme, Piment, Chocolat, Meringue, Bonbon, Merguez, Citron, Bierre, Beurre, Yaourt
-]
+        return (
+            CText("f{self.name} : on use, debuff ")
+            .red(self.aliment.stat_nerf)
+            .txt(f"up to {self.value} (min 1) and buff ")
+            .blue(self.aliment.stat_buff)
+            .txt("by the same amount.")
+        )
 
 #_______________________________________________________________________
 #_______________________________________________________________________
@@ -287,12 +198,9 @@ async def remove_consommable(ctx: Context, user: discord.abc.User, player: 'play
 
 def str_consommables(player:'player_info.Player'):
     if len(player.consommables) <= 0:
-        text = "```You don't have any consommables. Do ruin to have one```"
-        return text
-    text="```ansi\n Your consommables :"
-    for c in player.consommables:
-        print(c.get_print())
-        print(f"on a {c}")
-        text+= "\n- " + c.get_print()
-    text+="\n\n(!!use_consommable to use one)```"
-    return text
+        text = CText("```You don't have any consommables. Do ruin to have one```")
+        return text.str()
+    text = CText("Your consommables :\n")
+    text += "\n".join(c.get_print() for c in player.consommables)
+    text+="\n\n(Use !!use_consommable to use one)```"
+    return text.str()

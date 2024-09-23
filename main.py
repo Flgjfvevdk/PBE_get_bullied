@@ -651,10 +651,10 @@ async def add_c(ctx: Context):
         if player is None:
             await ctx.reply(TEXT_JOIN_THE_GAME)
             return
-        c = consommable.Gigot(2)
+        c = consommable.AlimentEnum.Gigot.new(2)
         print(c.get_print())
         # player.consommables.append(consommable.Gigot(2).construct())
-        player.consommables.append(consommable.Gigot(2))
+        player.consommables.append(c)
         print("player.consommables : ", player.consommables[0].get_print())
         await session.commit()
 

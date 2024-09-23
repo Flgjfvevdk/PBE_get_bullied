@@ -1,3 +1,44 @@
+class CText:
+    '''
+    Class used to create colorized text
+    '''
+
+    text = "```ansi\n"
+
+    def __init__(self, text: [str|None]):
+        if text:
+            self.text += text
+
+    def txt(self, text):
+        self.text += text
+        return self
+    def red(self, text):
+        self.text += red(text)
+        return self
+    def pink(self, text):
+        self.text += pink(text)
+        return self
+    def blue(self, text):
+        self.text += blue(text)
+        return self
+    def green(self, text):
+        self.text += green(text)
+        return self
+    def yellow(self, text):
+        self.text += yellow(text)
+        return self
+
+    def str(self):
+        return str(self)
+
+    def __str__(self):
+        return "```ansi\n" + self.text
+    def __add__(self, other):
+        return CText(self.text + other.text)
+    def __iadd__(self, other):
+        self.text += other.text
+        return self
+
 #pour coloriser il faut mettre ```ansi\n
 
 def red(text:str):

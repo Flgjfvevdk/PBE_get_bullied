@@ -29,107 +29,114 @@ class CancelChoiceException(Exception):
     def __init__(self, text = "Choice canceled"):
         super().__init__(text)
 
-class ButtonChoice(discord.ui.Button):
-    def __init__(self, user:discord.abc.User, event:asyncio.Event, variable_pointer:Dict, valeur_assigne, *args, **kwargs):
+class ButtonChoice[T](discord.ui.Button):
+    self.user: discord.abc.User
+    self.choice_value: T
+
+    def __init__(self, user:discord.abc.User, choice_value: T, callback, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.user:discord.abc.User = user
-        self.event:asyncio.Event = event
-        self.variable_pointer:Dict = variable_pointer
-        self.valeur_assigne = valeur_assigne
+        self.user = user
+        self.choice_value = choice_value
+        self.callback = callback
 
-    async def callback(self, interaction):
-        if(interaction.user == self.user):
-            self.variable_pointer["choix"] = self.valeur_assigne
-            self.event.set()
-            await interaction.response.defer() #Le bot ne renvoie pas de réponse automatique, mais pour faire comprendre à discord que l'interaction n'a pas fail, on fait ça
+    async def interaction_check(self, interaction: discord.Interaction):
+        return interaction.user == self.user
 
-class ButtonShopChoice(discord.ui.Button):
-    def __init__(self, event:asyncio.Event, variable_pointer:Dict[str, Bully | discord.abc.User | None ], valeur_assigne:Bully, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.event:asyncio.Event = event
-        self.variable_pointer:Dict[str, Bully | discord.abc.User| None ] = variable_pointer
-        self.valeur_assigne:Bully = valeur_assigne
-
-    async def callback(self, interaction):
-        self.variable_pointer["choix"] = self.valeur_assigne
-        self.variable_pointer["user"] = interaction.user
-        self.event.set()
+    async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer() #Le bot ne renvoie pas de réponse automatique, mais pour faire comprendre à discord que l'interaction n'a pas fail, on fait ça
+        self.callback(self.choice_value)
+        self.view.stop()
+
+class ButtonChoiceUser[T](discord.ui.Button):
+    self.choice_value: T
+
+    def __init__(self, choice_value: T, callback, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.choice_value = choice_value
+        self.callback = callback
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer() #Le bot ne renvoie pas de réponse automatique, mais pour faire comprendre à discord que l'interaction n'a pas fail, on fait ça
+        self.callback(self.choice_value, interaction.user)
+        self.view.stop()
 
 class ButtonClickBool(discord.ui.Button):
-    def __init__(self, user:discord.abc.User, event:asyncio.Event, *args, **kwargs):
+    def __init__(self, user:discord.abc.User, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.user:discord.abc.User = user
-        self.event:asyncio.Event = event
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return interaction.user == self.user
 
     async def callback(self, interaction):
-        if(interaction.user == self.user):
-            self.event.set()
-            await interaction.response.defer() #Le bot ne renvoie pas de réponse automatique, mais pour faire comprendre à discord que l'interaction n'a pas fail, on fait ça
+        await interaction.response.defer() #Le bot ne renvoie pas de réponse automatique, mais pour faire comprendre à discord que l'interaction n'a pas fail, on fait ça
+        self.view.stop()
 
-class ViewBullyShop(discord.ui.View):
-    def __init__(self, event:asyncio.Event, list_choix:List[Bully], variable_pointer:Dict[str, Bully | discord.abc.User| None]):
+class ViewBullyShop[T](discord.ui.View):
+    choice: T|None = None
+    user: discord.abc.User|None = None
+
+    def __init__(self, list_choix:List[Bully]):
         super().__init__()
         self.list_choix:List[Bully] = list_choix
         for index, choix in enumerate(list_choix):
             label = choix.name
-            self.add_item(ButtonShopChoice(style=discord.ButtonStyle.secondary, label=label, custom_id=f"button_{index}", 
-                                   event=event, variable_pointer= variable_pointer, valeur_assigne=choix))
+            self.add_item(ButtonChoiceUser(style=discord.ButtonStyle.secondary, label=label, custom_id=f"button_{index}", 
+                                   valeur_assigne=choix, callaback = self.callback))
+
+    def callback(self, choice: T, user: discord.abc.User):
+        self.choice = choice
+        self.user = user
 
 class ViewBullyChoice(discord.ui.View):
-    def __init__(self, user:discord.abc.User, event:asyncio.Event, list_choix:List[Bully], variable_pointer:Dict[str, Bully | None]):
+    def __init__(self, user:discord.abc.User, list_choix:List[Bully]):
         super().__init__()
         self.list_choix:List[Bully] = list_choix
 
         for index, choix in enumerate(list_choix):
             label = choix.name
             self.add_item(ButtonChoice(style=discord.ButtonStyle.secondary, label=label, custom_id=f"button_{index}", 
-                                   user = user, event=event, variable_pointer= variable_pointer, valeur_assigne=choix))
+                                   user = user, valeur_assigne=choix))
         
-        self.add_item(ButtonClickBool(style=discord.ButtonStyle.secondary,  label = "Cancel", user = user, event=event, emoji = "❌"))
+        self.add_item(ButtonClickBool(style=discord.ButtonStyle.secondary,  label = "Cancel", user = user, emoji = "❌"))
             
-# class ViewItemChoice(discord.ui.View): 
-#     def __init__(self, user:discord.abc.User, event:asyncio.Event, list_choix:List[Item], variable_pointer:Dict[str, Item | None]):
-#         super().__init__()
-#         self.list_choix:List[Item] = list_choix
-
-#         for index, choix in enumerate(list_choix):
-#             label = choix.name
-#             self.add_item(ButtonChoice(style=discord.ButtonStyle.secondary, label=label, custom_id=f"button_{index}", 
-#                                    user = user, event=event, variable_pointer= variable_pointer, valeur_assigne=choix))
-            
-#         self.add_item(ButtonClickBool(style=discord.ButtonStyle.secondary,  label = "Cancel", user = user, event=event, emoji = "❌"))
-
 T = TypeVar('T')
-class ViewChoice(discord.ui.View, Generic[T]): 
-    def __init__(self, user:discord.abc.User, event:asyncio.Event, list_choix:List[T], list_choix_name:List[str], variable_pointer:Dict[str, T | None]):
-        super().__init__()
-        self.list_choix:List[T] = list_choix
+class ViewChoice(discord.ui.View, Generic[T]):
+    choice: T|None = None
+
+    def __init__(self, user:discord.abc.User, list_choix:List[T], list_choix_name:List[str], timeout:float = float(CHOICE_TIMEOUT)):
+        super().__init__(timeout=timeout)
 
         for index, choix in enumerate(list_choix):
             label = list_choix_name[index]
             self.add_item(ButtonChoice(style=discord.ButtonStyle.secondary, label=label, custom_id=f"button_{index}", 
-                                   user = user, event=event, variable_pointer= variable_pointer, valeur_assigne=choix))
-            # self.add_item(ButtonShopChoice(style=discord.ButtonStyle.secondary, label=label, custom_id=f"button_{index}", 
-            #                        event=event, variable_pointer= variable_pointer, valeur_assigne=choix))
+                                   user = user, valeur_assigne=choix, callback = self.callback))
             
-        self.add_item(ButtonClickBool(style=discord.ButtonStyle.secondary,  label = "Cancel", user = user, event=event, emoji = "❌"))
+        self.add_item(ButtonClickBool(style=discord.ButtonStyle.secondary,  label = "Cancel", user = user, emoji = "❌"))
+
+    def callback(self, choice: T):
+        self.choice = choice
 
 class ViewYesNo(discord.ui.View):
-    def __init__(self, user:discord.abc.User, event:asyncio.Event, variable_pointer:Dict[str, bool]):
+    choice : bool|None = None
+
+    def __init__(self, user:discord.abc.User, timeout:float = float(CHOICE_TIMEOUT)):
         super().__init__()
 
         self.add_item(ButtonChoice(style=discord.ButtonStyle.secondary, label="Accept", emoji="✅",
-                                   user = user, event=event, variable_pointer= variable_pointer, valeur_assigne=True))
+                                   user = user, callback=self.callback, valeur_assigne=True))
         self.add_item(ButtonChoice(style=discord.ButtonStyle.secondary, label="Decline", emoji="❌",
-                                   user = user, event=event, variable_pointer= variable_pointer, valeur_assigne=False))
+                                   user = user, callback=self.callback, valeur_assigne=False))
+
+    def callback(self, choice: bool):
+        self.choice = choice
 
 class ViewClickBool(discord.ui.View):
-    def __init__(self, user:discord.abc.User, event:asyncio.Event, label:str, emoji:str|None = None):
+    def __init__(self, user:discord.abc.User, label:str, emoji:str|None = None):
         super().__init__()
         # emoji = "" if emoji is None else emoji
         self.add_item(ButtonClickBool(style=discord.ButtonStyle.secondary, label=label, emoji=emoji,
-                                   user = user, event=event))
+                                   user = user))
 
 ## _________________________________________________________________________
 

@@ -157,20 +157,14 @@ async def select_consumable(ctx: Context, user: discord.abc.User, player: 'playe
         return None
 
     #On init les variables
-    event = asyncio.Event()
-    var: dict[str, Consumable | None] = {"choix" : None}
     list_choix_name: list[str] = [f"{i+1}. {c.name}" for i,c in enumerate(player.consumables)]
-    view = interact_game.ViewChoice(user=user, event=event, list_choix=player.consumables, list_choix_name=list_choix_name, variable_pointer=var)
+    view = interact_game.ViewChoice(user=user, list_choix=player.consumables, list_choix_name=list_choix_name)
 
     message_consumable_choix = await channel_cible.send(embed=embed, view=view)
 
-    #On attend une réponse (et on retourne une erreur si nécessaire avec le timeout)
-    try:
-        await asyncio.wait_for(event.wait(), timeout=CHOICE_TIMEOUT)
-        selected_consumable = var["choix"]
-    except Exception as e: 
-        print(e)
-
+    await view.wait()
+    selected_consumable = view.choice
+    
     return selected_consumable
 
 async def remove_consumable(ctx: Context, user: discord.abc.User, player: 'player_info.Player', channel_cible=None, timeout = CHOICE_TIMEOUT) -> None : 

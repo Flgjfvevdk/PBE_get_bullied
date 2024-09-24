@@ -10,8 +10,7 @@ from pathlib import Path
 import discord
 from discord.ext.commands import Context, Bot
 from typing import Optional, List, Dict, TypeVar, Generic
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
-import asyncio
+from sqlalchemy.ext.asyncio import AsyncSession
 from utils.locks import PlayerLock
 
 MAX_BULLY_RESERVE = 10
@@ -68,10 +67,7 @@ async def print_reserve(ctx: Context, user: discord.abc.User, player: Player, bo
         
     text = bully.mise_en_forme_str(text)
 
-    #On init les variables
-    event = asyncio.Event()
-    var:Dict[str, int | None] = {"choix" : None}
-    view = interact_game.ViewChoice(user=user, event=event, list_choix=[0,1,2], list_choix_name=["Send bully to reserve", "Send bully to team", "Switch team and reserve"], variable_pointer=var)
+    view = interact_game.ViewChoice(user=user, list_choix=[0,1,2], list_choix_name=["Send bully to reserve", "Send bully to team", "Switch team and reserve"])
 
     if print_images and images:
         files = [discord.File(image) for image in images]
@@ -81,10 +77,10 @@ async def print_reserve(ctx: Context, user: discord.abc.User, player: Player, bo
 
     try:
         #On attend une réponse (et on retourne une erreur si nécessaire avec le timeout)
-        await asyncio.wait_for(event.wait(), timeout=TIMEOUT_RESERVE_MODIF)
+        await view.wait()
 
         #On sélectionne le bully et on crée un FightingBully
-        int_selected = var["choix"]
+        int_selected = view.choice
         if(int_selected is None) : 
             raise interact_game.CancelChoiceException("Cancel")
         user = ctx.author

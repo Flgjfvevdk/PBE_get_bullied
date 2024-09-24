@@ -1,6 +1,5 @@
 from discord.ext.commands import Context, Bot
 from discord.abc import User
-from discord import Thread
 import discord
 from utils.locks import PlayerLock
 import utils.database as database
@@ -13,7 +12,6 @@ import interact_game
 import money
 import random
 import math
-import asyncio
 from dataclasses import dataclass, field, KW_ONLY
 
 from typing import Dict
@@ -40,25 +38,21 @@ def loot_bully(level) -> Bully:
 
 async def shop_lootbox(ctx: Context, user: discord.abc.User):
     text = f"Select a lootbox to open. You'll get a bully with a level 2 times smaller than the box level."
-    event = asyncio.Event()
-    var:Dict[str, int | None] = {"choix" : None}
     level_choix = [1, 5, 10, 20, 30, 40, 50]
     list_choix_name:list[str] = []
     for l in (level_choix):
         list_choix_name.append(f"Level {l} ({get_cout(l)}{money.MONEY_ICON})")
-    view = interact_game.ViewChoice(user=user, event=event, list_choix=level_choix, list_choix_name= list_choix_name, variable_pointer = var)
+    view = interact_game.ViewChoice(user=user, list_choix=level_choix, list_choix_name=list_choix_name)
     shop_lb_msg = await ctx.channel.send(content=text, view=view)
 
-    #On attend une réponse (et on retourne une erreur si nécessaire avec le timeout)
-    try:
-        await asyncio.wait_for(event.wait(), timeout=CHOICE_TIMEOUT)
-        box_lvl = var["choix"]
-        if(box_lvl):
+    await view.wait()
+    box_lvl = view.choice
+    if(box_lvl):
+        try:
             await open_lootbox(ctx, user, box_lvl)
-    except Exception as e: 
-        print(e)
-    finally:
-        await shop_lb_msg.delete()
+        except Exception as e:
+            print(e)
+    await shop_lb_msg.delete()
 
 async def open_lootbox(ctx: Context, user: discord.abc.User, level:int):
     lock = PlayerLock(user.id)

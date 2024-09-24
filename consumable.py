@@ -89,12 +89,16 @@ class ConsumableAliment(Consumable):
             
     def get_print(self) -> CText:
         return (
-            CText().green(f"{self.name} : on use, debuff ")
+            CText(f"{self.name} : on use, debuff ")
             .red(self.aliment.value.stat_nerf)
             .txt(f" up to {self.value} (min 1) and buff ")
             .blue(self.aliment.value.stat_buff)
             .txt(" by the same amount.")
         )
+
+    def get_effect(self) -> str:
+        aliment = self.aliment.value
+        return f"Debuff **{aliment.stat_nerf}** to buff **{aliment.stat_buff}** by up to {int(self.value)}."
 
 #_______________________________________________________________________
 #_______________________________________________________________________
@@ -146,24 +150,19 @@ async def select_consumable(ctx: Context, user: discord.abc.User, player: 'playe
     
     selected_consumable: Consumable|None = None
 
+    #On affiche les items accessibles
+    embed = embed_consumables(player, user, select=True)
     if(player.consumables == []):
-        await ctx.channel.send(content=f"[{user.mention}] - You don't have any consumable")
+        await channel_cible.send(embed=embed)
         return None
 
-    #On affiche les items accessibles
-    # text = str_items(player, compact_print=True)
-    text = CText("Select a consumable" + (f" to use on {bully_selected.name}" if bully_selected is not None else "") + " :")
-    for c in player.consumables:
-        text.txt("\n  - ")
-        text += c.get_print()
-        
     #On init les variables
     event = asyncio.Event()
     var: dict[str, Consumable | None] = {"choix" : None}
-    list_choix_name: list[str] = [c.name for c in player.consumables]
-
+    list_choix_name: list[str] = [f"{i+1}. {c.name}" for i,c in enumerate(player.consumables)]
     view = interact_game.ViewChoice(user=user, event=event, list_choix=player.consumables, list_choix_name=list_choix_name, variable_pointer=var)
-    message_consumable_choix = await channel_cible.send(content=text.str(), view=view)
+
+    message_consumable_choix = await channel_cible.send(embed=embed, view=view)
 
     #On attend une réponse (et on retourne une erreur si nécessaire avec le timeout)
     try:
@@ -207,8 +206,21 @@ def str_consumables(player: 'player_info.Player') -> CText:
         text = CText("You don't have any consumables. Do ruin to have one")
         return text
     text = CText("Your consumables :")
+    text = CText()
     for c in player.consumables:
         text.txt("\n")
         text += c.get_print()
     text.txt("\n\n(Use !!use_consumable to use one)")
     return text
+
+def embed_consumables(player: 'player_info.Player', user: discord.abc.User, *, select=False) -> discord.Embed:
+    embed=discord.Embed(title=f"{user.display_name}'s consumables", color=0x77767b)
+    if select: embed.title = "Choose a consumable"
+    if not select: embed.set_footer(text="Enter !!use_consumable to use one.")
+    if len(player.consumables) == 0:
+        embed.description = "You have no consumables :("
+        if not select: embed.set_footer(text="But you may get some from ruins!")
+    for i,c in enumerate(player.consumables):
+        embed.add_field(name=f"{i+1}. {c.name}", value=c.get_effect(), inline=not select)
+    if not select: embed.set_thumbnail(url=user.avatar.url)
+    return embed

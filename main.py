@@ -487,8 +487,8 @@ async def show_consumables(ctx: Context):
         if player is None:
             await ctx.reply(TEXT_JOIN_THE_GAME)
             return
-        await ctx.channel.send(consumable.str_consumables(player=player).str())
-        # await consumable.print_consumables(ctx, player)
+        embed = consumable.embed_consumables(player,user)
+        await ctx.channel.send(embed=embed)
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 

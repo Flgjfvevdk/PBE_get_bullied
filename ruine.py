@@ -4,8 +4,8 @@ from bully import Bully, Rarity, LevelUpException, Stats
 import bully
 from fighting_bully import FightingBully
 # from item import Item, ItemStats, Seed
-import consommable
-from consommable import Consommable
+import consumable
+from consumable import Consumable
 import interact_game
 import fight_manager
 import money
@@ -235,18 +235,18 @@ class EnemyRoom():
 
 @dataclass
 class ConsoRoom():
-    conso: Consommable
+    conso: Consumable
 
     @staticmethod
     def generate(level: int, rarity: Rarity) -> "ConsoRoom":
         valeur = level * rarity.coef_level_points 
-        aliment = random.choice(list(consommable.AlimentEnum))
+        aliment = random.choice(list(consumable.AlimentEnum))
         conso = aliment.new_conso(value=valeur)
         return ConsoRoom(conso)
     
     async def interact(self, ruin: "Ruin"):
-        await ruin.thread.send(f"You found an consommable item: {self.conso.name}!")
-        await consommable.add_conso_to_player(ruin.ctx, ruin.player, self.conso, channel_cible=ruin.thread)
+        await ruin.thread.send(f"You found an consumable item: {self.conso.name}!")
+        await consumable.add_conso_to_player(ruin.ctx, ruin.player, self.conso, channel_cible=ruin.thread)
 
 
 @dataclass

@@ -19,7 +19,7 @@ import database
 from player_info import Player
 import tuto_text
 import lootbox
-import consommable
+import consumable
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -468,8 +468,8 @@ async def kill_all(ctx: Context):
         await session.commit()
     
 
-@bot.command(aliases=['use_c', 'use_conso', 'use_consommables'])
-async def use_consommable(ctx: Context):
+@bot.command(aliases=['use_c', 'use_conso', 'use_consumables'])
+async def use_consumable(ctx: Context):
     user = ctx.author
     if user.id in utils.players_in_interaction:
         await ctx.reply(f"You are already in an interaction.")
@@ -482,13 +482,13 @@ async def use_consommable(ctx: Context):
             if player is None:
                 await ctx.reply(TEXT_JOIN_THE_GAME)
                 return
-            await consommable.use_consommable(ctx=ctx, user=user, player=player, session=session, bot=bot)
+            await consumable.use_consumable(ctx=ctx, user=user, player=player, session=session, bot=bot)
             await session.commit()
     finally:
         utils.players_in_interaction.discard(user.id)
 
-@bot.command(aliases=['show_consommable', 'consommable', 'print_consommable', 'consommables', 'print_consommables', 'print_c'])
-async def show_consommables(ctx: Context):
+@bot.command(aliases=['show_consumable', 'consumable', 'print_consumable', 'consumables', 'print_consumables', 'print_c'])
+async def show_consumables(ctx: Context):
     user = ctx.author
 
     async with database.new_session() as session:
@@ -496,8 +496,8 @@ async def show_consommables(ctx: Context):
         if player is None:
             await ctx.reply(TEXT_JOIN_THE_GAME)
             return
-        await ctx.channel.send(consommable.str_consommables(player=player).str())
-        # await consommable.print_consommables(ctx, player)
+        await ctx.channel.send(consumable.str_consumables(player=player).str())
+        # await consumable.print_consumables(ctx, player)
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -652,10 +652,10 @@ async def add_c(ctx: Context):
         if player is None:
             await ctx.reply(TEXT_JOIN_THE_GAME)
             return
-        c = consommable.AlimentEnum.Gigot.new_conso(2)
+        c = consumable.AlimentEnum.Gigot.new_conso(2)
         print(c.get_print())
-        player.consommables.append(c)
-        print("player.consommables : ", player.consommables[0].get_print())
+        player.consumables.append(c)
+        print("player.consumables : ", player.consumables[0].get_print())
         await session.commit()
 
 @bot.command()
@@ -671,7 +671,7 @@ async def del_c(ctx: Context):
         if player is None:
             await ctx.reply(TEXT_JOIN_THE_GAME)
             return
-        player.consommables = []
+        player.consumables = []
         await session.commit()
 
 @bot.command()

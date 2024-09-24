@@ -175,26 +175,6 @@ async def suicide(ctx: Context):
 
     return
 
-# @bot.command(aliases=['destroy', 'remove_item'])
-# async def destroy_item(ctx: Context):
-#     user = ctx.author
-#     if user.id in utils.players_in_interaction:
-#         await ctx.reply(f"You are already in an interaction.")
-#         return
-    
-#     utils.players_in_interaction.add(user.id)
-#     try:
-#         async with database.new_session() as session:
-#             p = await session.get(Player, user.id)
-#             if p is None:
-#                 await ctx.reply(TEXT_JOIN_THE_GAME)
-#                 return
-#             await interact_game.remove_item(ctx, user=user, player=p)
-#             await session.commit()
-#     finally:
-#         utils.players_in_interaction.discard(user.id)
-
-#     return
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////

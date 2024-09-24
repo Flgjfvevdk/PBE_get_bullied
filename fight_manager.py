@@ -14,7 +14,7 @@ from discord.ext.commands import Context, Bot
 from player_info import Player
 from typing import Optional, Dict
 from dataclasses import replace
-import color_str
+import utils.color_str
 
 CHOICE_TIMEOUT = 30
 RECAP_MAX_EMOJI = 15

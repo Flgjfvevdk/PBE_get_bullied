@@ -2,8 +2,8 @@ from discord.ext.commands import Context, Bot
 from discord.abc import User
 from discord import Thread
 import discord
-import utils
-import database
+from utils.locks import PlayerLock
+import utils.database as database
 
 from bully import Bully, Rarity #ne pas confondre avec bully (le fichier)
 import bully #ne pas confondre avec Bully (la class)
@@ -36,8 +36,8 @@ def loot_bully(level) -> Bully:
         b.level_up_one()
 
     return b
-    
-    
+
+
 async def shop_lootbox(ctx: Context, user: discord.abc.User):
     text = f"Select a lootbox to open. You'll get a bully with a level 2 times smaller than the box level."
     event = asyncio.Event()
@@ -61,38 +61,39 @@ async def shop_lootbox(ctx: Context, user: discord.abc.User):
         await shop_lb_msg.delete()
 
 async def open_lootbox(ctx: Context, user: discord.abc.User, level:int):
-    if user.id in utils.players_in_interaction:
+    lock = PlayerLock(user.id)
+    if not lock.check():
         await ctx.send("You are already in an action.")
         return
-    
-    async with database.new_session() as session:
-        player = await session.get(Player, user.id)
+    with lock:
+        async with database.new_session() as session:
+            player = await session.get(Player, user.id)
 
-        if player is None:
-            await ctx.send("Please join the game first !")
-            return
-        
-        max_dungeon_lvl:int = player.max_dungeon
-        if level > max_dungeon_lvl and level > 1:
-            await ctx.send(f"{user.name}, you must beat dungeon level {level} to buy this lootbox")
-            return
+            if player is None:
+                await ctx.send("Please join the game first !")
+                return
+            
+            max_dungeon_lvl:int = player.max_dungeon
+            if level > max_dungeon_lvl and level > 1:
+                await ctx.send(f"{user.name}, you must beat dungeon level {level} to buy this lootbox")
+                return
 
-        cout = get_cout(level=level)
-        if(money.get_money_user(player) < cout):
-            await ctx.send(f"{user.name}, you don't have enough {money.MONEY_ICON} for this box [cost: {cout}{money.MONEY_ICON}]")
-            return
+            cout = get_cout(level=level)
+            if(money.get_money_user(player) < cout):
+                await ctx.send(f"{user.name}, you don't have enough {money.MONEY_ICON} for this box [cost: {cout}{money.MONEY_ICON}]")
+                return
 
-        if(interact_game.nb_bully_in_team(player) >= interact_game.BULLY_NUMBER_MAX):
-            await ctx.channel.send(f"{user.name}, you can't have more than {interact_game.BULLY_NUMBER_MAX} bullies at the same time")
-            return
-        
-        money.give_money(player, - cout)
-        b:Bully = loot_bully(level)
-        player.bullies.append(b)
-        
-        text_lootbox = bully.mise_en_forme_str(f"{user.name} has purchased a lootbox and got ... {b.name} a {b.rarity.name}!")
-        await ctx.channel.send(text_lootbox)
-        await session.commit()
+            if(interact_game.nb_bully_in_team(player) >= interact_game.BULLY_NUMBER_MAX):
+                await ctx.channel.send(f"{user.name}, you can't have more than {interact_game.BULLY_NUMBER_MAX} bullies at the same time")
+                return
+            
+            money.give_money(player, - cout)
+            b:Bully = loot_bully(level)
+            player.bullies.append(b)
+            
+            text_lootbox = bully.mise_en_forme_str(f"{user.name} has purchased a lootbox and got ... {b.name} a {b.rarity.name}!")
+            await ctx.channel.send(text_lootbox)
+            await session.commit()
     
     b = loot_bully(level=level)
     await interact_game.add_bully_to_player(ctx = ctx, player=player, b=b)

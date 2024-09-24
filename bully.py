@@ -4,7 +4,7 @@ import shutil
 from typing import Any, List, Optional, Tuple
 from dataclasses import dataclass, replace, InitVar, KW_ONLY, fields
 from pathlib import Path
-import color_str
+import utils.color_str
 
 import player_info
 
@@ -12,7 +12,7 @@ from enum import Enum
 from sqlalchemy.orm import Mapped, mapped_column, MappedAsDataclass, relationship, composite
 from sqlalchemy import String, select, ForeignKey
 from sqlalchemy.ext.asyncio.session import async_object_session
-from database import Base, new_session, DBPath
+from utils.database import Base, new_session, DBPath
 from sqlalchemy.ext.mutable import MutableComposite
 
 

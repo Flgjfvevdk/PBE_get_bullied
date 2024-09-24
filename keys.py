@@ -1,5 +1,5 @@
 
-import database
+import utils.database as database
 from player_info import Player
 
 

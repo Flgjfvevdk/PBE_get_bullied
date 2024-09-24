@@ -1,11 +1,11 @@
-import utils
+from utils.helpers import getenv
 from sqlalchemy.orm import DeclarativeBase, MappedAsDataclass
 from sqlalchemy.ext.declarative import AbstractConcreteBase
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession, async_scoped_session
 import sqlalchemy.types as types
 from pathlib import Path
 
-ENGINE = create_async_engine(utils.getenv("DB_URL"))
+ENGINE = create_async_engine(getenv("DB_URL"))
 
 new_session = async_sessionmaker(bind=ENGINE, class_=AsyncSession)
 

@@ -1,4 +1,4 @@
-from database import Base
+from utils.database import Base
 from bully import Bully, Stats
 from discord.ext.commands import Context, Bot
 import discord
@@ -6,7 +6,7 @@ import interact_game
 import player_info
 import asyncio
 from dataclasses import KW_ONLY, replace, dataclass
-from color_str import CText
+from utils.color_str import CText
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -89,7 +89,7 @@ class ConsumableAliment(Consumable):
             
     def get_print(self) -> CText:
         return (
-            CText("f{self.name} : on use, debuff ")
+            CText().green(f"{self.name} : on use, debuff ")
             .red(self.aliment.value.stat_nerf)
             .txt(f" up to {self.value} (min 1) and buff ")
             .blue(self.aliment.value.stat_buff)
@@ -113,7 +113,7 @@ async def add_conso_to_player(ctx: Context, player: 'player_info.Player', c:Cons
         await remove_consumable(ctx=ctx, user=ctx.author, player=player)
     
         if len(player.consumables) >= CONSO_NUMBER_MAX :
-            await channel_cible.send("You have too many consumable, the new one is destroyed.")
+            await channel_cible.send("You have too many consumables, the new one is destroyed.")
 
     if len(player.consumables) < CONSO_NUMBER_MAX :
         await channel_cible.send("You receive a new consumable : " + c.name + "!")

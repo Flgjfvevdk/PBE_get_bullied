@@ -4,8 +4,8 @@ import bully
 import interact_game
 import money
 import donjon
-import utils
-import database
+from utils.locks import PlayerLock
+import utils.database as database
 from player_info import Player
 
 import os
@@ -126,98 +126,50 @@ async def handle_shop_click(ctx:Context, variable_pointer:Dict[str, Bully | disc
     choix_bully: Bully = variable_pointer["choix"]
     user: discord.abc.User = variable_pointer["user"]
 
-    if user.id in utils.players_in_interaction:
+
+    lock = PlayerLock(user.id)
+    if not lock.check():
         await ctx.send("You are already in an action.")
         return
+    with lock:
+        async with database.new_session() as session:
+            try:
+                print(choix_bully)
+            except exc.DetachedInstanceError as e:
+                await ctx.send(f"This bully is no longer available (sorry {user.name})")
+                return
+            player = await session.get(Player, user.id)
+            
+            if player is None:
+                await ctx.send("Please join the game first !")
+                return
+            if(money.get_money_user(player) < cout_bully(choix_bully)):
+                await ctx.send(f"You don't have enough {money.MONEY_ICON} {user} for {choix_bully.name} [cost: {cout_bully(choix_bully)}{money.MONEY_ICON}]")
+                return
 
-    async with database.new_session() as session:
-        try:
-            print(choix_bully)
-        except exc.DetachedInstanceError as e:
-            await ctx.send(f"This bully is no longer available (sorry {user.name})")
-            return
-        player = await session.get(Player, user.id)
-        
-        if player is None:
-            await ctx.send("Please join the game first !")
-            return
-        if(money.get_money_user(player) < cout_bully(choix_bully)):
-            await ctx.send(f"You don't have enough {money.MONEY_ICON} {user} for {choix_bully.name} [cost: {cout_bully(choix_bully)}{money.MONEY_ICON}]")
-            return
+            if(interact_game.nb_bully_in_team(player) >= interact_game.BULLY_NUMBER_MAX):
+                await ctx.channel.send(f"You can't have more than {interact_game.BULLY_NUMBER_MAX} bullies at the same time")
+                return
+            
+            money.give_money(player, - cout_bully(choix_bully))
+            player.bullies.append(choix_bully)
 
-        if(interact_game.nb_bully_in_team(player) >= interact_game.BULLY_NUMBER_MAX):
-            await ctx.channel.send(f"You can't have more than {interact_game.BULLY_NUMBER_MAX} bullies at the same time")
-            return
-        
-        money.give_money(player, - cout_bully(choix_bully))
-        player.bullies.append(choix_bully)
+            if ctx.guild is None: #$$
+                raise Exception("On est pas censé être ici. ctx doit être un server pour handle une shop reaction")
+            # bullies_in_shop.remove(choix_bully)
+            bullies_in_shop_server[ctx.guild.id].remove(choix_bully)
+            
+            variable_pointer["choix"] = None
+            variable_pointer["user"] = None
 
-        if ctx.guild is None: #$$
-            raise Exception("On est pas censé être ici. ctx doit être un server pour handle une shop reaction")
-        # bullies_in_shop.remove(choix_bully)
-        bullies_in_shop_server[ctx.guild.id].remove(choix_bully)
-        
-        variable_pointer["choix"] = None
-        variable_pointer["user"] = None
+            text = bullies_in_shop_to_text(ctx.guild.id)
+            images = bullies_in_shop_to_images(ctx.guild.id)
+            files = [discord.File(image) for image in images]
+            # await shop_msg.edit(content=text, attachments=files, view=interact_game.ViewBullyShop(event=event, list_choix=bullies_in_shop, variable_pointer = variable_pointer))
+            await shop_msg.edit(content=text, attachments=files, view=interact_game.ViewBullyShop(event=event, list_choix=bullies_in_shop_server[ctx.guild.id], variable_pointer = variable_pointer))
+            await ctx.channel.send(f"{user.mention} has purchased {choix_bully.name} for {cout_bully(choix_bully)}🩹!")
 
-        text = bullies_in_shop_to_text(ctx.guild.id)
-        images = bullies_in_shop_to_images(ctx.guild.id)
-        files = [discord.File(image) for image in images]
-        # await shop_msg.edit(content=text, attachments=files, view=interact_game.ViewBullyShop(event=event, list_choix=bullies_in_shop, variable_pointer = variable_pointer))
-        await shop_msg.edit(content=text, attachments=files, view=interact_game.ViewBullyShop(event=event, list_choix=bullies_in_shop_server[ctx.guild.id], variable_pointer = variable_pointer))
-        await ctx.channel.send(f"{user.mention} has purchased {choix_bully.name} for {cout_bully(choix_bully)}🩹!")
-
-        await session.commit()
-
-async def handle_shop_reaction(ctx: Context, reaction: discord.Reaction, user: discord.abc.User, shop_msg: discord.Message):
-    if user.id in utils.players_in_interaction:
-        await ctx.send("You are already in an action.")
-
-    if ctx.guild is None: #$$
-            raise Exception("On est pas censé être ici. ctx doit être un server pour handle une shop reaction")
-    
-    utils.players_in_interaction.add(user.id)
-
-    # Get the index of the selected item
-    item_index = int(str(reaction.emoji)[0])
-    # if not (0 <= item_index <= len(bullies_in_shop)):
-    if not (0 <= item_index <= len(bullies_in_shop_server[ctx.guild.id])):
-        await ctx.send("Invalid selection.")
-        return
-    
-    # elif item_index not in bullies_in_shop:
-    elif item_index not in bullies_in_shop_server[ctx.guild.id]:
-        await ctx.send("This bully has already been purchased.")
-        return
-
-    #get the selected bully 
-    # b = bullies_in_shop[item_index]
-    b = bullies_in_shop_server[ctx.guild.id][item_index]
-    
-    # Process the purchase 
-    async with database.new_session() as session:
-        player = await session.get(Player, user.id)
-        
-        if player is None:
-            await ctx.send("Please join the game first !")
-            return
-        if(money.get_money_user(player) < cout_bully(b)):
-            await ctx.send(f"You don't have enough {money.MONEY_ICON} {user} for {b.name} [cost: {cout_bully(b)}{money.MONEY_ICON}]")
-            return
-    
-        if(interact_game.nb_bully_in_team(player) >= interact_game.BULLY_NUMBER_MAX):
-            await ctx.channel.send(f"You can't have more than {interact_game.BULLY_NUMBER_MAX} bullies at the same time")
-            return
-        
-        text = bullies_in_shop_to_text(ctx.guild.id)
-        await shop_msg.edit(content=text)
-        await ctx.channel.send(f"{user.mention} has purchased {b.name} for {cout_bully(b)}🩹!")
-
-        money.give_money(player, - cout_bully(b))
-        player.bullies.append(b)
-        # del bullies_in_shop[item_index]
-        del bullies_in_shop_server[ctx.guild.id][item_index]
-        await session.commit()
+            await session.commit()
 
 # Charger les serveurs sauvegardés depuis le fichier
 def load_shop_servers():

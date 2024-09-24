@@ -2,11 +2,8 @@ from pathlib import Path
 from discord import User
 from functools import wraps
 from discord.ext import commands
+from .locks import PlayerLock
 import json
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
 
 try:
     with Path("config/admins.txt").open("r") as f:
@@ -24,24 +21,20 @@ def is_admin():
         return ctx.author.id in ADMIN_LIST
     return commands.check(predicate)
 
-
-def getenv(name:str) -> str:
-    val = os.getenv(name)
-    if val is None:
-        raise Exception("ENV variable {name} is not set!")
-    return val
-
-players_in_interaction: set[int] = set()
-
 def author_is_free(f):
     async def predicate(ctx: commands.Context):
-        if ctx.author.id in players_in_interaction:
+        plock = PlayerLock(ctx.author.id)
+        if not plock.check():
             await ctx.reply("You are already in an action.")
             return
-        players_in_interaction.add(ctx.author.id)
-        try:
+        with plock:
             await f(ctx)
-        finally:
-            players_in_interaction.discard(ctx.author.id)
-        return
     return predicate
+
+def pbe_only():
+    async def predicate(ctx: commands.Context):
+        return os.getenv("TESTING") or ctx.me.display_name.startswith("PBE")
+    return commands.check(predicate)
+        
+
+            

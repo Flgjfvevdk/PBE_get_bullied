@@ -1,6 +1,6 @@
 import os
 from fighting_bully import FightingBully
-from database import Base
+from utils.database import Base
 from sqlalchemy.orm import Mapped, mapped_column, relationship, composite
 from sqlalchemy import ForeignKey, String
 import player_info

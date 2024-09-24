@@ -1,4 +1,4 @@
-from database import Base
+from utils.database import Base
 from typing import List
 from sqlalchemy.orm import Mapped, relationship, MappedAsDataclass, mapped_column
 from sqlalchemy import Table, Column, Integer, ForeignKey

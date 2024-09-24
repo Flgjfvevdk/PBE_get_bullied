@@ -12,7 +12,7 @@ from discord.ext.commands import Context, Bot
 from typing import Optional, List, Dict, TypeVar, Generic
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 import asyncio
-import utils
+from utils.locks import PlayerLock
 
 MAX_BULLY_RESERVE = 10
 TIMEOUT_RESERVE_MODIF = 60
@@ -87,31 +87,30 @@ async def print_reserve(ctx: Context, user: discord.abc.User, player: Player, bo
         int_selected = var["choix"]
         if(int_selected is None) : 
             raise interact_game.CancelChoiceException("Cancel")
-        if user.id in utils.players_in_interaction:
-            await ctx.reply(f"You are already in an interaction.")
+        user = ctx.author
+        lock = PlayerLock(user.id)
+        if not lock.check():
+            await ctx.send("You are already in an action.")
             return
-        
-        utils.players_in_interaction.add(user.id)
-        try :
-            if int_selected == 0:
-                bully_selected, _ = await interact_game.player_choose_bully(ctx=ctx, user=user, player=player, bot = bot)
-                await switch_reserve(ctx, player, bully_selected, go_reserve=True)
-            elif int_selected == 1 :
-                bully_selected, _ = await interact_game.player_choose_bully(ctx=ctx, user=user, player=player, bot = bot, from_team=False)
-                await switch_reserve(ctx, player, bully_selected, go_reserve=False)
-            else : 
-                bully_team, _ = await interact_game.player_choose_bully(ctx=ctx, user=user, player=player, bot = bot, from_team=True)
-                bully_reserve, _ = await interact_game.player_choose_bully(ctx=ctx, user=user, player=player, bot = bot, from_team=False)
-                bully_team.in_reserve = True
-                bully_reserve.in_reserve = False
-                await channel_cible.send(f"{bully_team.name} and {bully_reserve.name} switched")  
-            await session.commit()
-        except IndexError as e:
-            await channel_cible.send(f"Your team or reserve is empty")  
-        except Exception as e:
-            await message_reserve.edit(view=None)
-        finally:
-            utils.players_in_interaction.discard(user.id)
+        with lock:
+            try:
+                if int_selected == 0:
+                    bully_selected, _ = await interact_game.player_choose_bully(ctx=ctx, user=user, player=player, bot = bot)
+                    await switch_reserve(ctx, player, bully_selected, go_reserve=True)
+                elif int_selected == 1 :
+                    bully_selected, _ = await interact_game.player_choose_bully(ctx=ctx, user=user, player=player, bot = bot, from_team=False)
+                    await switch_reserve(ctx, player, bully_selected, go_reserve=False)
+                else : 
+                    bully_team, _ = await interact_game.player_choose_bully(ctx=ctx, user=user, player=player, bot = bot, from_team=True)
+                    bully_reserve, _ = await interact_game.player_choose_bully(ctx=ctx, user=user, player=player, bot = bot, from_team=False)
+                    bully_team.in_reserve = True
+                    bully_reserve.in_reserve = False
+                    await channel_cible.send(f"{bully_team.name} and {bully_reserve.name} switched")  
+                await session.commit()
+            except IndexError as e:
+                await channel_cible.send(f"Your team or reserve is empty")  
+            except Exception as e:
+                await message_reserve.edit(view=None)
         
     except Exception as e:
         await message_reserve.edit(view=None)

@@ -20,8 +20,6 @@ from dataclasses import dataclass, field, KW_ONLY
 from discord.ext.commands import Context, Bot
 import discord
 
-import utils
-
 RUIN_CHOICE_TIMEOUT = 60
 THREAD_DELETE_AFTER = 60
 MAX_PV_ENEMY = 8

@@ -34,9 +34,21 @@ class CText:
     def __str__(self):
         return "```ansi\n" + self.text+"\n```"
     def __add__(self, other):
-        return CText(self.text + other.text)
+        match other:
+            case CText():
+                return CText(self.text + other.text)
+            case str():
+                return CText(self.text + other)
+            case _:
+                return NotImplemented
     def __iadd__(self, other):
-        self.text += other.text
+        match other:
+            case CText():
+                self.text += other.text
+            case str():
+                self.text += other
+            case _:
+                return NotImplemented
         return self
 
 #pour coloriser il faut mettre ```ansi\n

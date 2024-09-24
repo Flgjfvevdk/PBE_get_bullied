@@ -687,9 +687,8 @@ async def bully_maj(ctx:Context):
             val = difference_points/nb_points
             b.increase_stat_with_seed(nb_points=nb_points, valeur=val, talkative = False)
         await session.commit() 
-    
-if os.getenv("TESTING"):
-    asyncio.run(database.init_models())
-bot.run(TOKEN)
 
-
+if __name__ == "__main__":
+    if os.getenv("TESTING"):
+        asyncio.run(database.init_models())
+    bot.run(TOKEN)

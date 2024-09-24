@@ -50,37 +50,3 @@ def create_buff_instance(class_name: str):
         return buff_class()  # Crée une instance de la classe
     except AttributeError:
         raise ValueError(f"La classe {class_name} n'existe pas dans le module.")
-
-# # Fonction pour créer une instance à partir du nom de la classe
-# def create_buff_instance(class_name: str):
-#     # Cherche la classe dans les globals
-#     if class_name in globals():
-#         return globals()[class_name]()  # Crée une instance de la classe
-#     else:
-#         raise ValueError(f"La classe {class_name} n'existe pas.")
-
-
-# #Les buffs qui existe : /////////////////////////////////////////////////////////////////////////
-# class NoBuff(BuffFight):
-#     def apply_buff(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
-#         return
-    
-# class Rage(BuffFight):
-#     def __init__(self):
-#         super().__init__()
-#         self.description:str = "When damaged, buff Strength"
-#     def apply_buff(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
-#         if fighter == recap_round.defender and recap_round.damage_receive > 0:
-#             fighter.stats.strength += fighter.combattant.lvl * 0.15
-#         return 
-
-# class Frustration(BuffFight):
-#     def __init__(self):
-#         super().__init__()
-#         self.description:str = "When attack fails, buff Lethality"
-#     def apply_buff(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
-#         if fighter == recap_round.attacker and recap_round.damage_receive == 0:
-#             fighter.stats.lethality += fighter.combattant.lvl * 0.1
-#         return 
-
-

@@ -4,7 +4,7 @@ import shutil
 from typing import Any, List, Optional, Tuple
 from dataclasses import dataclass, replace, InitVar, KW_ONLY, fields
 from pathlib import Path
-import utils.color_str
+import utils.color_str as color_str
 
 import player_info
 

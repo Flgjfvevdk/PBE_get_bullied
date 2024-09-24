@@ -238,7 +238,7 @@ async def challenge(ctx: Context, opponent:discord.Member):
     if not lock2.check():
         await ctx.channel.send(f"Sorry, but {opponent} is already busy!")
         return
-
+    
     with lock1, lock2:
         async with database.new_session() as session:
             p1 = await session.get(Player, user.id)
@@ -249,7 +249,7 @@ async def challenge(ctx: Context, opponent:discord.Member):
             if p2 is None:
                 await ctx.reply(f"{opponent} has not joined the game.")
                 return
-            await fight_manager.proposition_fight(ctx, user, p1, opponent, p2, bot)
+            await fight_manager.proposition_fight(ctx, user, opponent, p1, p2, bot)
             await session.commit()
 
     return
@@ -277,7 +277,7 @@ async def fun_challenge(ctx: Context, opponent:discord.Member):
             if p2 is None:
                 await ctx.reply(f"{opponent} has not joined the game.")
                 return
-            await fight_manager.proposition_fight(ctx, user, p1, opponent, p2, bot, for_fun=True)
+            await fight_manager.proposition_fight(ctx, user, opponent, p1, p2, bot, for_fun=True)
 
     return
 

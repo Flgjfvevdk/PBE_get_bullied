@@ -142,7 +142,7 @@ async def use_consumable(ctx: Context, user: discord.abc.User, player: 'player_i
         channel_cible = ctx.channel
 
     try :
-        bully_selected, _ = await interact_game.player_choose_bully(ctx=ctx, user=user, player=player, bot = bot)
+        bully_selected, _ = await interact_game.player_choose_bully(ctx=ctx, user=user, player=player)
     except asyncio.exceptions.TimeoutError as e:
         await ctx.send(f"Timeout, choose faster next time {user.name}")
         return

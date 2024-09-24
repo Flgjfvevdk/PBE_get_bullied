@@ -89,12 +89,16 @@ class ConsumableAliment(Consumable):
             
     def get_print(self) -> CText:
         return (
-            CText().green(f"{self.name} : on use, debuff ")
+            CText(f"{self.name} : on use, debuff ")
             .red(self.aliment.value.stat_nerf)
             .txt(f" up to {self.value} (min 1) and buff ")
             .blue(self.aliment.value.stat_buff)
             .txt(" by the same amount.")
         )
+
+    def get_effect(self) -> str:
+        aliment = self.aliment.value
+        return f"Debuff **{aliment.stat_nerf}** to buff **{aliment.stat_buff}** by up to {int(self.value)}."
 
 #_______________________________________________________________________
 #_______________________________________________________________________
@@ -206,9 +210,19 @@ def str_consumables(player: 'player_info.Player') -> CText:
     if len(player.consumables) <= 0:
         text = CText("You don't have any consumables. Do ruin to have one")
         return text
-    text = CText("Your consumables :")
+    #text = CText("Your consumables :")
+    text = CText()
     for c in player.consumables:
         text.txt("\n")
         text += c.get_print()
-    text.txt("\n\n(Use !!use_consumable to use one)")
+    #text.txt("\n\n(Use !!use_consumable to use one)")
     return text
+
+def embed_consumables(player: 'player_info.Player') -> discord.Embed:
+    embed=discord.Embed(title="Consumables", color=0x77767b)
+    embed.set_footer(text="Enter !!use_consumable to use one.")
+    if len(player.consumables) == 0:
+        embed.description = "You have no consumables :(\nBut you may get some from ruins!"
+    for c in player.consumables:
+        embed.add_field(name=c.name, value=c.get_effect(), inline=False)
+    return embed

@@ -193,6 +193,7 @@ class Bully(Base):
         mapped_column(name="stat_viciousness"),
         default=None
     )
+    buff_fight_tag: Mapped[str] = mapped_column(default= "NoBuff")
 
     def __post_init__(self, must_load_image:bool):
         if(must_load_image):

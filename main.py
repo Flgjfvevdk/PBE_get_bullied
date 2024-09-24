@@ -647,6 +647,27 @@ async def add_c(ctx: Context):
 
 @bot.command()
 @decorators.is_admin()
+async def add_elixir(ctx: Context):
+    user = ctx.author
+    lock = PlayerLock(user.id)
+    if not lock.check():
+        await ctx.send("You are already in an action.")
+        return
+    
+    with lock:
+        async with database.new_session() as session:
+            player = await session.get(Player, ctx.author.id)
+            if player is None:
+                await ctx.reply(TEXT_JOIN_THE_GAME)
+                return
+            e = consumable.ConsumableElixirBuff("Rage", "Rage")
+            print(e.get_print())
+            player.consumables.append(e)
+            print("player.consumables : ", player.consumables[0].get_print())
+            await session.commit()
+
+@bot.command()
+@decorators.is_admin()
 async def del_c(ctx: Context):
     user = ctx.author
     lock = PlayerLock(user.id)

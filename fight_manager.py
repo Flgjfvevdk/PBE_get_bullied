@@ -3,7 +3,7 @@ import random
 
 import discord
 from bully import Bully, Stats, LevelUpException
-# from item import Item
+import fighting_bully
 from fighting_bully import FightingBully
 import interact_game
 import money
@@ -81,34 +81,13 @@ async def start_fight(ctx: Context, user_1: discord.abc.User, player_1: Player, 
         await ctx.send(f"{user_2.name} cancelled the fight")
         return
     
-    # item_1, item_2 = await manager_equip_item(ctx, user_1, player_1, user_2, player_2, bot)
-    # item_1, item_2 = None, None
-    # fighting_bully_1.equipped_item = item_1
-    # fighting_bully_2.equipped_item = item_2
-
     await fight(ctx, user_1, player_1, user_2, player_2, bot, fighting_bully_1, fighting_bully_2, for_fun)
     
     return
 
-# async def manager_equip_item(ctx: Context, user_1: discord.abc.User, player_1: Player, user_2: discord.abc.User, player_2: Player, bot: Bot) -> tuple[Optional[Item], Optional[Item]]:
-#     item_1:Optional[Item] = None
-#     item_2:Optional[Item] = None
-
-#     item_1 = await interact_game.player_choose_item(ctx, user_1, player_1, bot, timeout=CHOICE_TIMEOUT)
-#     item_2 = await interact_game.player_choose_item(ctx, user_2, player_2, bot, timeout=CHOICE_TIMEOUT)
-#     return item_1, item_2
-
-# def apply_effect_item_before_fight(fighter_self : FightingBully):
-#     i = fighter_self.equipped_item
-#     if(i != None and i.is_bfr_fight):
-#         i.effect_before_fight(fighting_bully_self= fighter_self)
-
 async def fight(ctx: Context, user_1: discord.abc.User, player_1: Player, user_2: discord.abc.User, player_2: Player, bot: Bot, fighting_bully_1:FightingBully, fighting_bully_2:FightingBully, 
                 for_fun = False) -> None:
     
-    # apply_effect_item_before_fight(fighter_self=fighting_bully_1)
-    # apply_effect_item_before_fight(fighter_self=fighting_bully_2)
-
     await fight_simulation(ctx=ctx, user_1=user_1, user_2=user_2, bot=bot, 
                                         fighting_bully_1=fighting_bully_1, fighting_bully_2=fighting_bully_2)
     
@@ -232,7 +211,6 @@ async def team_fight(ctx: Context, user_1: discord.abc.User, player_1: Player, u
 async def fight_simulation(ctx:Context, bot: Bot, fighting_bully_1:FightingBully, fighting_bully_2:FightingBully,
                             user_1: discord.abc.User|None = None, user_2:discord.abc.User|None = None, is_switch_possible = False,
                             channel_cible = None) -> None:    
-
     if(channel_cible == None):
         channel_cible = ctx.channel
 
@@ -245,7 +223,6 @@ async def fight_simulation(ctx:Context, bot: Bot, fighting_bully_1:FightingBully
     #On calcul le texte
     barre_pv_joueur = value_to_bar_str(fighting_bully_1.pv, max_value= max_pv_1)
     barre_pv_enemy = value_to_bar_str(fighting_bully_2.pv, max_value= max_pv_2)
-    # text_pv_combat = "\t\tBully 1 : " + fighting_bully_1.combattant.name + "\nHP : " + barre_pv_joueur + "\n\n\t\t\t\tVS\n\n\t\tBully 2 : " + fighting_bully_2.combattant.name + "\nHP : " + barre_pv_enemy
     text_base_combat = f_text_base_combat(fighting_bully_1, fighting_bully_2, max_pv_1, max_pv_2, "", "")
     action_combat = "Let's get ready to rumble!"
     text_combat = "```ansi\n" + text_base_combat + "\n\n" + action_combat + "```"
@@ -322,8 +299,6 @@ def nouvelle_action_stat(fighting_bully_1:FightingBully, fighting_bully_2:Fighti
     name_1 = fighting_bully_1.combattant.name
     name_2 = fighting_bully_2.combattant.name
     
-    # stat_j1 = replace(fighting_bully_1.stats)
-    # stat_j2 = replace(fighting_bully_2.stats)
     stat_j1 = (fighting_bully_1.stats)
     stat_j2 = (fighting_bully_2.stats)
 

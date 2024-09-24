@@ -95,6 +95,24 @@ class ConsumableAliment(Consumable):
             .blue(self.aliment.value.stat_buff)
             .txt(" by the same amount.")
         )
+    
+class ConsumableElixirBuff(Consumable):
+    __mapper_args__ = {
+        "polymorphic_identity": "elixirbuff",
+        "polymorphic_load": "selectin"
+    }
+    __tablename__ = "elixirbuff"
+
+    id: Mapped[int] = mapped_column(ForeignKey("consumable.id"), init=False, primary_key=True)
+    buff_tag: Mapped[str]
+
+    def apply(self, b:Bully):
+        b.buff_fight_tag = self.buff_tag
+
+    def get_print(self) -> CText:
+        return (
+            CText().txt(f"Elixir of {self.name} : on use, give a fighting buff")
+        )
 
 #_______________________________________________________________________
 #_______________________________________________________________________

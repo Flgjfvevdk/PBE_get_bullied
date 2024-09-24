@@ -34,7 +34,7 @@ class CText:
 
     def __str__(self):
         inner = "".join(n.colorized() for n in self.nodes)
-        return "```ansi\n" + self.text+"\n```"
+        return "```ansi\n" + inner + "\n```"
 
 
 

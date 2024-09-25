@@ -10,6 +10,7 @@ import interact_game
 import fight_manager
 import money
 import keys
+import math
 import asyncio
 from player_info import Player
 
@@ -140,10 +141,10 @@ class EnemyRoom():
         print("stats fighting bully :", fighter.stats)
         while True:
             try: 
-                await fight_manager.fight_simulation(ruin.ctx, bot=ruin.bot, 
-                                    fighting_bully_1=fighter, fighting_bully_2=self.enemy,
-                                    user_1=ruin.user, is_switch_possible=self.can_switch,
-                                    channel_cible=ruin.thread)
+                nb_swaps = math.inf if self.can_switch else 0
+                fight = fight_manager.Fight(ruin.ctx, user_1=ruin.user, player_1=ruin.player, fighter_1=fighter, fighter_2=self.enemy, nb_swaps_1=nb_swaps, channel_cible=ruin.thread)
+                fight.do_end_fight = False
+                await fight.start_fight()
                 
             #Permet de faire une interruption du combat et de changer de bully qui se bat.
             except fight_manager.InterruptionCombat as erreur:

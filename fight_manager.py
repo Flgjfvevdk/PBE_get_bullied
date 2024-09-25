@@ -19,7 +19,7 @@ from utils.color_str import CText
 
 CHOICE_TIMEOUT = 30
 RECAP_MAX_EMOJI = 15
-FIGHT_MSG_TIME_UPDATE = 2
+FIGHT_MSG_TIME_UPDATE = 1
 
 
 async def proposition_fight(ctx:Context, user_1:discord.abc.User, user_2:discord.abc.User, player_1: Player, player_2: Player, bot: Bot, for_fun = False):
@@ -85,7 +85,8 @@ async def select_fighters(ctx: Context, user_1: discord.abc.User, user_2: discor
     return fighting_bully_1, fighting_bully_2
 
 class Fight():
-    def __init__(self, ctx:Context, user_1: discord.abc.User|None, user_2: discord.abc.User|None, player_1: Player|None, player_2: Player|None, fighter_1:FightingBully, fighter_2:FightingBully, for_fun = False, channel_cible=None, nb_swaps_1:int = 0, nb_swaps_2:int=0):
+    def __init__(self, ctx:Context, fighter_1:FightingBully, fighter_2:FightingBully, user_1: discord.abc.User|None = None, user_2: discord.abc.User|None=None
+                 , player_1: Player|None=None, player_2: Player|None = None, for_fun = False, channel_cible = None, nb_swaps_1:int = 0, nb_swaps_2:int = 0):
         self.ctx = ctx
         self.user_1 = user_1
         self.user_2 = user_2
@@ -120,6 +121,8 @@ class Fight():
             self.events_click_swap.append(asyncio.Event())
             self.labels_swap.append(f"Swap j2 {(': ' + str(self.nb_swaps_2)) if self.nb_swaps_2 < math.inf else ''}")
 
+        self.do_end_fight = True
+
     async def start_fight(self):
         await self.setup_message()
         await asyncio.sleep(FIGHT_MSG_TIME_UPDATE)
@@ -134,8 +137,9 @@ class Fight():
                 for k in range(len(self.users_can_swap)):
                     if self.events_click_swap[k].is_set():
                         raise InterruptionCombat(self.fighter_1.pv, self.fighter_2.pv, user_interrupt=self.users_can_swap[k])
-                    
-        await self.end_fight()
+
+        if self.do_end_fight:           
+            await self.end_fight()
         return
 
     async def play_round(self):
@@ -364,7 +368,6 @@ class TeamFight():
         if len(self.team_2) > 0 :
             await self.ctx.send(f"{self.user_2.name if self.user_2 is not None else 'Team 2'} won the teamfight!")
                 
-
     async def select_next_fighter(self, user:discord.abc.User|None, player:Player|None, team:list[FightingBully]) -> FightingBully:
         if user is None or player is None :
             return team[0]

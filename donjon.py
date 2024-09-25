@@ -7,6 +7,7 @@ from player_info import Player
 import interact_game
 import fight_manager
 import money
+import math
 import keys
 import asyncio
 
@@ -113,7 +114,6 @@ class Dungeon():
             self.fighters_joueur.append(new_fighter)
             self.xp_earned_bullies.append(0)
 
-
     def generate_dungeon_team(self) -> List[FightingBully]:
         enemies_fighters:List[FightingBully] = []
         
@@ -146,12 +146,6 @@ class Dungeon():
         return enemies_fighters
 
     async def enter(self) -> None:
-        # if(keys.get_keys_user(self.player) <= 0):
-        #     await self.ctx.send(f"You don't have any {keys.KEYS_ICON}")
-        #     return
-        # else :
-        #     self.player.keys -= 1
-        print("wah")
         message = await self.ctx.channel.send(f"{self.ctx.author.mention} enters the dungeon lev : {self.level}")
         try :
             self.thread = await self.ctx.channel.create_thread(name=f"Dungeon - Level {self.level}", message=message) #type: ignore
@@ -210,9 +204,10 @@ class Dungeon():
         #On fait le combat.
         while True:
             try: 
-                await fight_manager.fight_simulation(self.ctx, bot=self.bot, 
-                                            fighting_bully_1=fighting_bully_joueur, fighting_bully_2=fighting_bully_enemy, user_1=self.user,
-                                            is_switch_possible=can_switch, channel_cible=self.thread)
+                nb_swaps = math.inf if can_switch else 0
+                fight = fight_manager.Fight(self.ctx, user_1=self.user, player_1=self.player, fighter_1=fighting_bully_joueur, fighter_2=fighting_bully_enemy, nb_swaps_1=nb_swaps, channel_cible=self.thread)
+                fight.do_end_fight = False
+                await fight.start_fight()
                 
             #Permet de faire une interruption du combat et de changer de bully qui se bat.
             except fight_manager.InterruptionCombat as erreur:
@@ -222,12 +217,10 @@ class Dungeon():
             else:
                 break
         
-        pv_restant_joueur = fighting_bully_joueur.pv
         bully_joueur = fighting_bully_joueur.combattant
         #On regarde qui a perdu (le joueur ou l'ennemi)
-        if(pv_restant_joueur > 0) :
-            #Le joueur a gagné
-            #On calcul les récompenses, on les affiches et on les stocks
+        if(fighting_bully_joueur.pv > 0) :
+            #Le joueur a gagné. On calcul les récompenses, on les affiches et on les stocks
             (exp_earned, gold_earned) = fight_manager.reward_win_fight(bully_joueur, fighting_bully_enemy.combattant)
             exp_earned *= COEF_XP_FIGHTER
             gold_earned = int(COEF_GOLD_FIGHTER * gold_earned)
@@ -249,8 +242,7 @@ class Dungeon():
             self.current_floor += 1
 
         else : 
-            #Le joueur à perdu
-            #On tue le bully qui est ded
+            #Le joueur à perdu. On tue le bully qui est ded
             await self.thread.send(f"{bully_joueur.name} died in terrible agony.")
             await bully_joueur.kill()
             self.fighters_joueur.pop(num_bully_j)
@@ -281,7 +273,6 @@ class Dungeon():
             asyncio.create_task(delete_thread())
         except Exception as e:
             print(e)
-
 
 
 async def str_leaderboard_donjon(session: AsyncSession) -> str:

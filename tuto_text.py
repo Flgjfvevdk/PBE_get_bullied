@@ -30,7 +30,7 @@ tuto_bully = "\
 - Quand un bully reçoit autant d'expérience que son lvl, il **level up**.\n\
 - Quand il meurt, un bully donne de l'expérience à son tueur. L'xp donné dépend de son level mais aussi de sa rareté. NB : \n \
 \t- Plus un bully est rare, moins il va gagner d'xp à chaque combat.\n\
-\t- A partir du lvl 10, si le tueur à 2x plus de lvl que sa victime, le joueur reçoit de la monnaie à la place.\n\
+\t- Si un bully à au moins 5 lvl de plus que sa victime, il ne gagne pas d'xp. À la place le joueur reçoit de la monnaie.\n\
 - Les NOBODIES révèlent leur potentiel au lvl 10 …. \n\
 - Vous pouvez vous débarasser d'un bully en faisant ***!!suicide***\n\
 "

@@ -156,7 +156,6 @@ class Dungeon():
         try:
             while self.current_floor < len(self.enemies_fighters):
                 await self.handle_fight(can_switch=self.current_floor ==  len(self.enemies_fighters) - 1 or self.level==50)
-                # await self.handle_fight(can_switch=True)
                 self.reset_stats_bullies()
 
         except interact_game.CancelChoiceException as e:

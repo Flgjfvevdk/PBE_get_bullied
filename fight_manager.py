@@ -58,7 +58,7 @@ async def proposition_fight(ctx:Context, user_1:discord.abc.User, user_2:discord
     fighter_1, fighter_2 = await select_fighters(ctx, user_1, user_2, player_1, player_2)
 
     #On commence le combat
-    fight = Fight(ctx, user_1, user_2, player_1, player_2, fighter_1, fighter_2, for_fun=for_fun)
+    fight = Fight(ctx=ctx, user_1=user_1, user_2=user_2, player_1=player_1, player_2=player_2, fighter_1=fighter_1, fighter_2=fighter_2, for_fun=for_fun)
     await fight.start_fight()
     return
 
@@ -84,9 +84,8 @@ async def select_fighters(ctx: Context, user_1: discord.abc.User, user_2: discor
     
     return fighting_bully_1, fighting_bully_2
 
-
 class Fight():
-    def __init__(self, ctx:Context, user_1: discord.abc.User|None, user_2: discord.abc.User|None, player_1: Player|None, player_2: Player|None, fighter_1:FightingBully, fighter_2:FightingBully, for_fun = False, can_swap=False, channel_cible=None):
+    def __init__(self, ctx:Context, user_1: discord.abc.User|None, user_2: discord.abc.User|None, player_1: Player|None, player_2: Player|None, fighter_1:FightingBully, fighter_2:FightingBully, for_fun = False, channel_cible=None, nb_swaps_1:int = 0, nb_swaps_2:int=0):
         self.ctx = ctx
         self.user_1 = user_1
         self.user_2 = user_2
@@ -95,7 +94,6 @@ class Fight():
         self.fighter_1 = fighter_1
         self.fighter_2 = fighter_2
         self.for_fun = for_fun
-        self.can_swap = can_swap
         if(channel_cible is None):
             channel_cible = ctx.channel
         self.channel_cible:discord.abc.Messageable = channel_cible
@@ -107,20 +105,20 @@ class Fight():
         self.emojis_recap:list[list["str"]]= [[],[]]
         self.tour = random.randint(0,1)
 
-        self.nb_swaps_p1 = math.inf if can_swap and isinstance(user_1, discord.abc.User) else 0
-        self.nb_swaps_p2 = math.inf if can_swap and isinstance(user_2, discord.abc.User) else 0
+        self.nb_swaps_1 = nb_swaps_1 if isinstance(user_1, discord.abc.User) else 0
+        self.nb_swaps_2 = nb_swaps_2 if isinstance(user_2, discord.abc.User) else 0
 
         self.users_can_swap:list[discord.abc.User] = []
         self.events_click_swap:list[asyncio.Event] = []
         self.labels_swap:list[str] = []
-        if self.nb_swaps_p1 > 0 and self.user_1:
+        if self.nb_swaps_1 > 0 and self.user_1:
             self.users_can_swap.append(self.user_1)
             self.events_click_swap.append(asyncio.Event())
-            self.labels_swap.append(f"Swap j1 {(': ' + str(self.nb_swaps_p1)) if self.nb_swaps_p1 < math.inf else ''}")
-        if self.nb_swaps_p2 > 0 and self.user_2:
+            self.labels_swap.append(f"Swap j1 {(': ' + str(self.nb_swaps_1)) if self.nb_swaps_1 < math.inf else ''}")
+        if self.nb_swaps_2 > 0 and self.user_2:
             self.users_can_swap.append(self.user_2)
             self.events_click_swap.append(asyncio.Event())
-            self.labels_swap.append(f"Swap j2 {(': ' + str(self.nb_swaps_p1)) if self.nb_swaps_p1 < math.inf else ''}")
+            self.labels_swap.append(f"Swap j2 {(': ' + str(self.nb_swaps_2)) if self.nb_swaps_2 < math.inf else ''}")
 
     async def start_fight(self):
         await self.setup_message()
@@ -128,12 +126,11 @@ class Fight():
         while self.fighter_1.pv > 0 and self.fighter_2.pv > 0 :
             await self.play_round()
 
-
             await self.message.edit(content=self.text_fight())
             await asyncio.sleep(FIGHT_MSG_TIME_UPDATE)
 
             #On regarde si changement nécessaire 
-            if(self.can_swap and self.fighter_1.pv > 0 and self.fighter_2.pv > 0) : 
+            if((self.nb_swaps_1 > 0 or self.nb_swaps_2 > 0) and self.fighter_1.pv > 0 and self.fighter_2.pv > 0) : 
                 for k in range(len(self.users_can_swap)):
                     if self.events_click_swap[k].is_set():
                         raise InterruptionCombat(self.fighter_1.pv, self.fighter_2.pv, user_interrupt=self.users_can_swap[k])
@@ -227,7 +224,7 @@ class Fight():
         return
         
     async def setup_message(self):
-        if(self.can_swap):  
+        if(len(self.users_can_swap)>0):  
             self.message = await self.channel_cible.send(self.text_fight(),  view=interact_game.ViewClickBoolMultiple(users=self.users_can_swap, events=self.events_click_swap, labels=self.labels_swap, emoji="🔁"))
         else :
             self.message = await self.channel_cible.send(self.text_fight())
@@ -249,6 +246,134 @@ class Fight():
             )
         return text_f.str()
     
+async def proposition_team_fight(ctx:Context, user_1:discord.abc.User, user_2:discord.abc.User, player_1: Player, player_2: Player, for_fun = False):
+    text_challenge = f"{user_1.mention} challenges {user_2.mention} in a teamfight!"
+    if for_fun :
+        text_challenge = f"{user_1.mention} challenges {user_2.mention} to a fun teamfight (no death, no xp)!"
+
+    #On créer l'event qui sera set quand le bouton sera cliqué par user_2. La valeur du bouton (de la réponse) sera stocké dans var
+    event = asyncio.Event()
+    var:Dict[str, bool] = {"choix" : False}
+
+    if(user_1 != user_2):
+        #On affiche le message
+        message = await ctx.channel.send(content=text_challenge, view=interact_game.ViewYesNo(user=user_2, event=event, variable_pointer = var))
+        #On attend que le joueur clique sur un bouton
+        try:
+            await asyncio.wait_for(event.wait(), timeout=CHOICE_TIMEOUT)
+        except asyncio.exceptions.TimeoutError as e:
+            await message.reply(f"Too late! No fight between {user_1} and {user_2}")
+            return
+        #On récup le choix
+        challenge_accepte:bool = var["choix"]
+    else : 
+        message = await ctx.channel.send(content=text_challenge)
+        challenge_accepte = True
+
+    #On affiche le choix de user_2
+    if(challenge_accepte) : 
+        await message.reply("Challenge accepted!")
+    else : 
+        await message.reply("Challenge declined")
+        return
+
+    #On commence le teamfight
+    teamfight = TeamFight(ctx=ctx, user_1=user_1, user_2=user_2, player_1=player_1, player_2=player_2, for_fun=for_fun, can_swap=True)
+    teamfight.setup_teams()
+    await teamfight.start_teamfight()
+    return
+
+class TeamFight():
+    def __init__(self, ctx:Context, user_1: discord.abc.User|None, user_2: discord.abc.User|None, player_1: Player|None, player_2: Player|None
+                 , for_fun = True, can_swap=False, channel_cible=None):
+        self.ctx = ctx
+        self.user_1 = user_1
+        self.user_2 = user_2
+        self.player_1 = player_1
+        self.player_2 = player_2
+        self.team_1:list[FightingBully] = []
+        self.team_2:list[FightingBully] = []
+        self.for_fun = for_fun
+        self.can_swap = can_swap
+        if(channel_cible is None):
+            channel_cible = ctx.channel
+        self.channel_cible:discord.abc.Messageable = channel_cible
+
+        self.nb_swaps_1 = 1 if can_swap and isinstance(user_1, discord.abc.User) else 0
+        self.nb_swaps_2 = 1 if can_swap and isinstance(user_2, discord.abc.User) else 0
+
+        self.users_can_swap:list[discord.abc.User] = []
+        self.events_click_swap:list[asyncio.Event] = []
+        self.labels_swap:list[str] = []
+        if self.nb_swaps_1 > 0 and self.user_1:
+            self.users_can_swap.append(self.user_1)
+            self.events_click_swap.append(asyncio.Event())
+            self.labels_swap.append(f"Swap j1 {(': ' + str(self.nb_swaps_1)) if self.nb_swaps_1 < math.inf else ''}")
+        if self.nb_swaps_2 > 0 and self.user_2:
+            self.users_can_swap.append(self.user_2)
+            self.events_click_swap.append(asyncio.Event())
+            self.labels_swap.append(f"Swap j2 {(': ' + str(self.nb_swaps_1)) if self.nb_swaps_1 < math.inf else ''}")
+
+    def setup_teams(self, team_1:list[FightingBully] | None = None, team_2:list[FightingBully] | None = None):
+        if team_1 is not None:
+            self.team_1 = team_1.copy()
+        elif self.player_1 is not None:
+            self.team_1 = [FightingBully.create_fighting_bully(b) for b in self.player_1.get_equipe()]
+        else :
+            raise Warning("Team 1 failed to setup")
+        if team_2 is not None:
+            self.team_2 = team_2.copy()
+        elif self.player_2 is not None:
+            self.team_2 = [FightingBully.create_fighting_bully(b) for b in self.player_2.get_equipe()]
+        else :
+            raise Warning("Team 2 failed to setup")
+
+    async def start_teamfight(self):
+        fighter_1:FightingBully | None = None
+        fighter_2:FightingBully | None = None
+
+        while len(self.team_1) > 0 and len(self.team_2) > 0 :
+            if fighter_1 is None :
+                fighter_1 = await self.select_next_fighter(user=self.user_1, player=self.player_1, team=self.team_1)
+            if fighter_2 is None :
+                fighter_2 = await self.select_next_fighter(user=self.user_2, player=self.player_2, team=self.team_2)
+            
+            fight = Fight(self.ctx, user_1=self.user_1, user_2=self.user_2, player_1=self.player_1, player_2=self.player_2
+                          , fighter_1=fighter_1, fighter_2=fighter_2, for_fun=self.for_fun, nb_swaps_1=self.nb_swaps_1, nb_swaps_2=self.nb_swaps_2)
+            try : 
+                await fight.start_fight()
+            except InterruptionCombat as interrupt:
+                if interrupt.user == self.user_1:
+                    fighter_1 = None
+                    self.nb_swaps_1 -= 1
+                elif interrupt.user == self.user_2:
+                    fighter_2 = None
+                    self.nb_swaps_2 -= 1
+                else :
+                    raise interrupt
+            
+            if fighter_1 is not None and fighter_1.pv <= 0 :
+                self.team_1.remove(fighter_1)
+                fighter_1 = None
+            if fighter_2 is not None and fighter_2.pv <= 0 :
+                self.team_2.remove(fighter_2)
+                fighter_2 = None
+
+        if len(self.team_1) > 0 :
+            await self.ctx.send(f"{self.user_1.name if self.user_1 is not None else 'Team 1'} won the teamfight!")
+        if len(self.team_2) > 0 :
+            await self.ctx.send(f"{self.user_2.name if self.user_2 is not None else 'Team 2'} won the teamfight!")
+                
+
+    async def select_next_fighter(self, user:discord.abc.User|None, player:Player|None, team:list[FightingBully]) -> FightingBully:
+        if user is None or player is None :
+            return team[0]
+        try:
+            f_bully, _ = await interact_game.player_choose_fighting_bully(ctx=self.ctx, fighting_bullies=team, user=user, timeout=CHOICE_TIMEOUT)
+        except Exception as e:
+            await self.ctx.send(f"{user.name} give up the fight")
+            raise Exception("Abandon du combat")
+        return f_bully
 
 # Pour les comparaisons de stat ____________________________________
 def challenge_agility(stat_voulant_rejouer: Stats, stat_qui_attaque_normalement: Stats) -> bool:

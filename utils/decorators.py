@@ -3,6 +3,7 @@ from discord import User
 from functools import wraps
 from discord.ext import commands
 from .locks import PlayerLock
+import os
 import json
 
 try:

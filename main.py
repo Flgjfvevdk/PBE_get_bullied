@@ -19,7 +19,6 @@ import money
 import keys
 import shop
 import bully
-# import item
 import utils.database as database
 from player_info import Player
 import tuto_text
@@ -284,7 +283,7 @@ async def team_challenge(ctx: Context, opponent:discord.Member):
             if p2 is None:
                 await ctx.reply(f"{opponent} has not joined the game.")
                 return
-            await fight_manager.manager_start_team_fight(ctx, user, p1, opponent, p2, bot)
+            await fight_manager.proposition_team_fight(ctx, user_1=user, user_2=opponent, player_1=p1, player_2=p2, for_fun=True)
 
     return
 
@@ -411,16 +410,6 @@ async def hire(ctx: Context):
             await interact_game.add_random_bully_to_player(ctx, player, interact_game.generate_name())
             await session.commit()
 
-# @bot.command(aliases=['item', 'items'])
-# async def show_item(ctx: Context, user:Optional[discord.abc.User] = None):
-#     if(user is None):
-#         user = ctx.author
-#     async with database.new_session() as session:
-#         player = await session.get(Player, user.id)
-#         if player is None:
-#             await ctx.reply(TEXT_JOIN_THE_GAME)
-#             return
-#         await interact_game.print_items(ctx, player)
 
 @bot.command()
 async def kill_all(ctx: Context):
@@ -537,31 +526,6 @@ async def admin_open_shop(ctx: Context):
     else:
         await ctx.send(f'Server {ctx.guild.name} is already saved.')
 
-
-# @bot.command()
-# @decorators.is_admin()
-# async def get_item(ctx: Context):
-#     user = ctx.author
-#     if user.id in utils.players_in_interaction:
-#         await ctx.reply(f"You are already in an interaction.")
-#         return
-
-#     utils.players_in_interaction.add(user.id)
-#     try:
-#         async with database.new_session() as session:
-#             player = await session.get(Player, ctx.author.id)
-#             if player is None:
-#                 await ctx.reply(TEXT_JOIN_THE_GAME)
-#                 return
-#             try:
-#                 new_item = item.Item(name="Str - x0.5", is_bfr_fight=True, buff_start_self=item.ItemStats(1,0,0,0,pv=4), buff_start_self_mult_lvl=item.Stats(0.5, 0, 0, 0))
-#                 await interact_game.add_item_to_player(ctx, player, new_item)
-#                 await session.commit()
-#             except Exception as e:
-#                 print("on est la en fait")
-#                 print(e)
-#     finally:
-#         utils.players_in_interaction.discard(user.id)
 
 @bot.command()
 @decorators.is_admin()

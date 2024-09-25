@@ -205,7 +205,7 @@ class Dungeon():
         text_enemy_coming = f"An enemy is coming! {fighting_bully_enemy.combattant.get_print(compact_print=True, current_hp=fighting_bully_enemy.pv)}"
         await self.thread.send(f"{bully.mise_en_forme_str(text_enemy_coming)}") 
         
-        fighting_bully_joueur, num_bully_j = await interact_game.player_choose_fighting_bully(ctx=self.ctx, fighting_bullies=self.fighters_joueur, user=self.ctx.author, player=self.player, bot=self.bot, channel_cible=self.thread, timeout=DUNGEON_CHOICE_TIMEOUT)
+        fighting_bully_joueur, num_bully_j = await interact_game.player_choose_fighting_bully(ctx=self.ctx, fighting_bullies=self.fighters_joueur, user=self.ctx.author, channel_cible=self.thread, timeout=DUNGEON_CHOICE_TIMEOUT)
 
         #On fait le combat.
         while True:
@@ -258,7 +258,7 @@ class Dungeon():
 
     async def fighter_change(self, fighter: FightingBully) -> FightingBully:
         try :
-            fighter, new_num_bully_j = await interact_game.player_choose_fighting_bully(ctx=self.ctx, fighting_bullies=self.fighters_joueur, user=self.ctx.author, player=self.player, bot=self.bot, channel_cible=self.thread, timeout=DUNGEON_CHOICE_TIMEOUT)
+            fighter, new_num_bully_j = await interact_game.player_choose_fighting_bully(ctx=self.ctx, fighting_bullies=self.fighters_joueur, user=self.ctx.author, channel_cible=self.thread, timeout=DUNGEON_CHOICE_TIMEOUT)
 
         except interact_game.CancelChoiceException:
             await self.thread.send(f"{fighter.combattant.name} stays in fight.")

@@ -93,9 +93,7 @@ class EnemyRoom():
     
     async def fighter_choice(self, ruin: "Ruin") -> FightingBully:
         try :
-            # _, num_bully_j = await interact_game.player_choose_bully(ruin.ctx, ruin.user, ruin.player, ruin.bot, channel_cible=ruin.thread, timeout=RUIN_CHOICE_TIMEOUT)
-            # fighting_bully_joueur = ruin.fighters_joueur[num_bully_j]
-            fighting_bully_joueur, num_bully_j = await interact_game.player_choose_fighting_bully(ctx=ruin.ctx, fighting_bullies=ruin.fighters_joueur, user=ruin.user, player=ruin.player, bot=ruin.bot, channel_cible=ruin.thread, timeout=RUIN_CHOICE_TIMEOUT)
+            fighting_bully_joueur, num_bully_j = await interact_game.player_choose_fighting_bully(ctx=ruin.ctx, fighting_bullies=ruin.fighters_joueur, user=ruin.user, channel_cible=ruin.thread, timeout=RUIN_CHOICE_TIMEOUT)
 
         except interact_game.CancelChoiceException:
             await ruin.thread.send(f"{ruin.user.name} cancelled the fight and left the ruin")
@@ -120,9 +118,7 @@ class EnemyRoom():
     
     async def fighter_change(self, ruin: "Ruin", fighter: FightingBully) -> FightingBully:
         try :
-            # _, new_num_bully_j = await interact_game.player_choose_bully(ruin.ctx, ruin.user, ruin.player, ruin.bot, channel_cible=ruin.thread, timeout=RUIN_CHOICE_TIMEOUT)
-            # fighter = ruin.fighters_joueur[new_num_bully_j]
-            fighter, new_num_bully_j = await interact_game.player_choose_fighting_bully(ctx=ruin.ctx, fighting_bullies=ruin.fighters_joueur, user=ruin.user, player=ruin.player, bot=ruin.bot, channel_cible=ruin.thread, timeout=RUIN_CHOICE_TIMEOUT)
+            fighter, new_num_bully_j = await interact_game.player_choose_fighting_bully(ctx=ruin.ctx, fighting_bullies=ruin.fighters_joueur, user=ruin.user, channel_cible=ruin.thread, timeout=RUIN_CHOICE_TIMEOUT)
         except interact_game.CancelChoiceException:
             await ruin.thread.send(f"{fighter.combattant.name} stays in fight.")
         except asyncio.exceptions.TimeoutError:

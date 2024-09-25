@@ -23,7 +23,6 @@ class FightingBully():
     @staticmethod
     def create_fighting_bully(b:Bully) -> "FightingBully":
         fighter = FightingBully(combattant=b, pv=b.max_pv, base_stats=replace(b.stats), stats=replace(b.stats), buff=create_buff_instance(b.buff_fight_tag))
-        print(fighter.buff.description)
         return fighter
     
     def reset_stats(self) -> None:

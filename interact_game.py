@@ -286,7 +286,7 @@ async def player_choose_bully(ctx: Context, user: discord.abc.User, player: Play
     await channel_cible.send(f"{user} selects {bully_selected.name}") 
     return bully_selected, bully_number
 
-async def player_choose_fighting_bully(ctx:Context, fighting_bullies:list[FightingBully], user: discord.abc.User, player: Player, bot: Bot, channel_cible=None, timeout = CHOICE_TIMEOUT) -> tuple[FightingBully, int]:
+async def player_choose_fighting_bully(ctx:Context, fighting_bullies:list[FightingBully], user: discord.abc.User, channel_cible=None, timeout = CHOICE_TIMEOUT) -> tuple[FightingBully, int]:
     '''Il faut try catch cette méthode car elle peut raise une exception en cas de timeout !!!
     '''
     if(channel_cible == None):

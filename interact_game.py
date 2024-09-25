@@ -1,6 +1,7 @@
 import random
 import os
 import money
+import shop
 from bully import Bully
 import bully
 # from item import Item
@@ -47,6 +48,15 @@ class ButtonChoice[T](discord.ui.Button):
         self.callback(self.choice_value)
         self.view.stop()
 
+class ButtonChoiceShop(discord.ui.Button):
+    def __init__(self, choice_value: T, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.choice_value = choice_value
+    
+    async def callback(self, interaction):
+        await shop.shop_button_callback(interaction, choice_value)
+
+
 class ButtonChoiceUser[T](discord.ui.Button):
     self.choice_value: T
 
@@ -72,21 +82,16 @@ class ButtonClickBool(discord.ui.Button):
         await interaction.response.defer() #Le bot ne renvoie pas de réponse automatique, mais pour faire comprendre à discord que l'interaction n'a pas fail, on fait ça
         self.view.stop()
 
-class ViewBullyShop[T](discord.ui.View):
-    choice: T|None = None
-    user: discord.abc.User|None = None
+class ViewBullyShop(discord.ui.View):
 
     def __init__(self, list_choix:List[Bully]):
         super().__init__()
-        self.list_choix:List[Bully] = list_choix
         for index, choix in enumerate(list_choix):
+            
             label = choix.name
-            self.add_item(ButtonChoiceUser(style=discord.ButtonStyle.secondary, label=label, custom_id=f"button_{index}", 
-                                   valeur_assigne=choix, callaback = self.callback))
+            self.add_item(ButtonChoiceShop(style=discord.ButtonStyle.secondary, label=label, custom_id=f"button_{index}", 
+                                   valeur_assigne=choix, callback = shop.button_click_callback))
 
-    def callback(self, choice: T, user: discord.abc.User):
-        self.choice = choice
-        self.user = user
 
 class ViewBullyChoice(discord.ui.View):
     def __init__(self, user:discord.abc.User, list_choix:List[Bully]):

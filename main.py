@@ -536,8 +536,8 @@ async def admin_give(ctx: Context,user: discord.User, name: str, lvl:int, rarity
 @decorators.is_admin()
 async def admin_new_shop(ctx: Context):
     try:
-        await shop.restock_shop()
-        await shop.print_shop(ctx, bot)
+        await shop.restock_shop(ctx.guild.id)
+        await shop.server_shops[ctx.guild.id].print_shop(ctx.channel)
     except Exception as e:
         print(e)
 
@@ -553,6 +553,7 @@ async def admin_open_shop(ctx: Context):
     if server_id not in shop_servers_id:
         shop_servers_id.append(server_id)
         shop.save_shop_server(shop_servers_id)
+        await shop.add_new_shop(server_id)
         await ctx.send(f'Server {ctx.guild.name} has been saved!')
     else:
         await ctx.send(f'Server {ctx.guild.name} is already saved.')

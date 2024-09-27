@@ -159,10 +159,11 @@ class Fight():
             self.emojis_recap[1].append( "🛡️" if self.tour==0 else "👊")
             recap_round.is_success_block = True
             if challenge_viciousness(attacker.stats, defender.stats):
-                apply_viciousness(attacker.stats, defender.stats, is_attack_success=False, is_attacker=True)
+                malus_vicious = apply_viciousness(attacker.stats, defender.stats, is_attack_success=False, is_attacker=True)
                 self.emojis_recap[0].append("🗡️" if self.tour==0 else "🛡️")
                 self.emojis_recap[1].append("🛡️" if self.tour==0 else "🗡️")
                 recap_round.is_success_vicious = True
+                recap_round.malus_vicious = malus_vicious
         else :
             lethal_buff = challenge_lethality(attacker.stats, defender.stats)
             lethal_buff += 1 if lethal_buff > 1 else 0
@@ -172,29 +173,35 @@ class Fight():
                 self.emojis_recap[0].append("🔪" if self.tour==0 else "💥")
                 self.emojis_recap[1].append("💥" if self.tour==0 else "🔪")
                 recap_round.is_success_lethal = True
-                recap_round.damage_receive = pv_perdu
+                recap_round.damage_receive_defender = pv_perdu
             else :
                 pv_perdu = 1
                 defender.pv -= pv_perdu
                 self.emojis_recap[0].append("👊" if self.tour==0 else "🩸")
                 self.emojis_recap[1].append("🩸" if self.tour==0 else "👊")
-                recap_round.damage_receive = pv_perdu
+                recap_round.damage_receive_defender = pv_perdu
             
             if challenge_viciousness(attacker.stats, defender.stats):
-                apply_viciousness(attacker.stats, defender.stats, is_attack_success=True, is_attacker=True)
+                malus_vicious = apply_viciousness(attacker.stats, defender.stats, is_attack_success=True, is_attacker=True)
                 em_att = "🔪" if lethal_buff > 0 else "🗡️"
                 self.emojis_recap[0].append(em_att if self.tour==0 else "💔")
                 self.emojis_recap[1].append("💔" if self.tour==0 else em_att)
                 recap_round.is_success_vicious = True
+                recap_round.malus_vicious = malus_vicious
 
         self.tour ^= 1 
 
         await self.apply_buff_fight(recap_round=recap_round)
         return
     
-    async def apply_buff_fight(self, recap_round):
-        self.fighter_1.buff.apply_buff(fighter=self.fighter_1, opponent=self.fighter_2, recap_round=recap_round)
-        self.fighter_2.buff.apply_buff(fighter=self.fighter_2, opponent=self.fighter_1, recap_round=recap_round)
+    async def apply_buff_fight(self, recap_round:fighting_bully.RecapRound):
+        d1_self, d1_opponent = self.fighter_1.buff.apply_aggresive(fighter=self.fighter_1, opponent=self.fighter_2, recap_round=recap_round)
+        d2_self, d2_opponent = self.fighter_2.buff.apply_aggresive(fighter=self.fighter_2, opponent=self.fighter_1, recap_round=recap_round)
+        damage_j1, damage_j2 = d1_self + d2_opponent, d2_self + d1_opponent
+        recap_round.add_damage_receive(self.fighter_1, damage_j1)
+        recap_round.add_damage_receive(self.fighter_2, damage_j2)
+        self.fighter_1.buff.apply_defensive(fighter=self.fighter_1, opponent=self.fighter_2, recap_round=recap_round)
+        self.fighter_2.buff.apply_defensive(fighter=self.fighter_2, opponent=self.fighter_1, recap_round=recap_round)
 
     async def end_fight(self):
         if(self.fighter_1.pv <= 0):
@@ -401,8 +408,9 @@ def challenge_viciousness(stat_challenger: Stats, stat_defender: Stats) -> bool:
     fourberie = Bully.clash_stat(st_actif = stat_att_vicieux, st_passif = stat_def_vicieux, neutre=minim)
     return fourberie
 
-def apply_viciousness(stat_challenger:Stats, stat_defender:Stats, is_attack_success, is_attacker):
-    """Apply a permanent viciousness debuff to the defender's highest stat."""
+def apply_viciousness(stat_challenger:Stats, stat_defender:Stats, is_attack_success, is_attacker) -> float:
+    """Apply a permanent viciousness debuff to the defender's highest stat.
+    Return the debuff stat value"""
     max_stat_name = stat_defender.max_stat()
     total_stat_points = stat_defender.sum_stats()
     if getattr(stat_defender, max_stat_name) > getattr(stat_challenger, max_stat_name) :
@@ -410,16 +418,13 @@ def apply_viciousness(stat_challenger:Stats, stat_defender:Stats, is_attack_succ
             malus = total_stat_points * 0.12
         elif is_attacker:
             malus = total_stat_points * 0.08
-        else:
-            malus = total_stat_points * 0.0
     else:
         if is_attack_success and is_attacker:
             malus = total_stat_points * 0.02
         elif is_attacker:
             malus = total_stat_points * 0.02
-        else:
-            malus = total_stat_points * 0.0
     setattr(stat_defender, max_stat_name, max(1, getattr(stat_defender, max_stat_name) - malus))
+    return malus
 
 def value_to_bar_str(v:int, max_value=10) -> str:
     v = max(0,v) #Pour éviter des valeurs négatives

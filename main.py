@@ -586,12 +586,11 @@ async def add_c(ctx: Context):
             c = consumable.AlimentEnum.Gigot.new_conso(2)
             print(c.get_print())
             player.consumables.append(c)
-            print("player.consumables : ", player.consumables[0].get_print())
             await session.commit()
 
 @bot.command()
 @decorators.is_admin()
-async def add_elixir(ctx: Context):
+async def add_elixir(ctx: Context, buff_name : str):
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
@@ -604,7 +603,7 @@ async def add_elixir(ctx: Context):
             if player is None:
                 await ctx.reply(TEXT_JOIN_THE_GAME)
                 return
-            e = consumable.ConsumableElixirBuff("Rage", "Rage")
+            e = consumable.ConsumableElixirBuff(buff_name, buff_name)
             print(e.get_print())
             player.consumables.append(e)
             print("player.consumables : ", player.consumables[0].get_print())

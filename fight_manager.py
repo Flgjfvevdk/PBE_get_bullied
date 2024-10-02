@@ -204,17 +204,12 @@ class Fight():
             d2, d1 = b.apply_aggresive(fighter=self.fighter_2, opponent=self.fighter_1, recap_round=recap_round)
             damage_j1 += d1
             damage_j2 += d2
-        # d1_self, d1_opponent = self.fighter_1.buff.apply_aggresive(fighter=self.fighter_1, opponent=self.fighter_2, recap_round=recap_round)
-        # d2_self, d2_opponent = self.fighter_2.buff.apply_aggresive(fighter=self.fighter_2, opponent=self.fighter_1, recap_round=recap_round)
-        # damage_j1, damage_j2 = d1_self + d2_opponent, d2_self + d1_opponent
         recap_round.add_damage_receive(self.fighter_1, damage_j1)
         recap_round.add_damage_receive(self.fighter_2, damage_j2)
         for b in self.fighter_1.buffs:
             b.apply_defensive(fighter=self.fighter_1, opponent=self.fighter_2, recap_round=recap_round)
         for b in self.fighter_2.buffs:
             b.apply_defensive(fighter=self.fighter_2, opponent=self.fighter_1, recap_round=recap_round)
-        # self.fighter_1.buff.apply_defensive(fighter=self.fighter_1, opponent=self.fighter_2, recap_round=recap_round)
-        # self.fighter_2.buff.apply_defensive(fighter=self.fighter_2, opponent=self.fighter_1, recap_round=recap_round)
 
     async def end_fight(self):
         if(self.fighter_1.pv <= 0):

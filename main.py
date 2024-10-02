@@ -210,9 +210,6 @@ async def tuto_buffs(ctx: Context):
     for buffClass in classes:
         if issubclass(buffClass, fighting_bully.BuffFight):
             txt+=f"{buffClass.__name__} : {buffClass.description}\n"
-            print("nice")
-        else : 
-            print("buff : ", buffClass)
     await ctx.channel.send(CText(txt).str())
 
 

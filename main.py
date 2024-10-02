@@ -7,6 +7,7 @@ import os
 from typing import Optional
 import discord
 from discord.ext import commands
+from pathlib import Path
 
 from utils.helpers import getenv
 from utils.locks import PlayerLock
@@ -618,7 +619,6 @@ async def add_elixir(ctx: Context, buff_name : str):
             e = consumable.ConsumableElixirBuff(buff_name, buff_name)
             print(e.get_print())
             player.consumables.append(e)
-            print("player.consumables : ", player.consumables[0].get_print())
             await session.commit()
 
 @bot.command()

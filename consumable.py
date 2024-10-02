@@ -12,6 +12,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.ext.asyncio.session import async_object_session
 import enum
+import buffs
+from fighting_bully import BuffFight
 
 CHOICE_TIMEOUT = 60
 CONSO_NUMBER_MAX = 10
@@ -110,13 +112,10 @@ class ConsumableElixirBuff(Consumable):
         b.buff_fight_tag = self.buff_tag
 
     def get_print(self) -> CText:
+        BuffClass:type[BuffFight] = getattr(buffs, self.buff_tag)
         return (
-            CText().txt(f"Elixir of {self.name} : on use, give a fighting buff")
+            CText().txt(f"Elixir of {self.name}. On use, give a fighting buff : {BuffClass.description}")
         )
-
-    def get_effect(self) -> str:
-        aliment = self.aliment.value
-        return f"Debuff **{aliment.stat_nerf}** to buff **{aliment.stat_buff}** by up to {int(self.value)}."
 
 #_______________________________________________________________________
 #_______________________________________________________________________
@@ -202,21 +201,6 @@ async def remove_consumable(ctx: Context, user: discord.abc.User, player: 'playe
         if session is not None:
             await session.delete(consumable_selected)
 
-# async def print_consumables(ctx: Context, player: 'player_info.Player', channel_cible=None):
-#     #Par défaut, le channel d'envoie est le channel du contexte
-#     if(channel_cible==None):
-#         channel_cible = ctx.channel
-
-#     if len(player.consumables) <= 0:
-#         text = "```You don't have any consumables. Do ruin to have one```"
-#         return text
-#     text="```ansi\n Your consumables :"
-#     for c in player.consumables:
-#         print(c.get_print())
-#         print(f"on a {c}")
-#         text+= "\n- " + c.get_print()
-#     text+="\n\n(!!use_consumable to use one)```"
-#     await channel_cible.send(text)
 
 
 def str_consumables(player: 'player_info.Player') -> CText:
@@ -239,6 +223,6 @@ def embed_consumables(player: 'player_info.Player', user: discord.abc.User, *, s
         embed.description = "You have no consumables :("
         if not select: embed.set_footer(text="But you may get some from ruins!")
     for i,c in enumerate(player.consumables):
-        embed.add_field(name=f"{i+1}. {c.name}", value=c.get_effect(), inline=not select)
-    if not select: embed.set_thumbnail(url=user.avatar.url)
+        embed.add_field(name=f"{i+1}. {c.name}", value=c.get_print(), inline=not select)
+    if user.avatar is not None and not select: embed.set_thumbnail(url=user.avatar.url)
     return embed

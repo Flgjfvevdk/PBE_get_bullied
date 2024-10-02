@@ -100,10 +100,10 @@ class Stats(MutableComposite):
     
     def to_str_color(self)-> str:
         import math
-        txt_s = f"{color_str.blue(str(round(self.strength, max(0,2-round(math.log10(self.strength))))))}"
-        txt_a = f"{color_str.yellow(str(round(self.agility, max(0,2-round(math.log10(self.agility))))))}"
-        txt_l = f"{color_str.red(str(round(self.lethality, max(0,2-round(math.log10(self.lethality))))))}"
-        txt_v = f"{color_str.green(str(round(self.viciousness, max(0,2-round(math.log10(self.viciousness))))))}"
+        txt_s = f"{color_str.BlueNode(str(round(self.strength, max(0,2-round(math.log10(self.strength)))))).colorized()}"
+        txt_a = f"{color_str.YellowNode(str(round(self.agility, max(0,2-round(math.log10(self.agility)))))).colorized()}"
+        txt_l = f"{color_str.RedNode(str(round(self.lethality, max(0,2-round(math.log10(self.lethality)))))).colorized()}"
+        txt_v = f"{color_str.GreenNode(str(round(self.viciousness, max(0,2-round(math.log10(self.viciousness)))))).colorized()}"
         
         return f"|{txt_s}|{txt_a}|{txt_l}|{txt_v}|"
     
@@ -273,7 +273,6 @@ class Bully(Base):
             self.increase_stat_unique_rarity(self.lvl)
             
         else:
-            # new_points = new_points_lvl_up(self.lvl, self.rarity)
             new_points = self.lvl
             valeur = self.rarity.coef_level_points
             self.increase_stat_with_seed(nb_points=new_points, talkative = False, valeur=valeur)
@@ -365,11 +364,12 @@ class Bully(Base):
 def str_print_bully(bully:Bully, compact_print = False, current_hp:int|None = None):
     text = ""
     hp_text = f"Max HP : {bully.max_pv}" if current_hp is None else f"HP : {current_hp}/{bully.max_pv}"
+    buff_text = f"Buff : {bully.buff_fight_tag}" if bully.buff_fight_tag != 'NoBuff' else ""
     def good_print_float(x:float) -> float|int:
         xf:float = float(x)
         return int(xf) if xf.is_integer() else round(xf, 1)
     if(compact_print) :
-        text += bully.name + " | lvl : " + str(bully.lvl) + " | Rarity : " + bully.rarity.name + " | " + hp_text + "\n\t" 
+        text += bully.name + " | lvl : " + str(bully.lvl) + " | Rarity : " + bully.rarity.name + " | " + hp_text + " | " + buff_text + "\n\t" 
         text += " |S : "+ str(good_print_float(bully.stats.strength))
         text += " |A : "+ str(good_print_float(bully.stats.agility))
         text += " |L : "+ str(good_print_float(bully.stats.lethality))
@@ -378,7 +378,7 @@ def str_print_bully(bully:Bully, compact_print = False, current_hp:int|None = No
         text += bully.name + "\tRarity : " + bully.rarity.name
         text += "\nlvl : " + str(bully.lvl)
         text += "\texp : " + str(bully.exp)
-        text += "\t" + hp_text
+        text += "\t" + hp_text + "\t" + buff_text
         #On print la force
         text += "\nStrength : - - -"
         text += str_text_stat(int(bully.stats.strength))

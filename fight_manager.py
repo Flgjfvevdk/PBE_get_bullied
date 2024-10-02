@@ -86,7 +86,7 @@ async def select_fighters(ctx: Context, user_1: discord.abc.User, user_2: discor
 
 class Fight():
     def __init__(self, ctx:Context, fighter_1:FightingBully, fighter_2:FightingBully, user_1: discord.abc.User|None = None, user_2: discord.abc.User|None=None
-                 , player_1: Player|None=None, player_2: Player|None = None, for_fun = False, channel_cible = None, nb_swaps_1:int = 0, nb_swaps_2:int = 0):
+                 , player_1: Player|None=None, player_2: Player|None = None, for_fun = False, channel_cible = None, nb_swaps_1:float = 0, nb_swaps_2:float = 0):
         self.ctx = ctx
         self.user_1 = user_1
         self.user_2 = user_2

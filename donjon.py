@@ -146,7 +146,7 @@ class Dungeon():
         return enemies_fighters
 
     async def enter(self) -> None:
-        message = await self.ctx.channel.send(f"{self.ctx.author.mention} enters the dungeon lev : {self.level}")
+        message = await self.ctx.channel.send(f"{self.ctx.author.mention} enters the dungeon level : {self.level}")
         try :
             self.thread = await self.ctx.channel.create_thread(name=f"Dungeon - Level {self.level}", message=message) #type: ignore
         except Exception as e:

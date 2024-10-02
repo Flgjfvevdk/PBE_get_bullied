@@ -19,7 +19,6 @@ import money
 import keys
 import shop
 import bully
-# import item
 import utils.database as database
 from player_info import Player
 import tuto_text
@@ -175,26 +174,6 @@ async def suicide(ctx: Context):
 
     return
 
-# @bot.command(aliases=['destroy', 'remove_item'])
-# async def destroy_item(ctx: Context):
-#     user = ctx.author
-#     if user.id in utils.players_in_interaction:
-#         await ctx.reply(f"You are already in an interaction.")
-#         return
-    
-#     utils.players_in_interaction.add(user.id)
-#     try:
-#         async with database.new_session() as session:
-#             p = await session.get(Player, user.id)
-#             if p is None:
-#                 await ctx.reply(TEXT_JOIN_THE_GAME)
-#                 return
-#             await interact_game.remove_item(ctx, user=user, player=p)
-#             await session.commit()
-#     finally:
-#         utils.players_in_interaction.discard(user.id)
-
-#     return
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -221,6 +200,21 @@ async def tuto_shop(ctx: Context):
 @bot.command(aliases=['tuto_lb', 'tuto_l'])
 async def tuto_lootbox(ctx: Context):
     await ctx.channel.send(tuto_text.tuto_lootbox)
+@bot.command(aliases=['tuto_bf', 'tuto_buff', 'list_buff', 'list_buffs'])
+async def tuto_buffs(ctx: Context):
+    txt = ""
+    import inspect, buffs, fighting_bully
+    from utils.color_str import CText
+    classes = [member[1] for member in inspect.getmembers(buffs) if inspect.isclass(member[1])]
+    print("")
+    for buffClass in classes:
+        if issubclass(buffClass, fighting_bully.BuffFight):
+            txt+=f"{buffClass.__name__} : {buffClass.description}\n"
+            print("nice")
+        else : 
+            print("buff : ", buffClass)
+    await ctx.channel.send(CText(txt).str())
+
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -238,7 +232,7 @@ async def challenge(ctx: Context, opponent:discord.Member):
     if not lock2.check():
         await ctx.channel.send(f"Sorry, but {opponent} is already busy!")
         return
-
+    
     with lock1, lock2:
         async with database.new_session() as session:
             p1 = await session.get(Player, user.id)
@@ -249,7 +243,7 @@ async def challenge(ctx: Context, opponent:discord.Member):
             if p2 is None:
                 await ctx.reply(f"{opponent} has not joined the game.")
                 return
-            await fight_manager.proposition_fight(ctx, user, p1, opponent, p2, bot)
+            await fight_manager.proposition_fight(ctx, user, opponent, p1, p2, bot)
             await session.commit()
 
     return
@@ -277,7 +271,7 @@ async def fun_challenge(ctx: Context, opponent:discord.Member):
             if p2 is None:
                 await ctx.reply(f"{opponent} has not joined the game.")
                 return
-            await fight_manager.proposition_fight(ctx, user, p1, opponent, p2, bot, for_fun=True)
+            await fight_manager.proposition_fight(ctx, user, opponent, p1, p2, bot, for_fun=True)
 
     return
 
@@ -304,7 +298,7 @@ async def team_challenge(ctx: Context, opponent:discord.Member):
             if p2 is None:
                 await ctx.reply(f"{opponent} has not joined the game.")
                 return
-            await fight_manager.manager_start_team_fight(ctx, user, p1, opponent, p2, bot)
+            await fight_manager.proposition_team_fight(ctx, user_1=user, user_2=opponent, player_1=p1, player_2=p2, for_fun=True)
 
     return
 
@@ -431,16 +425,6 @@ async def hire(ctx: Context):
             await interact_game.add_random_bully_to_player(ctx, player, interact_game.generate_name())
             await session.commit()
 
-# @bot.command(aliases=['item', 'items'])
-# async def show_item(ctx: Context, user:Optional[discord.abc.User] = None):
-#     if(user is None):
-#         user = ctx.author
-#     async with database.new_session() as session:
-#         player = await session.get(Player, user.id)
-#         if player is None:
-#             await ctx.reply(TEXT_JOIN_THE_GAME)
-#             return
-#         await interact_game.print_items(ctx, player)
 
 @bot.command()
 async def kill_all(ctx: Context):
@@ -558,31 +542,6 @@ async def admin_open_shop(ctx: Context):
         await ctx.send(f'Server {ctx.guild.name} is already saved.')
 
 
-# @bot.command()
-# @decorators.is_admin()
-# async def get_item(ctx: Context):
-#     user = ctx.author
-#     if user.id in utils.players_in_interaction:
-#         await ctx.reply(f"You are already in an interaction.")
-#         return
-
-#     utils.players_in_interaction.add(user.id)
-#     try:
-#         async with database.new_session() as session:
-#             player = await session.get(Player, ctx.author.id)
-#             if player is None:
-#                 await ctx.reply(TEXT_JOIN_THE_GAME)
-#                 return
-#             try:
-#                 new_item = item.Item(name="Str - x0.5", is_bfr_fight=True, buff_start_self=item.ItemStats(1,0,0,0,pv=4), buff_start_self_mult_lvl=item.Stats(0.5, 0, 0, 0))
-#                 await interact_game.add_item_to_player(ctx, player, new_item)
-#                 await session.commit()
-#             except Exception as e:
-#                 print("on est la en fait")
-#                 print(e)
-#     finally:
-#         utils.players_in_interaction.discard(user.id)
-
 @bot.command()
 @decorators.is_admin()
 async def py_admin(ctx: Context):
@@ -642,6 +601,26 @@ async def add_c(ctx: Context):
             c = consumable.AlimentEnum.Gigot.new_conso(2)
             print(c.get_print())
             player.consumables.append(c)
+            await session.commit()
+
+@bot.command()
+@decorators.is_admin()
+async def add_elixir(ctx: Context, buff_name : str):
+    user = ctx.author
+    lock = PlayerLock(user.id)
+    if not lock.check():
+        await ctx.send("You are already in an action.")
+        return
+    
+    with lock:
+        async with database.new_session() as session:
+            player = await session.get(Player, ctx.author.id)
+            if player is None:
+                await ctx.reply(TEXT_JOIN_THE_GAME)
+                return
+            e = consumable.ConsumableElixirBuff(buff_name, buff_name)
+            print(e.get_print())
+            player.consumables.append(e)
             print("player.consumables : ", player.consumables[0].get_print())
             await session.commit()
 

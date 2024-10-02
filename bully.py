@@ -4,7 +4,7 @@ import shutil
 from typing import Any, List, Optional, Tuple
 from dataclasses import dataclass, replace, InitVar, KW_ONLY, fields
 from pathlib import Path
-import utils.color_str
+import utils.color_str as color_str
 
 import player_info
 
@@ -193,6 +193,7 @@ class Bully(Base):
         mapped_column(name="stat_viciousness"),
         default=None
     )
+    buff_fight_tag: Mapped[str] = mapped_column(default= "NoBuff")
 
     def __post_init__(self, must_load_image:bool):
         if(must_load_image):

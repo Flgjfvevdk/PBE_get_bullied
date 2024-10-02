@@ -95,6 +95,24 @@ class ConsumableAliment(Consumable):
             .blue(self.aliment.value.stat_buff)
             .txt(" by the same amount.")
         )
+    
+class ConsumableElixirBuff(Consumable):
+    __mapper_args__ = {
+        "polymorphic_identity": "elixirbuff",
+        "polymorphic_load": "selectin"
+    }
+    __tablename__ = "elixirbuff"
+
+    id: Mapped[int] = mapped_column(ForeignKey("consumable.id"), init=False, primary_key=True)
+    buff_tag: Mapped[str]
+
+    def apply(self, b:Bully):
+        b.buff_fight_tag = self.buff_tag
+
+    def get_print(self) -> CText:
+        return (
+            CText().txt(f"Elixir of {self.name} : on use, give a fighting buff")
+        )
 
     def get_effect(self) -> str:
         aliment = self.aliment.value
@@ -128,7 +146,7 @@ async def use_consumable(ctx: Context, user: discord.abc.User, player: 'player_i
         channel_cible = ctx.channel
 
     try :
-        bully_selected, _ = await interact_game.player_choose_bully(ctx=ctx, user=user, player=player, bot = bot)
+        bully_selected, _ = await interact_game.player_choose_bully(ctx=ctx, user=user, player=player)
     except asyncio.exceptions.TimeoutError as e:
         await ctx.send(f"Timeout, choose faster next time {user.name}")
         return

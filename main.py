@@ -200,6 +200,21 @@ async def tuto_shop(ctx: Context):
 @bot.command(aliases=['tuto_lb', 'tuto_l'])
 async def tuto_lootbox(ctx: Context):
     await ctx.channel.send(tuto_text.tuto_lootbox)
+@bot.command(aliases=['tuto_bf', 'tuto_buff', 'list_buff', 'list_buffs'])
+async def tuto_buffs(ctx: Context):
+    txt = ""
+    import inspect, buffs, fighting_bully
+    from utils.color_str import CText
+    classes = [member[1] for member in inspect.getmembers(buffs) if inspect.isclass(member[1])]
+    print("")
+    for buffClass in classes:
+        if issubclass(buffClass, fighting_bully.BuffFight):
+            txt+=f"{buffClass.__name__} : {buffClass.description}\n"
+            print("nice")
+        else : 
+            print("buff : ", buffClass)
+    await ctx.channel.send(CText(txt).str())
+
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 

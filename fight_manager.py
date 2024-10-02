@@ -195,13 +195,26 @@ class Fight():
         return
     
     async def apply_buff_fight(self, recap_round:fighting_bully.RecapRound):
-        d1_self, d1_opponent = self.fighter_1.buff.apply_aggresive(fighter=self.fighter_1, opponent=self.fighter_2, recap_round=recap_round)
-        d2_self, d2_opponent = self.fighter_2.buff.apply_aggresive(fighter=self.fighter_2, opponent=self.fighter_1, recap_round=recap_round)
-        damage_j1, damage_j2 = d1_self + d2_opponent, d2_self + d1_opponent
+        damage_j1, damage_j2 = 0, 0
+        for b in self.fighter_1.buffs:
+            d1, d2 = b.apply_aggresive(fighter=self.fighter_1, opponent=self.fighter_2, recap_round=recap_round)
+            damage_j1 += d1
+            damage_j2 += d2
+        for b in self.fighter_2.buffs:
+            d2, d1 = b.apply_aggresive(fighter=self.fighter_2, opponent=self.fighter_1, recap_round=recap_round)
+            damage_j1 += d1
+            damage_j2 += d2
+        # d1_self, d1_opponent = self.fighter_1.buff.apply_aggresive(fighter=self.fighter_1, opponent=self.fighter_2, recap_round=recap_round)
+        # d2_self, d2_opponent = self.fighter_2.buff.apply_aggresive(fighter=self.fighter_2, opponent=self.fighter_1, recap_round=recap_round)
+        # damage_j1, damage_j2 = d1_self + d2_opponent, d2_self + d1_opponent
         recap_round.add_damage_receive(self.fighter_1, damage_j1)
         recap_round.add_damage_receive(self.fighter_2, damage_j2)
-        self.fighter_1.buff.apply_defensive(fighter=self.fighter_1, opponent=self.fighter_2, recap_round=recap_round)
-        self.fighter_2.buff.apply_defensive(fighter=self.fighter_2, opponent=self.fighter_1, recap_round=recap_round)
+        for b in self.fighter_1.buffs:
+            b.apply_defensive(fighter=self.fighter_1, opponent=self.fighter_2, recap_round=recap_round)
+        for b in self.fighter_2.buffs:
+            b.apply_defensive(fighter=self.fighter_2, opponent=self.fighter_1, recap_round=recap_round)
+        # self.fighter_1.buff.apply_defensive(fighter=self.fighter_1, opponent=self.fighter_2, recap_round=recap_round)
+        # self.fighter_2.buff.apply_defensive(fighter=self.fighter_2, opponent=self.fighter_1, recap_round=recap_round)
 
     async def end_fight(self):
         if(self.fighter_1.pv <= 0):
@@ -248,12 +261,12 @@ class Fight():
         barre_pv_2 = value_to_bar_str(self.fighter_2.pv, max_value= self.max_pv_2)
         text_f = CText(
                 f"\t\tBully 1 : {self.fighter_1.combattant.name}\n"
-                f"HP : {barre_pv_1} ({self.fighter_1.pv:02}/{self.max_pv_1:02}) \t{self.fighter_1.stats.to_str_color()}\n"
+                f"HP : {barre_pv_1} ({self.fighter_1.pv:02}/{self.max_pv_1:02}) \t{self.fighter_1.stats.to_str_color()} \t{buff_to_str(self.fighter_1.buffs)}\n"
                 f"{''.join(self.emojis_recap[0][-RECAP_MAX_EMOJI:])}\n"
                 "\t\t\t\tVS\n"
                 f"{''.join(self.emojis_recap[1][-RECAP_MAX_EMOJI:])}\n"
                 f"\t\tBully 2 : {self.fighter_2.combattant.name}\n"
-                f"HP : {barre_pv_2} ({self.fighter_2.pv:02}/{self.max_pv_2:02}) \t{self.fighter_2.stats.to_str_color()}"
+                f"HP : {barre_pv_2} ({self.fighter_2.pv:02}/{self.max_pv_2:02}) \t{self.fighter_2.stats.to_str_color()}\t{buff_to_str(self.fighter_2.buffs)}"
             )
         return text_f.str()
     
@@ -434,6 +447,12 @@ def value_to_bar_str(v:int, max_value=10) -> str:
     for k in range(max_value-v):
         t += "."
     return t
+
+def buff_to_str(buffs:list[fighting_bully.BuffFight]):
+    txt = "" if buffs == [] else "Buff : |" 
+    for b in buffs : 
+        txt += f" {b.name} |"
+    return txt
 
 # Les récompenses 
 def reward_win_fight(b_win:Bully, b_lose:Bully) -> tuple[float, int]:

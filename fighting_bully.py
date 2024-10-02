@@ -1,12 +1,13 @@
 from __future__ import annotations # Replace type hints to their string form (Item => "Item"), which resolves circular dependencies
                                    # WARNING: Should only be used for type hints
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, replace, field
 from bully import Bully, Stats
         
 class BuffFight():
+    description:str = "No buff"
     def __init__(self):
         self.name:str = self.__class__.__name__
-        self.description:str = "No buff"
+        # self.
         # Ajouter variable si variables nécessaires
     def apply_aggresive(self, fighter:FightingBully, opponent:FightingBully, recap_round:RecapRound) -> tuple[int, int]:
         """ For buff that could deal damage to a fighter.
@@ -25,11 +26,13 @@ class FightingBully():
     pv: int
     base_stats: Stats
     stats: Stats
-    buff:BuffFight = BuffFight()
+    buffs:list[BuffFight] = field(default_factory=lambda: [])
 
     @staticmethod
     def create_fighting_bully(b:Bully) -> "FightingBully":
-        fighter = FightingBully(combattant=b, pv=b.max_pv, base_stats=replace(b.stats), stats=replace(b.stats), buff=create_buff_instance(b.buff_fight_tag))
+        fighter = FightingBully(combattant=b, pv=b.max_pv, base_stats=replace(b.stats), stats=replace(b.stats))#, buffs=create_buff_instance(b.buff_fight_tag))
+        if (b.buff_fight_tag != "NoBuff"):
+            fighter.buffs.append(create_buff_instance(b.buff_fight_tag))
         return fighter
     
     def reset_stats(self) -> None:
@@ -67,7 +70,7 @@ class RecapRound():
             raise Warning("Input fighter is neither attacker nor defender")
             return 0
 
-def create_buff_instance(class_name: str):
+def create_buff_instance(class_name: str) -> BuffFight: 
     import buffs
     # Cherche la classe dans le module
     try:

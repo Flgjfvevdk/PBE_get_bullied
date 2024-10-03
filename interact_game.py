@@ -245,7 +245,7 @@ def str_fighting_bully(fighting_bully:list[FightingBully], print_images=False) -
     return (text, files)
 
 
-async def player_choose_bully(ctx: Context, user: discord.abc.User, player: Player, channel_cible=None, timeout = CHOICE_TIMEOUT, from_team=True) -> tuple[Bully, int]:
+async def select_bully(ctx: Context, user: discord.abc.User, player: Player, channel_cible=None, timeout = CHOICE_TIMEOUT, from_team=True) -> Bully:
     '''Il faut try catch cette méthode car elle peut raise une exception en cas de timeout !!!
     '''
     if(channel_cible == None):
@@ -284,7 +284,7 @@ async def player_choose_bully(ctx: Context, user: discord.abc.User, player: Play
 
     #On envoie les infos sur le bully choisit
     await channel_cible.send(f"{user} selects {bully_selected.name}") 
-    return bully_selected, bully_number
+    return bully_selected
 
 async def player_choose_fighting_bully(ctx:Context, fighting_bullies:list[FightingBully], user: discord.abc.User, channel_cible=None, timeout = CHOICE_TIMEOUT) -> tuple[FightingBully, int]:
     '''Il faut try catch cette méthode car elle peut raise une exception en cas de timeout !!!

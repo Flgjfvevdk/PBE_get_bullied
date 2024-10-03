@@ -95,14 +95,14 @@ async def print_reserve(ctx: Context, user: discord.abc.User, player: Player, bo
         with lock:
             try:
                 if int_selected == 0:
-                    bully_selected, _ = await interact_game.player_choose_bully(ctx=ctx, user=user, player=player)
+                    bully_selected = await interact_game.select_bully(ctx=ctx, user=user, player=player)
                     await switch_reserve(ctx, player, bully_selected, go_reserve=True)
                 elif int_selected == 1 :
-                    bully_selected, _ = await interact_game.player_choose_bully(ctx=ctx, user=user, player=player, from_team=False)
+                    bully_selected = await interact_game.select_bully(ctx=ctx, user=user, player=player, from_team=False)
                     await switch_reserve(ctx, player, bully_selected, go_reserve=False)
                 else : 
-                    bully_team, _ = await interact_game.player_choose_bully(ctx=ctx, user=user, player=player, from_team=True)
-                    bully_reserve, _ = await interact_game.player_choose_bully(ctx=ctx, user=user, player=player, from_team=False)
+                    bully_team = await interact_game.select_bully(ctx=ctx, user=user, player=player, from_team=True)
+                    bully_reserve = await interact_game.select_bully(ctx=ctx, user=user, player=player, from_team=False)
                     bully_team.in_reserve = True
                     bully_reserve.in_reserve = False
                     await channel_cible.send(f"{bully_team.name} and {bully_reserve.name} switched")  

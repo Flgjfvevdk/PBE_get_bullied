@@ -25,6 +25,7 @@ from player_info import Player
 import tuto_text
 import lootbox
 import consumable
+import trades
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -404,6 +405,34 @@ async def print_reserve(ctx: Context, user:Optional[discord.User |discord.Member
             return
         await reserve.print_reserve(ctx, user, player, bot, session=session, print_images = True)
         
+@bot.command(aliases=['exchange', 'trade_offer'])
+async def trade(ctx: Context, other:discord.Member):
+    user = ctx.author
+
+    lock1 = PlayerLock(user.id)
+    if not lock1.check():
+        await ctx.send("You are already in an action.")
+        return
+    lock2 = PlayerLock(other.id)
+    if not lock2.check():
+        await ctx.channel.send(f"Sorry, but {other} is already busy!")
+        return
+    
+    with lock1, lock2:
+        async with database.new_session() as session:
+            p1 = await session.get(Player, user.id)
+            p2 = await session.get(Player, other.id)
+            if p1 is None:
+                await ctx.reply(TEXT_JOIN_THE_GAME)
+                return
+            if p2 is None:
+                await ctx.reply(f"{other} has not joined the game.")
+                return
+            await trades.trade_offer(ctx, user, other, p1, p2)
+            await session.commit()
+
+    return
+
 
 @bot.command(aliases=['h'])
 #@decorators.author_is_free

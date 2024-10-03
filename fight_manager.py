@@ -19,7 +19,7 @@ from utils.color_str import CText
 
 CHOICE_TIMEOUT = 30
 RECAP_MAX_EMOJI = 15
-FIGHT_MSG_TIME_UPDATE = 1
+FIGHT_MSG_TIME_UPDATE = 1.5
 
 
 async def proposition_fight(ctx:Context, user_1:discord.abc.User, user_2:discord.abc.User, player_1: Player, player_2: Player, bot: Bot, for_fun = False):
@@ -62,10 +62,11 @@ async def proposition_fight(ctx:Context, user_1:discord.abc.User, user_2:discord
     await fight.start_fight()
     return
 
-async def select_fighters(ctx: Context, user_1: discord.abc.User, user_2: discord.abc.User, player_1: Player, player_2: Player) -> tuple[FightingBully, FightingBully]:
+async def select_fighters(ctx: Context, user_1: discord.abc.User, user_2: discord.abc.User, player_1: Player, player_2: Player, talkative:bool = False) -> tuple[FightingBully, FightingBully]:
     try:
-        bully_1, _ = await interact_game.player_choose_bully(ctx, user_1, player_1, timeout = CHOICE_TIMEOUT)
+        bully_1 = await interact_game.select_bully(ctx, user_1, player_1, timeout = CHOICE_TIMEOUT)
         fighting_bully_1 = FightingBully.create_fighting_bully(bully_1)
+        if talkative : await ctx.channel.send(f"{user_1.name} select {bully_1.name} (lvl:{bully_1.lvl})")
     except asyncio.exceptions.TimeoutError as e:
         await ctx.send(f"Timeout, choose faster next time {user_1.name}")
         raise e
@@ -73,8 +74,9 @@ async def select_fighters(ctx: Context, user_1: discord.abc.User, user_2: discor
         await ctx.send(f"{user_1.name} cancelled the fight")
         raise e
     try:
-        bully_2, _ = await interact_game.player_choose_bully(ctx, user_2, player_2, timeout = CHOICE_TIMEOUT)
+        bully_2 = await interact_game.select_bully(ctx, user_2, player_2, timeout = CHOICE_TIMEOUT)
         fighting_bully_2 = FightingBully.create_fighting_bully(bully_2)
+        if talkative : await ctx.channel.send(f"{user_2.name} select {bully_2.name} (lvl:{bully_2.lvl})")
     except asyncio.exceptions.TimeoutError as e:
         await ctx.send(f"Timeout, choose faster next time {user_2.name}")
         raise e

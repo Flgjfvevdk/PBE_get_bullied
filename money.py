@@ -8,7 +8,8 @@ PAYDAY_COOLDOWN = 8 * 60 * 60
 PAYDAY_VALUE = 250
 
 MONEY_ICON = "🩹"
-MONEY_JOIN_VALUE = 400
+MONEY_JOIN_VALUE = 500
+MONEY_REFERRAL = 600
 
 async def cooldown_restant_pay(player: Player) -> int:
     # Vérifier si l'utilisateur est en cooldown

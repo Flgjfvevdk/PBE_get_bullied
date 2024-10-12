@@ -74,8 +74,20 @@ async def on_command_error(ctx: Context, error):
 @bot.command()
 async def join(ctx: Context):
     async with database.new_session() as session:
-        await interact_game.join_game(ctx, session)
-        
+        await interact_game.join_game(ctx, user=ctx.author, session=session)
+
+@bot.command(aliases=['parrain', 'referral', 'parrainage'])
+async def invite(ctx: Context, user:discord.Member):
+    async with database.new_session() as session:
+        player_parrain = await session.get(Player, ctx.author.id)
+        if player_parrain is None:
+            await ctx.reply(TEXT_JOIN_THE_GAME)
+            return
+        if await session.get(Player, user.id) is not None :
+            await ctx.reply(f"{user} has already joined the game.")
+            return
+        await interact_game.invite_join(ctx, player_parrain, user, session=session)
+       
 
 @bot.command(aliases=['py', 'pay'])
 async def payday(ctx: Context):

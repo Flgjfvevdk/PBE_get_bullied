@@ -125,13 +125,13 @@ class ViewClickBoolMultiple(discord.ui.View):
 
 ## _________________________________________________________________________
 
-async def join_game(ctx: Context, session: AsyncSession, channel_cible: Optional[discord.abc.Messageable]=None) -> None:
+async def join_game(ctx: Context, user:discord.Member|discord.User, session: AsyncSession, channel_cible: Optional[discord.abc.Messageable]=None) -> Player|None:
     # Par défaut, le channel d'envoie est le channel du contexte
     if(channel_cible==None):
         channel_cible = ctx.channel
     
     player = Player(money.MONEY_JOIN_VALUE)
-    player.id = ctx.author.id
+    player.id = user.id
     try:
         session.add(player)
         await session.commit()
@@ -141,7 +141,36 @@ async def join_game(ctx: Context, session: AsyncSession, channel_cible: Optional
         return
 
     await ctx.reply("Welcome to the adventure ! (!!tuto)")
-    return 
+    return player
+
+async def invite_join(ctx: Context, parrain:Player, user:discord.Member|discord.User, session: AsyncSession, channel_cible: Optional[discord.abc.Messageable]=None) -> None:
+    event = asyncio.Event()
+    var:Dict[str, bool] = {"choix" : False}
+
+    if(user != ctx.author):
+        #On affiche le message
+        message = await ctx.channel.send(content=f"{user}, do you want to join game ?", view=ViewYesNo(user=user, event=event, variable_pointer = var))
+        try:
+            await asyncio.wait_for(event.wait(), timeout=CHOICE_TIMEOUT)
+        except asyncio.exceptions.TimeoutError as e:
+            await message.delete()
+            return
+        join_accept:bool = var["choix"]
+        await message.delete()
+        if join_accept :
+            # new_player = await join_game(ctx, user, session, channel_cible)
+            new_player = Player(money.MONEY_JOIN_VALUE)
+            new_player.id = user.id
+            try:
+                session.add(new_player)
+                parrain.money += money.MONEY_REFERRAL
+                bully_gift = Bully(f"{ctx.author.name}'s gift", stats=bully.Stats(8, 8, 8, 8), buff_fight_tag="Friendship")
+                new_player.bullies.append(bully_gift)
+                await session.commit()
+            except IntegrityError:
+                await ctx.reply("You have already joined the game!\n(if you think this is an error, please contact an administrator)")
+                return            
+
 
 async def add_random_bully_to_player(ctx: Context, player: Player, name_brute: str, channel_cible=None) -> None:
     name_bully:str = name_brute

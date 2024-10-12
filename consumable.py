@@ -36,6 +36,9 @@ class Consumable(Base):
 
     def get_print(self) -> CText:
         raise Exception("Must be implemented")
+    
+    def get_effect(self) -> str:
+        raise Exception("Must be implemented")
 
 
 @dataclass(eq=True, frozen=True)
@@ -222,5 +225,5 @@ def embed_consumables(player: 'player_info.Player', user: discord.abc.User, *, s
         if not select: embed.set_footer(text="But you may get some from ruins!")
     for i,c in enumerate(player.consumables):
         embed.add_field(name=f"{i+1}. {c.name}", value=c.get_effect(), inline=not select)
-    if not select: embed.set_thumbnail(url=user.avatar.url)
+    if not select and user.avatar is not None: embed.set_thumbnail(url=user.avatar.url)
     return embed

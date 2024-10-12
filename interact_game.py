@@ -136,8 +136,7 @@ async def join_game(ctx: Context, user:discord.Member|discord.User, session: Asy
         session.add(player)
         await session.commit()
     except IntegrityError:
-        await ctx.reply("You have already joined the game!\n"
-                  "(if you think this is an error, please contact an administrator)")
+        await ctx.reply("You have already joined the game!")
         return
 
     await ctx.reply("Welcome to the adventure ! (!!tuto)")
@@ -168,7 +167,7 @@ async def invite_join(ctx: Context, parrain:Player, user:discord.Member|discord.
                 new_player.bullies.append(bully_gift)
                 await session.commit()
             except IntegrityError:
-                await ctx.reply("You have already joined the game!\n(if you think this is an error, please contact an administrator)")
+                await ctx.reply("You have already joined the game.")
                 return            
 
 

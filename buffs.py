@@ -221,7 +221,10 @@ class Haunted(BuffFight):
             fighter.buffs = self.saved_buffs.copy()
 
         
-  
+
+#Special Buff (for special occasion)
+class Friendship(BuffFight):
+    description:str = "All your friends love you."
 
 #Unique Buff (for Unique character)
 class Cat(BuffFight):
@@ -235,7 +238,7 @@ class Cat(BuffFight):
             fighter.pv = fighter.combattant.max_pv
         return
 class Vilain(BuffFight):
-    description:str = "Get more vicious when the enemy suffers from a vicious attack."
+    description:str = "Increase Viciousness when the enemy suffers from a vicious attack."
     def __init__(self):
         super().__init__()
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):

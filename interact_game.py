@@ -254,7 +254,7 @@ async def select_bully(ctx: Context, user: discord.abc.User, player: Player, cha
     bullies_in:list[Bully] = player.get_equipe() if from_team else player.get_reserve()
 
     if len(bullies_in) == 0:
-        channel_cible.send(f"{user.mention}, you do not have any bullies!")
+        await channel_cible.send(f"{user.mention}, you do not have any bullies!")
         raise IndexError
 
     #Demande au joueur de choisir son combattant

@@ -38,6 +38,9 @@ class Consumable(Base):
 
     def get_print(self) -> CText:
         raise Exception("Must be implemented")
+    
+    def get_effect(self) -> str:
+        raise Exception("Must be implemented")
 
 
 @dataclass(eq=True, frozen=True)
@@ -116,6 +119,10 @@ class ConsumableElixirBuff(Consumable):
         return (
             CText().txt(f"Elixir of {self.name}. On use, give a fighting buff : {BuffClass.description}")
         )
+
+    def get_effect(self) -> str:
+        aliment = self.aliment.value
+        return f"Debuff **{aliment.stat_nerf}** to buff **{aliment.stat_buff}** by up to {int(self.value)}."
 
 #_______________________________________________________________________
 #_______________________________________________________________________
@@ -223,6 +230,6 @@ def embed_consumables(player: 'player_info.Player', user: discord.abc.User, *, s
         embed.description = "You have no consumables :("
         if not select: embed.set_footer(text="But you may get some from ruins!")
     for i,c in enumerate(player.consumables):
-        embed.add_field(name=f"{i+1}. {c.name}", value=c.get_print(), inline=not select)
-    if user.avatar is not None and not select: embed.set_thumbnail(url=user.avatar.url)
+        embed.add_field(name=f"{i+1}. {c.name}", value=c.get_effect(), inline=not select)
+    if not select and user.avatar is not None: embed.set_thumbnail(url=user.avatar.url)
     return embed

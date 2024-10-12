@@ -101,6 +101,10 @@ class ConsumableAliment(Consumable):
             .txt(" by the same amount.")
         )
     
+    def get_effect(self) -> str:
+        aliment = self.aliment.value
+        return f"Debuff **{aliment.stat_nerf}** to buff **{aliment.stat_buff}** by up to {int(self.value)}."
+    
 class ConsumableElixirBuff(Consumable):
     __mapper_args__ = {
         "polymorphic_identity": "elixirbuff",
@@ -117,12 +121,12 @@ class ConsumableElixirBuff(Consumable):
     def get_print(self) -> CText:
         BuffClass:type[BuffFight] = getattr(buffs, self.buff_tag)
         return (
-            CText().txt(f"Elixir of {self.name}. On use, give a fighting buff : {BuffClass.description}")
+            CText().txt(f"Elixir of {self.name}. On use, give a fighting buff: {BuffClass.description}")
         )
 
     def get_effect(self) -> str:
-        aliment = self.aliment.value
-        return f"Debuff **{aliment.stat_nerf}** to buff **{aliment.stat_buff}** by up to {int(self.value)}."
+        BuffClass:type[BuffFight] = getattr(buffs, self.buff_tag)
+        return f"Elixir of {self.name}. On use, give a fighting buff: {BuffClass.description}"
 
 #_______________________________________________________________________
 #_______________________________________________________________________
@@ -144,7 +148,7 @@ async def add_conso_to_player(ctx: Context, player: 'player_info.Player', c:Cons
             await channel_cible.send("You have too many consumables, the new one is destroyed.")
 
     if len(player.consumables) < CONSO_NUMBER_MAX :
-        await channel_cible.send("You receive a new consumable : " + c.name + "!")
+        await channel_cible.send("You receive a new consumable: " + c.name + "!")
         player.consumables.append(c)
 
 async def use_consumable(ctx: Context, user: discord.abc.User, player: 'player_info.Player', session:AsyncSession, bot: Bot, channel_cible=None) :
@@ -214,7 +218,7 @@ def str_consumables(player: 'player_info.Player') -> CText:
     if len(player.consumables) <= 0:
         text = CText("You don't have any consumables. Do ruin to have one")
         return text
-    text = CText("Your consumables :")
+    text = CText("Your consumables:")
     text = CText()
     for c in player.consumables:
         text.txt("\n")

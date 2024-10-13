@@ -55,8 +55,9 @@ class Ironskin(BuffFight):
     def __init__(self):
         super().__init__()
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
-        if fighter == recap_round.defender and recap_round.is_success_lethal and recap_round.damage_receive_defender > 0:
+        if fighter == recap_round.defender and recap_round.damage_bonus_lethal > 0 and recap_round.damage_receive_defender > 0:
             fighter.pv += 1
+            recap_round.damage_bonus_lethal -= 1
         return 
 
 #11-20   
@@ -67,7 +68,7 @@ class SlimyPunch(BuffFight):
         super().__init__()
     def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
         if fighter == recap_round.attacker and not recap_round.is_success_block:
-            opponent.stats.agility *= 0.9
+            opponent.stats.agility *= 0.92
         return 0, 0
     
 class SlimyBody(BuffFight):
@@ -132,6 +133,15 @@ class GoldenSkin(BuffFight):
             fighter.pv += recap_round.get_damage_receive(fighter) - 2
         return 
     
+class SharpTeeth(BuffFight):
+    description:str = "Ses coups critiques diminuent la Strength de l'adversaire."
+    description_en:str = ""
+    def __init__(self):
+        super().__init__()
+    def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
+        if fighter == recap_round.attacker and recap_round.is_success_lethal:
+            opponent.stats.strength *= 0.9
+        return 0, 0
 
 #31-40
 class Lycanthropy(BuffFight):
@@ -173,6 +183,8 @@ class BossStage(BuffFight):
             self.first_stage = False
         return
 
+
+
 #41-50
 class Venomous(BuffFight):
     description:str = "Ses coups critiques empoisonne son adversaire."
@@ -210,6 +222,24 @@ class Scary(BuffFight):
             if not_haunted:
                 opponent.buffs.append(Haunted())
         return
+
+class CrystalSkin(BuffFight):
+    description:str = "Annule les dégâts supplémentaires des coups critiques."
+    description_en:str = "Cancel bonus damage from critical strikes."
+    def __init__(self):
+        super().__init__()
+    def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound)-> tuple[int, int] :
+        if recap_round.damage_bonus_lethal > 0:
+            dmg_bonus = recap_round.damage_bonus_lethal
+            if recap_round.attacker == fighter :
+                opponent.pv += dmg_bonus
+                recap_round.damage_bonus_lethal = 0
+                return -dmg_bonus, 0 
+            if recap_round.attacker == opponent :
+                fighter.pv += dmg_bonus
+                recap_round.damage_bonus_lethal = 0
+                return 0, -dmg_bonus
+        return 0, 0
 
 #Buff Negatif
 class Poisoned(BuffFight):

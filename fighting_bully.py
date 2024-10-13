@@ -49,7 +49,7 @@ class FightingBully():
 
 class RecapRound():
     def __init__(self, attacker:FightingBully, defender:FightingBully, is_success_agility:bool, is_success_block:bool, is_success_lethal:bool, is_success_vicious:bool
-                 , damage_receive:int, malus_vicious:float = 0):
+                 , damage_receive:int, malus_vicious:float = 0, damage_bonus_lethal:int = 0):
         self.attacker = attacker
         self.defender = defender
 
@@ -58,6 +58,7 @@ class RecapRound():
         self.is_success_lethal = is_success_lethal
         self.is_success_vicious = is_success_vicious
 
+        self.damage_bonus_lethal = damage_bonus_lethal
         self.damage_receive_attacker = 0 #Les dégâts reçus.
         self.damage_receive_defender = damage_receive #Les dégâts reçus.
 

@@ -176,6 +176,7 @@ class Fight():
                 self.emojis_recap[1].append("💥" if self.tour==0 else "🔪")
                 recap_round.is_success_lethal = True
                 recap_round.damage_receive_defender = pv_perdu
+                recap_round.damage_bonus_lethal = lethal_buff
             else :
                 pv_perdu = 1
                 defender.pv -= pv_perdu

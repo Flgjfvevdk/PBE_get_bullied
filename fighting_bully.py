@@ -2,12 +2,20 @@ from __future__ import annotations # Replace type hints to their string form (It
                                    # WARNING: Should only be used for type hints
 from dataclasses import dataclass, replace, field
 from bully import Bully, Stats
-        
+from enum import Enum
+
+class CategoryBuff(Enum):
+    NONE = 0
+    BASIC = 1
+    DEBUFF = 2
+    SPECIAL = 3
+    UNIQUE = 4
+
 class BuffFight():
     description:str = "No buff"
+    category:CategoryBuff = CategoryBuff.BASIC
     def __init__(self):
         self.name:str = self.__class__.__name__
-        # self.
         # Ajouter variable si variables nécessaires
     def apply_aggresive(self, fighter:FightingBully, opponent:FightingBully, recap_round:RecapRound) -> tuple[int, int]:
         """ For buff that could deal damage to a fighter.

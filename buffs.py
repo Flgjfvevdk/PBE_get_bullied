@@ -1,9 +1,10 @@
-from fighting_bully import BuffFight, FightingBully, RecapRound
+from fighting_bully import BuffFight, FightingBully, RecapRound, CategoryBuff
 from bully import Bully
 import random
 
 #Les buffs qui existe : /////////////////////////////////////////////////////////////////////////
 class NoBuff(BuffFight):
+    category:CategoryBuff = CategoryBuff.NONE
     pass
 
 #1-10 
@@ -194,6 +195,7 @@ class Scary(BuffFight):
 #Buff Negatif
 class Poisoned(BuffFight):
     description:str = "Take damage every round. Can get rid of it with Strength."
+    category:CategoryBuff = CategoryBuff.DEBUFF
     def __init__(self, difficulty = 1.0 ):
         super().__init__()
         self.difficulty = difficulty
@@ -206,6 +208,7 @@ class Poisoned(BuffFight):
     
 class Haunted(BuffFight):
     description:str = "Deactivate buffs until successfully hitting an enemy."
+    category:CategoryBuff = CategoryBuff.DEBUFF
     def __init__(self):
         super().__init__()
         self.saved_buffs:list[BuffFight] = []
@@ -225,10 +228,12 @@ class Haunted(BuffFight):
 #Special Buff (for special occasion)
 class Friendship(BuffFight):
     description:str = "All your friends love you."
+    category:CategoryBuff = CategoryBuff.SPECIAL
 
 #Unique Buff (for Unique character)
 class Cat(BuffFight):
     description:str = "Cats have 9 lives!"
+    category:CategoryBuff = CategoryBuff.UNIQUE
     def __init__(self):
         super().__init__()
         self.vies = 9
@@ -239,6 +244,7 @@ class Cat(BuffFight):
         return
 class Vilain(BuffFight):
     description:str = "Increase Viciousness when the enemy suffers from a vicious attack."
+    category:CategoryBuff = CategoryBuff.UNIQUE
     def __init__(self):
         super().__init__()
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
@@ -247,6 +253,7 @@ class Vilain(BuffFight):
         return
 class SpaceCake(BuffFight):
     description:str = "When striking an enemy, swap two of their stats."
+    category:CategoryBuff = CategoryBuff.UNIQUE
     def __init__(self):
         super().__init__()
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
@@ -258,6 +265,7 @@ class SpaceCake(BuffFight):
         return
 class SuppaFastAndFurious(BuffFight):
     description:str = "Fast attacks = more damage."
+    category:CategoryBuff = CategoryBuff.UNIQUE
     def __init__(self):
         super().__init__()
     def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
@@ -267,6 +275,7 @@ class SuppaFastAndFurious(BuffFight):
         return 0, 0
 class StrangeGift(BuffFight):
     description:str = "On death, replace the enemy's buffs with a debuff."
+    category:CategoryBuff = CategoryBuff.UNIQUE
     def __init__(self):
         super().__init__()
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
@@ -275,6 +284,7 @@ class StrangeGift(BuffFight):
         return 
 class Bombe(BuffFight):
     description:str = "When struck to death, deal 5 damage to the enemy."
+    category:CategoryBuff = CategoryBuff.UNIQUE
     def __init__(self):
         super().__init__()
     def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :

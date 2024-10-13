@@ -220,10 +220,15 @@ async def tuto_buffs(ctx: Context):
     import inspect, buffs, fighting_bully
     from utils.color_str import CText
     classes = [member[1] for member in inspect.getmembers(buffs) if inspect.isclass(member[1])]
-    print("")
+    txt += "\tPositive Buffs:\n"
     for buffClass in classes:
-        if issubclass(buffClass, fighting_bully.BuffFight):
+        if issubclass(buffClass, fighting_bully.BuffFight) and buffClass.category not in [fighting_bully.CategoryBuff.UNIQUE, fighting_bully.CategoryBuff.NONE, fighting_bully.CategoryBuff.DEBUFF] and buffClass != fighting_bully.BuffFight:
             txt+=f"{buffClass.__name__} : {buffClass.description}\n"
+    txt += "\n\tNegative Buffs:\n"
+    for buffClass in classes:
+        if issubclass(buffClass, fighting_bully.BuffFight) and buffClass.category == fighting_bully.CategoryBuff.DEBUFF :
+            txt+=f"{buffClass.__name__} : {buffClass.description}\n"
+            print(f"{buffClass.__name__} : {buffClass.description}")
     await ctx.channel.send(CText(txt).str())
 
 

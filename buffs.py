@@ -202,6 +202,25 @@ class Overdrive(BuffFight):
         fighter.stats.viciousness = max(1, fighter.stats.viciousness - malus)
         return
 
+class WarmUp(BuffFight):
+    description:str = "Après 10 round, augmente toutes ses stats."
+    description_en:str = ""
+    def __init__(self, fighter:FightingBully|None = None):
+        super().__init__()
+        self.countdown = 10
+        self.done = False
+    def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
+        if not self.done : 
+            if self.countdown > 0 :
+                self.countdown -= 1
+            else : 
+                self.done = True
+                fighter.stats.strength *= 1.5
+                fighter.stats.agility *= 1.5
+                fighter.stats.lethality *= 1.5
+                fighter.stats.viciousness *= 1.5
+
+        return
 
 #41-50
 class Venomous(BuffFight):
@@ -219,14 +238,6 @@ class Venomous(BuffFight):
 # CANCEL car Créer des bugs car si un adversaire à un truc qui bloque les dégâts ou regen, alors ce buff va s'appliquer ou pas selon l'ordre d'appel. On ne veux pas ça !
 # class DeathFrenzy(BuffFight):
 #     description:str = "Régénère 4 HP après avoir donné un coup fatal sur un enemy."
-#     description_en:str = "Heal HP upon striking an enemy to death."
-#     def __init__(self):
-#         super().__init__()
-#     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
-#         if fighter == recap_round.attacker and not recap_round.is_success_block and opponent.pv <= 0 :
-#             fighter.pv += 4
-#             return -4, 0
-#         return 0, 0
 
 class Scary(BuffFight):
     description:str = "Ses coups vicieux, même raté, peuvent hanter l'ennemi (Haunted Debuff)."
@@ -258,6 +269,8 @@ class CrystalSkin(BuffFight):
                 recap_round.damage_bonus_lethal = 0
                 return 0, -dmg_bonus
         return 0, 0
+
+
 
 #Buff Negatif
 class Poisoned(BuffFight):
@@ -297,6 +310,19 @@ class Friendship(BuffFight):
     description:str = "Tous tes amis t'adorent."
     description_en:str = "All your friends love you."
     category:CategoryBuff = CategoryBuff.SPECIAL
+
+class DragonBlood(BuffFight):
+    description:str = "Devient de plus en plus fort."
+    description_en:str = ""
+    def __init__(self, fighter:FightingBully|None = None):
+        super().__init__()
+    def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
+        bonus = fighter.combattant.lvl * 0.05
+        fighter.stats.strength += bonus
+        fighter.stats.agility += bonus
+        fighter.stats.lethality += bonus
+        fighter.stats.viciousness += bonus
+        return
 
 #Unique Buff (for Unique character)
 class Cat(BuffFight):

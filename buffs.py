@@ -1,6 +1,7 @@
 from fighting_bully import BuffFight, FightingBully, RecapRound, CategoryBuff
 from bully import Bully
 import random
+import math
 
 #Les buffs qui existe : /////////////////////////////////////////////////////////////////////////
 class NoBuff(BuffFight):
@@ -269,7 +270,20 @@ class CrystalSkin(BuffFight):
                 return 0, -dmg_bonus
         return 0, 0
 
-
+class ProtectiveShadow(BuffFight):
+    description:str = "Au lieu de prendre des dégâts, diminue sa Viciousness. Ce buff disparait quand la Viciousness atteint 1."
+    description_en:str = ""
+    def __init__(self, fighter:FightingBully|None = None):
+        super().__init__()
+    def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
+        if recap_round.get_damage_receive(fighter) > 0:
+            dmg = recap_round.get_damage_receive(fighter)
+            fighter.pv += dmg
+            fighter.stats.viciousness -= fighter.combattant.lvl
+            if fighter.stats.viciousness <= 1 :
+                fighter.stats.viciousness = 1
+                fighter.buffs.remove(self)
+        return
 
 #Buff Negatif
 class Poisoned(BuffFight):
@@ -320,6 +334,7 @@ class DragonBlood(BuffFight):
         fighter.stats.lethality += bonus
         fighter.stats.viciousness += bonus
         return
+
 
 #Unique Buff (for Unique character)
 class Cat(BuffFight):

@@ -215,11 +215,10 @@ class WarmUp(BuffFight):
                 self.countdown -= 1
             else : 
                 self.done = True
-                fighter.stats.strength *= 1.5
-                fighter.stats.agility *= 1.5
-                fighter.stats.lethality *= 1.5
-                fighter.stats.viciousness *= 1.5
-
+                fighter.stats.strength *= 2
+                fighter.stats.agility *= 2
+                fighter.stats.lethality *= 2
+                fighter.stats.viciousness *= 2
         return
 
 #41-50

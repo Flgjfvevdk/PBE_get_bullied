@@ -640,7 +640,6 @@ async def add_c(ctx: Context):
                 await ctx.reply(TEXT_JOIN_THE_GAME)
                 return
             c = consumable.AlimentEnum.Gigot.new_conso(2)
-            print(c.get_print())
             player.consumables.append(c)
             await session.commit()
 
@@ -660,7 +659,6 @@ async def add_elixir(ctx: Context, buff_name : str):
                 await ctx.reply(TEXT_JOIN_THE_GAME)
                 return
             e = consumable.ConsumableElixirBuff(buff_name, buff_name)
-            print(e.get_print())
             player.consumables.append(e)
             await session.commit()
 

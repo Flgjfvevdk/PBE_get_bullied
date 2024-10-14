@@ -103,6 +103,17 @@ class Frustration(BuffFight):
             fighter.stats.lethality += fighter.combattant.lvl * 0.1
         return 0, 0
 
+class DragonSkin(BuffFight):
+    description:str = "Ne reçoit pas de dégât des attaques non critiques."
+    description_en:str = ""
+    def __init__(self, fighter:FightingBully|None = None):
+        super().__init__()
+    def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
+        if recap_round.defender == fighter and not recap_round.is_success_lethal and recap_round.get_damage_receive(fighter) > 0:
+            fighter.pv += 1
+        return 
+    
+
 #21-30  
 class RoyalSlimyBody(BuffFight):
     description:str = "À chaque attaque bloqué, réduit l'Agility de l'attaquant."
@@ -115,7 +126,7 @@ class RoyalSlimyBody(BuffFight):
         return 0, 0
 
 class RootOfEvil(BuffFight):
-    description:str = "À chaque fois attaque vicieuse subit, augmente sa stat Viciousness."
+    description:str = "À chaque fois attaque vicieuse subit, augmente sa Viciousness."
     description_en:str = "When get vicious debuff, increase your Viciousness."
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
@@ -143,6 +154,16 @@ class SharpTeeth(BuffFight):
         if fighter == recap_round.attacker and recap_round.is_success_lethal:
             opponent.stats.strength *= 0.9
         return 0, 0
+
+class DragonResilience(BuffFight):
+    description:str = "À chaque fois attaque vicieuse subit, augmente sa Strength."
+    description_en:str = ""
+    def __init__(self, fighter:FightingBully|None = None):
+        super().__init__()
+    def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
+        if fighter == recap_round.defender and recap_round.is_success_vicious:
+            fighter.stats.viciousness += recap_round.malus_vicious*0.5
+        return
 
 #31-40
 class Lycanthropy(BuffFight):
@@ -179,8 +200,8 @@ class BossStage(BuffFight):
         self.first_stage = True
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if self.first_stage and fighter.pv < fighter.combattant.max_pv / 2:
-            fighter.stats.strength += fighter.combattant.lvl * 0.7
-            fighter.stats.agility += fighter.combattant.lvl * 0.7
+            fighter.stats.strength += fighter.combattant.lvl * 1.5
+            fighter.stats.agility += fighter.combattant.lvl * 1.5
             self.first_stage = False
         return
 
@@ -285,6 +306,19 @@ class ProtectiveShadow(BuffFight):
                 fighter.buffs.remove(self)
         return
 
+class DragonAscension(BuffFight):
+    description:str = "Devient de plus en plus fort."
+    description_en:str = ""
+    def __init__(self, fighter:FightingBully|None = None):
+        super().__init__()
+    def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
+        bonus = fighter.combattant.lvl * 0.1
+        fighter.stats.strength += bonus
+        fighter.stats.agility += bonus
+        fighter.stats.lethality += bonus
+        fighter.stats.viciousness += bonus
+        return
+
 #Buff Negatif
 class Poisoned(BuffFight):
     description:str = "Reçoit 1 dégât à chaque round. Peut disparaitre avec de la Strength."
@@ -322,18 +356,16 @@ class Friendship(BuffFight):
     description_en:str = "All your friends love you."
     category:CategoryBuff = CategoryBuff.SPECIAL
 
-class DragonBlood(BuffFight):
-    description:str = "Devient de plus en plus fort."
+class Dragon(BuffFight):
+    description:str = "Obtient tous les buffs Dragons"
     description_en:str = ""
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
-    def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
-        bonus = fighter.combattant.lvl * 0.1
-        fighter.stats.strength += bonus
-        fighter.stats.agility += bonus
-        fighter.stats.lethality += bonus
-        fighter.stats.viciousness += bonus
-        return
+        if fighter is not None : 
+            fighter.buffs = [DragonSkin(fighter=fighter), DragonResilience(fighter=fighter), DragonAscension(fighter=fighter)]
+        else : 
+            print("Fighter devrait être init")
+    
 
 
 #Unique Buff (for Unique character)

@@ -450,7 +450,7 @@ def value_to_bar_str(v:int, max_value=10) -> str:
     return t
 
 def buff_to_str(buffs:list[fighting_bully.BuffFight]):
-    txt = "" if buffs == [] else "Buff : |" 
+    txt = "\n" if buffs == [] else "\nBuff : |" 
     for b in buffs : 
         txt += f" {b.name} |"
     return txt

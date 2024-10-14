@@ -189,13 +189,13 @@ class Overdrive(BuffFight):
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
         if fighter is not None : 
-            bonus = fighter.combattant.lvl * 1.5
+            bonus = fighter.combattant.lvl * 2
             fighter.stats.strength += bonus
             fighter.stats.agility += bonus
             fighter.stats.lethality += bonus
             fighter.stats.viciousness += bonus
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
-        malus = fighter.combattant.lvl * 0.15
+        malus = fighter.combattant.lvl * 0.2
         fighter.stats.strength = max(1, fighter.stats.strength - malus)
         fighter.stats.agility = max(1, fighter.stats.agility - malus)
         fighter.stats.lethality = max(1, fighter.stats.lethality - malus)
@@ -249,7 +249,7 @@ class Scary(BuffFight):
         if fighter == recap_round.attacker and recap_round.is_success_vicious and random.random() < self.proba:
             not_haunted = len([b for b in opponent.buffs if isinstance(b, Haunted)]) == 0
             if not_haunted:
-                opponent.buffs.append(Haunted())
+                opponent.buffs.append(Haunted(fighter=opponent))
         return
 
 class CrystalSkin(BuffFight):
@@ -294,15 +294,13 @@ class Haunted(BuffFight):
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
         self.saved_buffs:list[BuffFight] = []
-        self.is_active = False
-    def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
-        if not self.is_active :
+        if fighter is not None:
             for b in fighter.buffs:
                 if not isinstance(b, Haunted):
                     self.saved_buffs.append(b)
-            self.is_active = True
-            fighter.buffs = []
-        elif fighter == recap_round.attacker and not recap_round.is_success_block:
+            fighter.buffs = [self]
+    def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
+        if fighter == recap_round.attacker and not recap_round.is_success_block:
             fighter.buffs = self.saved_buffs.copy()
 
 #Special Buff (for special occasion)
@@ -317,7 +315,7 @@ class DragonBlood(BuffFight):
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
-        bonus = fighter.combattant.lvl * 0.05
+        bonus = fighter.combattant.lvl * 0.1
         fighter.stats.strength += bonus
         fighter.stats.agility += bonus
         fighter.stats.lethality += bonus

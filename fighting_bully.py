@@ -40,7 +40,7 @@ class FightingBully():
     def create_fighting_bully(b:Bully) -> "FightingBully":
         fighter = FightingBully(combattant=b, pv=b.max_pv, base_stats=replace(b.stats), stats=replace(b.stats))#, buffs=create_buff_instance(b.buff_fight_tag))
         if (b.buff_fight_tag != "NoBuff"):
-            fighter.buffs.append(create_buff_instance(b.buff_fight_tag))
+            fighter.buffs.append(create_buff_instance(b.buff_fight_tag, fighter=fighter))
         return fighter
     
     def reset_stats(self) -> None:
@@ -87,7 +87,7 @@ def create_buff_instance(class_name: str, fighter:FightingBully|None = None) -> 
         BuffClass = getattr(buffs, class_name)
         if not issubclass(BuffClass, BuffFight):
             print("Le buff du bully est invalide")
-            return BuffFight()
+            return BuffFight(fighter=fighter)
         return BuffClass(fighter)  # Crée une instance de la classe
     except AttributeError:
         raise ValueError(f"La classe {class_name} n'existe pas dans le module.")

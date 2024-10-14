@@ -524,13 +524,15 @@ async def show_consumables(ctx: Context):
 #Command d'admin _____________________________________________________________________________________________________
 @bot.command()
 @decorators.is_admin()
-async def admin_give(ctx: Context,user: discord.User, name: str, lvl:int, rarity:str , strength: float, agility: float, lethality: float, viciousness: float, path_image: str = "", seed_str:str = "", max_pv:int|None = None):
+async def admin_give(ctx: Context,user: discord.User, name: str, lvl:int, rarity:str , strength: float, agility: float, lethality: float, viciousness: float, path_image: str = "", seed_str:str = "", max_pv:int = bully.BULLY_MAX_BASE_HP, buff_tag:str = "NoBuff"):
     # # Création de l'objet Stats
     stats = bully.Stats(strength, agility, lethality, viciousness)
     
     # Création de l'objet Bully
     b = bully.Bully(name=name, rarity= bully.Rarity[rarity], stats=stats)
     b.lvl = lvl
+    b.max_pv = max_pv
+    b.buff_fight_tag = buff_tag
     sum_stats = stats.sum_stats() 
     if seed_str == "" :
         b.seed = bully.Seed(stats.strength/sum_stats, stats.agility/sum_stats, stats.lethality/sum_stats, stats.viciousness/sum_stats)
@@ -545,8 +547,6 @@ async def admin_give(ctx: Context,user: discord.User, name: str, lvl:int, rarity
     if path_image != "":
         b.image_file_path=Path(path_image)
 
-    if max_pv is not None:
-        b.max_pv = max_pv
     
     async with database.new_session() as session:
         player = await session.get(Player, user.id)
@@ -556,9 +556,6 @@ async def admin_give(ctx: Context,user: discord.User, name: str, lvl:int, rarity
         await interact_game.add_bully_to_player(ctx, player, b)
         await session.commit()
 
-    # Message de confirmation
-    await ctx.send(f"{user.mention}, vous avez reçu {b.name}")
-    
 
 @bot.command(aliases=['new_shop', 'ns'])
 @decorators.is_admin()

@@ -19,7 +19,7 @@ from utils.color_str import CText
 
 CHOICE_TIMEOUT = 30
 RECAP_MAX_EMOJI = 15
-FIGHT_MSG_TIME_UPDATE = 1.5
+FIGHT_MSG_TIME_UPDATE = 2
 
 
 async def proposition_fight(ctx:Context, user_1:discord.abc.User, user_2:discord.abc.User, player_1: Player, player_2: Player, bot: Bot, for_fun = False):
@@ -157,8 +157,6 @@ class Fight():
             recap_round.is_success_agility = True
         
         if challenge_block(attacker.stats, defender.stats) :
-            self.emojis_recap[0].append( "👊" if self.tour==0 else "🛡️")
-            self.emojis_recap[1].append( "🛡️" if self.tour==0 else "👊")
             recap_round.is_success_block = True
             if challenge_viciousness(attacker.stats, defender.stats):
                 malus_vicious = apply_viciousness(attacker.stats, defender.stats, is_attack_success=False, is_attacker=True)
@@ -166,31 +164,36 @@ class Fight():
                 self.emojis_recap[1].append("🛡️" if self.tour==0 else "🗡️")
                 recap_round.is_success_vicious = True
                 recap_round.malus_vicious = malus_vicious
+            else : 
+                self.emojis_recap[0].append( "👊" if self.tour==0 else "🛡️")
+                self.emojis_recap[1].append( "🛡️" if self.tour==0 else "👊")
         else :
             lethal_buff = challenge_lethality(attacker.stats, defender.stats)
             lethal_buff += 1 if lethal_buff > 1 else 0
+            em_att = "👊"
+            em_def = "🩸"
             if lethal_buff > 0 :
                 pv_perdu = 1 + lethal_buff
                 defender.pv -= pv_perdu
-                self.emojis_recap[0].append("🔪" if self.tour==0 else "💥")
-                self.emojis_recap[1].append("💥" if self.tour==0 else "🔪")
+                em_att = "🔪"
+                em_def = "💥"
                 recap_round.is_success_lethal = True
                 recap_round.damage_receive_defender = pv_perdu
                 recap_round.damage_bonus_lethal = lethal_buff
             else :
                 pv_perdu = 1
                 defender.pv -= pv_perdu
-                self.emojis_recap[0].append("👊" if self.tour==0 else "🩸")
-                self.emojis_recap[1].append("🩸" if self.tour==0 else "👊")
                 recap_round.damage_receive_defender = pv_perdu
             
             if challenge_viciousness(attacker.stats, defender.stats):
                 malus_vicious = apply_viciousness(attacker.stats, defender.stats, is_attack_success=True, is_attacker=True)
                 em_att = "🔪" if lethal_buff > 0 else "🗡️"
-                self.emojis_recap[0].append(em_att if self.tour==0 else "💔")
-                self.emojis_recap[1].append("💔" if self.tour==0 else em_att)
+                em_def = "💔"
                 recap_round.is_success_vicious = True
                 recap_round.malus_vicious = malus_vicious
+
+            self.emojis_recap[0].append(em_att if self.tour==0 else em_def)
+            self.emojis_recap[1].append(em_def if self.tour==0 else em_att)
 
         self.tour ^= 1 
 

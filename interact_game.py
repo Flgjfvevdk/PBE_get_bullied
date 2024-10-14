@@ -188,7 +188,7 @@ async def add_bully_to_player(ctx: Context, player: Player, b: Bully, channel_ci
     
     player.bullies.append(b)
 
-    await channel_cible.send("You have a new bully : " + b.name)   
+    await channel_cible.send(f"You have a new bully : " + b.name)   
 
 
 async def print_bullies(ctx: Context, player: Player, compact_print=False, print_images=False, channel_cible=None) -> None:

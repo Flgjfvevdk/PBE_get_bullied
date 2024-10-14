@@ -162,7 +162,7 @@ class DragonResilience(BuffFight):
         super().__init__()
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if fighter == recap_round.defender and recap_round.is_success_vicious:
-            fighter.stats.viciousness += recap_round.malus_vicious*0.5
+            fighter.stats.strength += recap_round.malus_vicious*0.5
         return
 
 #31-40
@@ -256,10 +256,6 @@ class Venomous(BuffFight):
                 opponent.buffs.append(Poisoned(difficulty=fighter.stats.lethality))
         return
 
-# CANCEL car Créer des bugs car si un adversaire à un truc qui bloque les dégâts ou regen, alors ce buff va s'appliquer ou pas selon l'ordre d'appel. On ne veux pas ça !
-# class DeathFrenzy(BuffFight):
-#     description:str = "Régénère 4 HP après avoir donné un coup fatal sur un enemy."
-
 class Scary(BuffFight):
     description:str = "Ses coups vicieux, même raté, peuvent hanter l'ennemi (Haunted Debuff)."
     description_en:str = "Vicious debuff can haunt the enemy."
@@ -312,7 +308,7 @@ class DragonAscension(BuffFight):
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
-        bonus = fighter.combattant.lvl * 0.1
+        bonus = fighter.combattant.lvl * 0.2
         fighter.stats.strength += bonus
         fighter.stats.agility += bonus
         fighter.stats.lethality += bonus

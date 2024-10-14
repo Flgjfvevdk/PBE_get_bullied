@@ -162,7 +162,7 @@ class DragonResilience(BuffFight):
         super().__init__()
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if fighter == recap_round.defender and recap_round.is_success_vicious:
-            fighter.stats.strength += recap_round.malus_vicious*0.8
+            fighter.stats.strength += recap_round.malus_vicious*0.6
         return
 
 #31-40

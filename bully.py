@@ -295,8 +295,6 @@ class Bully(Base):
         new_rarity:Rarity = random.choices(list(Rarity), weights=NOBODY_RARITY_EVOLUTION_CHANCES)[0]
         
         #On rajoute les points qu'il faut rajouter
-        # difference_points = (new_rarity.points_bonus - self.rarity.points_bonus) + int(NOBODY_LEVEL_EVOLUTION * (new_rarity.level_bonus - self.rarity.level_bonus))
-        # self.increase_stat_with_seed(nb_points=difference_points, talkative = False)
         difference_points = nb_points_tot_rarity(self.lvl, new_rarity) - self.stats.sum_stats()
         nb_points:int = round(self.lvl * (self.lvl + 1) / 2)
         val = difference_points/nb_points
@@ -306,6 +304,8 @@ class Bully(Base):
 
         #On change les pv max
         self.max_pv = BULLY_ASCENDED_MAX_BASE_HP
+
+        self.name += " The Immortal"
 
         #On change l'image : 
         self.image_file_path = self.new_possible_image_random()

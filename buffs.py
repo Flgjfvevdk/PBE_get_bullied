@@ -315,6 +315,48 @@ class DragonAscension(BuffFight):
         fighter.stats.viciousness += bonus
         return
 
+#Team Buffs
+class ToxicTeam(BuffFight):
+    description:str = "Les coups vicieux bloqués font 1 dégât."
+    description_en:str = ""
+    def __init__(self, fighter:FightingBully|None = None):
+        super().__init__()
+    def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
+        if fighter == recap_round.attacker and recap_round.is_success_vicious and recap_round.is_success_block:
+            opponent.pv -= 1
+            return 0, 1
+        return 0, 0
+
+class MonsterTeam(BuffFight):
+    description:str = "Se soigne de 1 HP en faisant un coup critique."
+    description_en:str = ""
+    def __init__(self, fighter:FightingBully|None = None):
+        super().__init__()
+    def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
+        if fighter == recap_round.attacker and recap_round.is_success_lethal and fighter.pv + 1 <= fighter.combattant.max_pv:
+            fighter.pv += 1
+            return -1, 0
+        return 0, 0
+
+class DevastatorTeam(BuffFight):
+    description:str = "Les coups non critiques font 1 dégât supplémentaire."
+    description_en:str = ""
+    def __init__(self, fighter:FightingBully|None = None):
+        super().__init__()
+    def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
+        if fighter == recap_round.attacker and not recap_round.is_success_lethal:
+            opponent.pv -= 1
+            return 0, 1
+        return 0, 0
+    
+class SublimeTeam(BuffFight):
+    description:str = "Commence les combats avec 2 pv supplémentaire."
+    description_en:str = ""
+    def __init__(self, fighter:FightingBully|None = None):
+        super().__init__()
+        if fighter is not None :
+            fighter.pv += 2
+
 #Buff Negatif
 class Poisoned(BuffFight):
     description:str = "Reçoit 1 dégât à chaque round. Peut disparaitre avec de la Strength."
@@ -375,6 +417,7 @@ class Cat(BuffFight):
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if fighter.pv <= 0 and self.vies > 0:
             self.vies -= 1
+            self.name = f"{self.vies} vie{'s' if self.vies>1 else ''} !"
             fighter.pv = fighter.combattant.max_pv
         return
 class Vilain(BuffFight):

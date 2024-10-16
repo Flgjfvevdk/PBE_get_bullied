@@ -295,6 +295,10 @@ async def fun_challenge(ctx: Context, opponent:discord.Member):
 @bot.command(aliases=['tch', 'teamfight', 'team_fight'])
 async def team_challenge(ctx: Context, opponent:discord.Member):
     user = ctx.author
+
+    if user == opponent:
+        await ctx.send("You can't challenge yourself.")
+        return
     
     lock1 = PlayerLock(user.id)
     if not lock1.check():

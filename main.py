@@ -297,7 +297,7 @@ async def team_challenge(ctx: Context, opponent:discord.Member):
     user = ctx.author
 
     if user == opponent:
-        await ctx.send("You can't challenge yourself.")
+        await ctx.send("You can't team challenge yourself.")
         return
     
     lock1 = PlayerLock(user.id)

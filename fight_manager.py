@@ -104,7 +104,12 @@ class Fight():
         self.max_pv_1 = self.fighter_1.combattant.max_pv
         self.max_pv_2 = self.fighter_2.combattant.max_pv
 
-        self.message:discord.Message
+        # self.message:discord.Message
+        # self.embed1:discord.Embed
+        # self.embed2:discord.Embed
+        self.message_1:discord.Message
+        self.message_mid:discord.Message
+        self.message_2:discord.Message
         self.emojis_recap:list[list["str"]]= [[],[]]
         self.tour = random.randint(0,1)
 
@@ -131,7 +136,8 @@ class Fight():
         while self.fighter_1.pv > 0 and self.fighter_2.pv > 0 :
             await self.play_round()
 
-            await self.message.edit(content=self.text_fight())
+            # await self.message.edit(content=self.text_fight())
+            await self.update_message()
             await asyncio.sleep(FIGHT_MSG_TIME_UPDATE)
 
             #On regarde si changement nécessaire 
@@ -248,13 +254,42 @@ class Fight():
             await self.channel_cible.send(f"{pretext}{bully_perdant.name} died in terrible agony")
         return
         
+        # if(len(self.users_can_swap)>0):  
+        #     self.message = await self.channel_cible.send(self.text_fight(),  view=interact_game.ViewClickBoolMultiple(users=self.users_can_swap, events=self.events_click_swap, labels=self.labels_swap, emoji="🔁"))
+        # else :
+        #     self.message = await self.channel_cible.send(self.text_fight())
+    
     async def setup_message(self):
-        if(len(self.users_can_swap)>0):  
-            self.message = await self.channel_cible.send(self.text_fight(),  view=interact_game.ViewClickBoolMultiple(users=self.users_can_swap, events=self.events_click_swap, labels=self.labels_swap, emoji="🔁"))
-        else :
-            self.message = await self.channel_cible.send(self.text_fight())
+        with open(self.fighter_1.combattant.get_image(), "rb") as bully_image_file_1, open(self.fighter_2.combattant.get_image(), "rb") as bully_image_file_2:
+            bully_image_file_1 = discord.File(bully_image_file_1, filename="bully_image_file_1.png") 
+            bully_image_file_2 = discord.File(bully_image_file_2, filename="bully_image_file_2.png")
+            
+            texts = self.texts_fight()
+            # Création du premier embed avec une miniature (image à gauche) et un texte d'exemple
+            self.embed1 = discord.Embed(title=f"{self.fighter_1.combattant.name}", description=texts[0], color=0x3498db)
+            # self.embed1 = discord.Embed(title=f"{self.fighter_1.combattant.name}", color=0x3498db)
+            self.embed1.set_thumbnail(url="attachment://bully_image_file_1.png")
+
+            # Création du second embed avec une miniature (image à droite) et un texte d'exemple
+            self.embed2 = discord.Embed(title=f"{self.fighter_2.combattant.name}", description=texts[1], color=0xe74c3c)
+            self.embed2.set_thumbnail(url="attachment://bully_image_file_2.png")
+
+            # self.embed_mid = discord.Embed(title=None, description=texts[2])
+
+            # self.message = await self.channel_cible.send(files=[bully_image_file_1, bully_image_file_2], embeds=[self.embed1, self.embed_mid, self.embed2])
+            self.message_1 = await self.channel_cible.send(file=bully_image_file_1, embed=self.embed1)
+            self.message_mid = await self.channel_cible.send(texts[2])
+            self.message_2 = await self.channel_cible.send(file=bully_image_file_2, embed=self.embed2)
         
-        return 
+    async def update_message(self):
+        texts = self.texts_fight()
+        self.embed1.description = texts[0]
+        self.embed2.description = texts[1]
+        # await self.message.edit(embeds=[self.embed1, self.embed_mid, self.embed2])
+        await self.message_mid.edit(content=texts[2])
+        await self.message_1.edit(embed=self.embed1)
+        await self.message_2.edit(embed=self.embed2)
+
 
     def text_fight(self) -> str:
         text_f = ""
@@ -262,14 +297,40 @@ class Fight():
         barre_pv_2 = value_to_bar_str(self.fighter_2.pv, max_value= self.max_pv_2)
         text_f = CText(
                 f"\t\tBully 1 : {self.fighter_1.combattant.name}\n"
-                f"HP : {barre_pv_1} ({self.fighter_1.pv:02}/{self.max_pv_1:02}) \t{self.fighter_1.stats.to_str_color()} \t{buff_to_str(self.fighter_1.buffs)}\n"
+                f"HP : {barre_pv_1} ({self.fighter_1.pv:02}/{self.max_pv_1:02}) \t{self.fighter_1.stats.to_str_color()} \n{buff_to_str(self.fighter_1.buffs)}\n"
                 f"{''.join(self.emojis_recap[0][-RECAP_MAX_EMOJI:])}\n"
                 "\t\t\t\tVS\n"
                 f"{''.join(self.emojis_recap[1][-RECAP_MAX_EMOJI:])}\n"
                 f"\t\tBully 2 : {self.fighter_2.combattant.name}\n"
-                f"HP : {barre_pv_2} ({self.fighter_2.pv:02}/{self.max_pv_2:02}) \t{self.fighter_2.stats.to_str_color()}\t{buff_to_str(self.fighter_2.buffs)}"
+                f"HP : {barre_pv_2} ({self.fighter_2.pv:02}/{self.max_pv_2:02}) \t{self.fighter_2.stats.to_str_color()}\n{buff_to_str(self.fighter_2.buffs)}"
             )
         return text_f.str()
+    
+    def texts_fight(self) -> tuple[str, str, str]:
+        barre_pv_1 = value_to_bar_str(self.fighter_1.pv, max_value= self.max_pv_1)
+        barre_pv_2 = value_to_bar_str(self.fighter_2.pv, max_value= self.max_pv_2)
+        text_1 = CText(
+            f"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\nBully 1 : {self.fighter_1.combattant.name}\n{buff_to_str(self.fighter_1.buffs)}\n"
+            # f"HP : {barre_pv_1} ({self.fighter_1.pv:02}/{self.max_pv_1:02}) \t{self.fighter_1.stats.to_str_color()} \n"
+            # f"{''.join(self.emojis_recap[0][-RECAP_MAX_EMOJI:])}\n"
+        ) .str()
+        text_2 =CText(
+            # f"{''.join(self.emojis_recap[1][-RECAP_MAX_EMOJI:])}\n"
+            f"Bully 2 : {self.fighter_2.combattant.name}\n{buff_to_str(self.fighter_2.buffs)}\n"
+            # f"HP : {barre_pv_2} ({self.fighter_2.pv:02}/{self.max_pv_2:02}) \t{self.fighter_2.stats.to_str_color()}\n"
+            "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯"
+        ).str()
+        text_1 = buff_to_str(self.fighter_1.buffs)
+        text_2 = buff_to_str(self.fighter_2.buffs)
+
+        text_mid = CText(
+            f"HP : {barre_pv_1} ({self.fighter_1.pv:02}/{self.max_pv_1:02}) \t{self.fighter_1.stats.to_str_color()} \n"
+            f"{''.join(self.emojis_recap[0][-RECAP_MAX_EMOJI:])}\n"
+            f"{''.join(self.emojis_recap[1][-RECAP_MAX_EMOJI:])}\n"
+            f"HP : {barre_pv_2} ({self.fighter_2.pv:02}/{self.max_pv_2:02}) \t{self.fighter_2.stats.to_str_color()}"
+        ).str()
+
+        return text_1, text_2, text_mid
     
 async def proposition_team_fight(ctx:Context, user_1:discord.abc.User, user_2:discord.abc.User, player_1: Player, player_2: Player, for_fun = False):
     text_challenge = f"{user_1.mention} challenges {user_2.mention} in a teamfight!"
@@ -450,9 +511,11 @@ def value_to_bar_str(v:int, max_value=10) -> str:
     return t
 
 def buff_to_str(buffs:list[fighting_bully.BuffFight]):
-    txt = "\n" if buffs == [] else "\nBuff : |" 
+    # txt = "\n" if buffs == [] else "\nBuff : |" 
+    txt = "\n" if buffs == [] else "\nBuff : \n" 
     for b in buffs : 
-        txt += f" {b.name} |"
+        # txt += f" {b.name} |"
+        txt += f" {b.name} \n"
     return txt
 
 # Les récompenses 

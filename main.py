@@ -32,6 +32,7 @@ from sqlalchemy.future import select
 from sqlalchemy.orm import configure_mappers
 
 import asyncio
+from utils.color_str import CText
 
 from discord.ext.commands import Bot, Context, CommandNotFound
 from discord import Embed
@@ -218,7 +219,7 @@ async def tuto_lootbox(ctx: Context):
 async def tuto_buffs(ctx: Context):
     txt = ""
     import inspect, buffs, fighting_bully
-    from utils.color_str import CText
+    
     classes = [member[1] for member in inspect.getmembers(buffs) if inspect.isclass(member[1])]
     txt += "\tPositive Buffs:\n"
     for buffClass in classes:
@@ -517,6 +518,57 @@ async def show_consumables(ctx: Context):
             return
         embed = consumable.embed_consumables(player,user)
         await ctx.channel.send(embed=embed)
+        
+@bot.command()
+async def example_embed(ctx: Context):
+    with open("sac_a_xp.png", "rb") as left_image_file, open("sac_a_xp.png", "rb") as right_image_file:
+        # Envoie les deux images en tant que fichiers Discord
+        left_image = discord.File(left_image_file, filename="left_image.png")
+        right_image = discord.File(right_image_file, filename="right_image.png")
+
+        emojis_recap = ["👊👊👊🛡️🩸🩸🛡️💔🔪👊🔪", "🩸🩸🛡️👊👊👊🗡️🗡️💔🛡️💥"]
+        text_1 = CText(
+            f"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\nBully 1 : {'fighter1 name'}\n"
+            f"HP : {'▮▮▮▮▮▮▮...'} ({'7'}/{10}) \t{'statIci'} \n{'buffici'}\n"
+            f"\n\n{''.join(emojis_recap[0])}\n"
+        ) 
+        text_2 = CText(
+            f"{''.join(emojis_recap[1])}\n\n\n"
+            f"Bully 2 : {'fighter2 name'}\n"
+            f"HP : {'▮▮▮▮▮.....'} ({'5'}/{10}) \t{'statIci'} \n{'buffici'}\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯"
+        )
+
+        # Création du premier embed avec une miniature (image à gauche) et un texte d'exemple
+        embed1 = discord.Embed(title="Fighter 1 VS Fighter 2", description=text_1, color=0x3498db)
+        embed1.set_thumbnail(url="attachment://left_image.png")  # Image à gauche via miniature
+
+        # Création du second embed avec une miniature (image à droite) et un texte d'exemple
+        embed2 = discord.Embed(title=None, description=text_2, color=0xe74c3c)
+        embed2.set_thumbnail(url="attachment://right_image.png")  # Image à droite via miniature
+
+        # Envoi des deux embeds avec les fichiers image
+        await ctx.send(files=[left_image, right_image], embeds=[embed1, embed2])
+
+     
+@bot.command()
+async def dropdown(ctx: commands.Context):
+    # Initial embed
+    embed = discord.Embed(title="Menu déroulant", description="Sélectionnez une option ci-dessous.", color=0x3498db)
+    embed2 = discord.Embed(title="Menu zdzdzdzdz", description="Sélzfzffezaazefafezezfi-dessous.", color=0x3498db)
+    
+    # Create a view with the dropdown
+    # view = MyView()s
+    
+    # Send the initial embed
+    message = await ctx.send(embeds=[embed, embed2])
+
+    # Boucle pour éditer la description sans recréer l'embed
+    base_text = "Voici le texte initial"
+    for i in range(5):  # Exemple : change la description 5 fois
+        embed.description = f"{base_text} |{'|' * i}"  # Ajoute des "|" chaque seconde
+        embed2.description = f"{base_text} |{'*' * i}"  # Ajoute des "|" chaque seconde
+        await message.edit(embeds=[embed, embed2])  # Edit uniquement la description
+        await asyncio.sleep(1)  # Pause de 1 seconde avant la prochaine mise à jour
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 

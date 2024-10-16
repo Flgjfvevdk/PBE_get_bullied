@@ -285,12 +285,14 @@ class Fight():
         
     async def update_message(self):
         texts = self.texts_fight()
-        self.embed1.description = texts[0]
-        self.embed2.description = texts[1]
         # await self.message.edit(embeds=[self.embed1, self.embed_mid, self.embed2])
         await self.message_mid.edit(content=texts[2])
-        await self.message_1.edit(embed=self.embed1)
-        await self.message_2.edit(embed=self.embed2)
+        if self.embed1.description != texts[0]:
+            self.embed1.description = texts[0]
+            await self.message_1.edit(embed=self.embed1)
+        if self.embed2.description != texts[1]:
+            self.embed2.description = texts[1]
+            await self.message_2.edit(embed=self.embed2)
 
 
     def text_fight(self) -> str:

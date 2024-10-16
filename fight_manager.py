@@ -259,12 +259,12 @@ class Fight():
             await self.channel_cible.send(f"{pretext}{bully_perdant.name} died in terrible agony")
         return
         
+    
+    async def setup_message(self):
         # if(len(self.users_can_swap)>0):  
         #     self.message = await self.channel_cible.send(self.text_fight(),  view=interact_game.ViewClickBoolMultiple(users=self.users_can_swap, events=self.events_click_swap, labels=self.labels_swap, emoji="🔁"))
         # else :
         #     self.message = await self.channel_cible.send(self.text_fight())
-    
-    async def setup_message(self):
         with open(self.fighter_1.combattant.get_image(), "rb") as bully_image_file_1, open(self.fighter_2.combattant.get_image(), "rb") as bully_image_file_2:
             bully_image_file_1 = discord.File(bully_image_file_1, filename="bully_image_file_1.png") 
             bully_image_file_2 = discord.File(bully_image_file_2, filename="bully_image_file_2.png")
@@ -281,7 +281,10 @@ class Fight():
             # self.message = await self.channel_cible.send(files=[bully_image_file_1, bully_image_file_2], embeds=[self.embed1, self.embed_mid, self.embed2])
             self.message_1 = await self.channel_cible.send(file=bully_image_file_1, embed=self.embed1)
             self.message_mid = await self.channel_cible.send(texts[2])
-            self.message_2 = await self.channel_cible.send(file=bully_image_file_2, embed=self.embed2)
+            if (len(self.users_can_swap)>0) : 
+                self.message_2 = await self.channel_cible.send(file=bully_image_file_2, embed=self.embed2,  view=interact_game.ViewClickBoolMultiple(users=self.users_can_swap, events=self.events_click_swap, labels=self.labels_swap, emoji="🔁"))
+            else :
+                self.message_2 = await self.channel_cible.send(file=bully_image_file_2, embed=self.embed2)
         
     async def update_message(self):
         texts = self.texts_fight()
@@ -434,9 +437,11 @@ class TeamFight():
             if fighter_1 is not None and fighter_1.pv <= 0 :
                 self.team_1.remove(fighter_1)
                 fighter_1 = None
+                self.increase_swap()
             if fighter_2 is not None and fighter_2.pv <= 0 :
                 self.team_2.remove(fighter_2)
                 fighter_2 = None
+                self.increase_swap()
 
         if len(self.team_1) > 0 :
             await self.ctx.send(f"{self.user_1.name if self.user_1 is not None else 'Team 1'} won the teamfight!")
@@ -453,6 +458,12 @@ class TeamFight():
             raise Exception("Abandon du combat")
         return f_bully
 
+    def increase_swap(self):
+        if self.can_swap :
+            if self.user_1 :
+                self.nb_swaps_1 += 1
+            if self.user_2 :
+                self.nb_swaps_2 += 1
 # Pour les comparaisons de stat ____________________________________
 def challenge_agility(stat_voulant_rejouer: Stats, stat_qui_attaque_normalement: Stats) -> bool:
     stat_veux_rejouer_agility = stat_voulant_rejouer.agility

@@ -6,14 +6,18 @@ from enum import Enum
 
 class CategoryBuff(Enum):
     NONE = 0
-    BASIC = 1
-    DEBUFF = 2
-    SPECIAL = 3
-    UNIQUE = 4
+    LVL_1 = 1
+    LVL_2 = 2
+    LVL_3 = 3
+    LVL_4 = 4
+    LVL_5 = 5
+    DEBUFF = -1
+    SPECIAL = -2
+    UNIQUE = -3
 
 class BuffFight():
     description:str = "No buff"
-    category:CategoryBuff = CategoryBuff.BASIC
+    category:CategoryBuff = CategoryBuff.NONE
     def __init__(self, fighter:FightingBully|None = None):
         self.name:str = self.__class__.__name__
         # Ajouter variable si variables nécessaires
@@ -26,7 +30,9 @@ class BuffFight():
     def apply_defensive(self, fighter:FightingBully, opponent:FightingBully, recap_round:RecapRound) -> None:
         """For buff that use damage infos as conditions."""
         return
-
+    def on_death(self, fighter:FightingBully, opponent:FightingBully, recap_round:RecapRound) -> None:
+        """For buff that use self death as conditions."""
+        return
     
 @dataclass
 class FightingBully():

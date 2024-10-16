@@ -12,6 +12,7 @@ class NoBuff(BuffFight):
 class Rage(BuffFight):
     description:str = "À chaque dégât subit, augmente sa Strength."
     description_en:str = "When damaged, increase Strength."
+    category:CategoryBuff = CategoryBuff.LVL_1
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
@@ -19,9 +20,10 @@ class Rage(BuffFight):
             fighter.stats.strength += fighter.combattant.lvl * 0.15
         return 
     
-class DislocatedParts(BuffFight):
+class LosingWeight(BuffFight):
     description:str = "À chaque dégât subit, augmente sa Agility."
     description_en:str = "When damaged, increase Agility."
+    category:CategoryBuff = CategoryBuff.LVL_1
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
@@ -32,6 +34,7 @@ class DislocatedParts(BuffFight):
 class AngerIssue(BuffFight):
     description:str = "À chaque dégât subit, augmente sa Lethality."
     description_en:str = "When damaged, increase Lethality."
+    category:CategoryBuff = CategoryBuff.LVL_1
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
@@ -42,6 +45,7 @@ class AngerIssue(BuffFight):
 class Brutal(BuffFight):
     description:str = "Augmente de 1 les dégâts de ses coups critiques."
     description_en:str = "Deals one more critical damage."
+    category:CategoryBuff = CategoryBuff.LVL_1
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
     def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
@@ -53,18 +57,21 @@ class Brutal(BuffFight):
 class Ironskin(BuffFight):
     description:str = "Reçoit 1 dégât de moins des coups critiques."
     description_en:str = "Take one less critical damage."
+    category:CategoryBuff = CategoryBuff.LVL_1
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
-        if fighter == recap_round.defender and recap_round.damage_bonus_lethal > 0 and recap_round.damage_receive_defender > 0:
+        if fighter == recap_round.defender and recap_round.damage_bonus_lethal > 0 and recap_round.get_damage_receive(fighter) > 0:
             fighter.pv += 1
             recap_round.damage_bonus_lethal -= 1
+            recap_round.add_damage_receive(fighter, -1)
         return 
 
 #11-20   
 class SlimyPunch(BuffFight):
-    description:str = "À chaque frappe réussit, réduit l'Agility de l'adversaire."
+    description:str = "À chaque frappe réussie, réduit l'Agility de l'adversaire."
     description_en:str = "When the enemy is hit, their Agility is reduced."
+    category:CategoryBuff = CategoryBuff.LVL_2
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
     def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
@@ -75,6 +82,7 @@ class SlimyPunch(BuffFight):
 class SlimyBody(BuffFight):
     description:str = "À chaque coup subit, réduit l'Agility de l'adversaire."
     description_en:str = "When hit, reduce the enemy's Agility."
+    category:CategoryBuff = CategoryBuff.LVL_2
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
@@ -85,6 +93,7 @@ class SlimyBody(BuffFight):
 class ThornSkin(BuffFight):
     description:str = "À chaque coup critique subit, renvoie 1 dégât à l'attaquant."
     description_en:str = "Deals damage to the attacker when hit by a critical strike."
+    category:CategoryBuff = CategoryBuff.LVL_2
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
     def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
@@ -96,6 +105,7 @@ class ThornSkin(BuffFight):
 class Frustration(BuffFight):
     description:str = "À chaque attaque raté, augmente sa Lethality."
     description_en:str = "When attack fails, increase Lethality."
+    category:CategoryBuff = CategoryBuff.LVL_2
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
     def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
@@ -106,11 +116,24 @@ class Frustration(BuffFight):
 class DragonSkin(BuffFight):
     description:str = "Ne reçoit pas de dégât des attaques non critiques."
     description_en:str = ""
+    category:CategoryBuff = CategoryBuff.LVL_2
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
-        if recap_round.defender == fighter and not recap_round.is_success_lethal and recap_round.get_damage_receive(fighter) > 0:
+        if recap_round.defender == fighter and not recap_round.is_success_lethal and not recap_round.is_success_block and recap_round.get_damage_receive(fighter) > 0:
             fighter.pv += 1
+            recap_round.add_damage_receive(fighter, -1)
+        return 
+    
+class ShadowEater(BuffFight):
+    description:str = "Ses attaques réussies augmente sa Viciousness."
+    description_en:str = ""
+    category:CategoryBuff = CategoryBuff.LVL_2
+    def __init__(self, fighter:FightingBully|None = None):
+        super().__init__()
+    def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
+        if recap_round.attacker == fighter and not recap_round.is_success_block:
+            fighter.stats.viciousness += fighter.combattant.lvl * 0.25
         return 
     
 
@@ -118,6 +141,7 @@ class DragonSkin(BuffFight):
 class RoyalSlimyBody(BuffFight):
     description:str = "À chaque attaque bloqué, réduit l'Agility de l'attaquant."
     description_en:str = "When blocking an attack, reduce the enemy's Agility."
+    category:CategoryBuff = CategoryBuff.LVL_3
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
     def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
@@ -126,8 +150,9 @@ class RoyalSlimyBody(BuffFight):
         return 0, 0
 
 class RootOfEvil(BuffFight):
-    description:str = "À chaque fois attaque vicieuse subit, augmente sa Viciousness."
+    description:str = "À chaque attaque vicieuse subit, augmente sa Viciousness."
     description_en:str = "When get vicious debuff, increase your Viciousness."
+    category:CategoryBuff = CategoryBuff.LVL_3
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
@@ -138,16 +163,20 @@ class RootOfEvil(BuffFight):
 class GoldenSkin(BuffFight):
     description:str = "Ne peut pas recevoir plus de 2 dégâts en 1 round."
     description_en:str = "Can't receive more than 2 damages at once."
+    category:CategoryBuff = CategoryBuff.LVL_3
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
         if recap_round.get_damage_receive(fighter) > 2:
-            fighter.pv += recap_round.get_damage_receive(fighter) - 2
+            heal = recap_round.get_damage_receive(fighter) - 2
+            fighter.pv += heal
+            recap_round.add_damage_receive(fighter, -heal)
         return 
     
 class SharpTeeth(BuffFight):
     description:str = "Ses coups critiques diminuent la Strength de l'adversaire."
     description_en:str = ""
+    category:CategoryBuff = CategoryBuff.LVL_3
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
     def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
@@ -156,8 +185,9 @@ class SharpTeeth(BuffFight):
         return 0, 0
 
 class DragonResilience(BuffFight):
-    description:str = "À chaque fois attaque vicieuse subit, augmente sa Strength."
+    description:str = "À chaque attaque vicieuse subit, augmente sa Strength."
     description_en:str = ""
+    category:CategoryBuff = CategoryBuff.LVL_3
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
@@ -169,6 +199,7 @@ class DragonResilience(BuffFight):
 class Lycanthropy(BuffFight):
     description:str = "Échange la Lethality et la Viciousness selon les HP de l'adversaire."
     description_en:str = "Swap Lethality and Viciousness depending on enemy's HP."
+    category:CategoryBuff = CategoryBuff.LVL_4
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
@@ -185,6 +216,7 @@ class Lycanthropy(BuffFight):
 class VampireCharm(BuffFight):
     description:str = "À chaque coup vicieux blessant l'adversaire, régénère 1 HP."
     description_en:str = "When deal vicious damage on the enemy, regen HP."
+    category:CategoryBuff = CategoryBuff.LVL_4
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
@@ -195,6 +227,7 @@ class VampireCharm(BuffFight):
 class BossStage(BuffFight):
     description:str = "Augmente toutes ses stats après avoir perdu la moitié de ses HP."
     description_en:str = "Increase stats when below half HP."
+    category:CategoryBuff = CategoryBuff.LVL_4
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
         self.first_stage = True
@@ -208,6 +241,7 @@ class BossStage(BuffFight):
 class Overdrive(BuffFight):
     description:str = "Commence avec des gros buffs de stats mais s'essouffle peu à peu."
     description_en:str = ""
+    category:CategoryBuff = CategoryBuff.LVL_4
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
         if fighter is not None : 
@@ -227,6 +261,7 @@ class Overdrive(BuffFight):
 class WarmUp(BuffFight):
     description:str = "Après 10 round, augmente toutes ses stats."
     description_en:str = ""
+    category:CategoryBuff = CategoryBuff.LVL_4
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
         self.countdown = 10
@@ -247,6 +282,7 @@ class WarmUp(BuffFight):
 class Venomous(BuffFight):
     description:str = "Ses coups critiques empoisonne son adversaire."
     description_en:str = "Poison enemy on critical strikes."
+    category:CategoryBuff = CategoryBuff.LVL_5
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
@@ -259,6 +295,7 @@ class Venomous(BuffFight):
 class Scary(BuffFight):
     description:str = "Ses coups vicieux, même raté, peuvent hanter l'ennemi (Haunted Debuff)."
     description_en:str = "Vicious debuff can haunt the enemy."
+    category:CategoryBuff = CategoryBuff.LVL_5
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
         self.proba = 0.3
@@ -272,24 +309,28 @@ class Scary(BuffFight):
 class CrystalSkin(BuffFight):
     description:str = "Annule les dégâts supplémentaires des coups critiques."
     description_en:str = "Cancel bonus damage from critical strikes."
+    category:CategoryBuff = CategoryBuff.LVL_5
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
     def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound)-> tuple[int, int] :
         if recap_round.damage_bonus_lethal > 0:
             dmg_bonus = recap_round.damage_bonus_lethal
             if recap_round.attacker == fighter :
-                opponent.pv += dmg_bonus
+                heal = min(dmg_bonus, recap_round.get_damage_receive(opponent))
+                opponent.pv += heal
                 recap_round.damage_bonus_lethal = 0
-                return -dmg_bonus, 0 
+                return -heal, 0 
             if recap_round.attacker == opponent :
-                fighter.pv += dmg_bonus
+                heal = min(dmg_bonus, recap_round.get_damage_receive(fighter))
+                fighter.pv += heal
                 recap_round.damage_bonus_lethal = 0
-                return 0, -dmg_bonus
+                return 0, -heal
         return 0, 0
 
 class ProtectiveShadow(BuffFight):
     description:str = "Au lieu de prendre des dégâts, diminue sa Viciousness. Ce buff disparait quand la Viciousness atteint 1."
     description_en:str = ""
+    category:CategoryBuff = CategoryBuff.LVL_5
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
@@ -305,6 +346,7 @@ class ProtectiveShadow(BuffFight):
 class DragonAscension(BuffFight):
     description:str = "Devient de plus en plus fort."
     description_en:str = ""
+    category:CategoryBuff = CategoryBuff.LVL_5
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
@@ -373,7 +415,7 @@ class Poisoned(BuffFight):
         return 1, 0
     
 class Haunted(BuffFight):
-    description:str = "Les buffs sont désactivés jusqu'à la prochaine attaque réussit contre un ennemi."
+    description:str = "Les buffs sont désactivés jusqu'à la prochaine attaque réussie contre un ennemi."
     description_en:str = "Deactivate buffs until successfully hitting an enemy."
     category:CategoryBuff = CategoryBuff.DEBUFF
     def __init__(self, fighter:FightingBully|None = None):
@@ -414,7 +456,7 @@ class Cat(BuffFight):
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
         self.vies = 9
-    def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
+    def on_death(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if fighter.pv <= 0 and self.vies > 0:
             self.vies -= 1
             self.name = f"{self.vies} vie{'s' if self.vies>1 else ''} !"
@@ -460,19 +502,24 @@ class StrangeGift(BuffFight):
     category:CategoryBuff = CategoryBuff.UNIQUE
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
-    def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
+    def on_death(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
         if fighter.pv <= 0:
             opponent.buffs = [Poisoned(difficulty=fighter.stats.viciousness)]
         return 
 class Bombe(BuffFight):
-    description:str = "Les coups qui l'achève le font exploser en infligeant 5 dégâts à son adversaire."
+    description:str = "Inflige 1 dégât aux 2 combattants quand il bloque ou réussit une attaque."
     description_en:str = "When struck to death, deal 5 damage to the enemy."
     category:CategoryBuff = CategoryBuff.UNIQUE
     def __init__(self, fighter:FightingBully|None = None):
         super().__init__()
     def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
-        if fighter.pv <= 0:
-            opponent.pv -= 5
-            return 0, 5
+        if fighter == recap_round.defender and recap_round.is_success_block:
+            fighter.pv -= 1
+            opponent.pv -= 1
+            return 1, 1
+        elif fighter == recap_round.attacker and not recap_round.is_success_block:
+            fighter.pv -= 1
+            opponent.pv -= 1
+            return 1, 1
         return 0, 0
     

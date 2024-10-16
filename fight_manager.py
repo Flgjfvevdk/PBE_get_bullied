@@ -19,7 +19,7 @@ from utils.color_str import CText
 
 CHOICE_TIMEOUT = 30
 RECAP_MAX_EMOJI = 15
-FIGHT_MSG_TIME_UPDATE = 2
+FIGHT_MSG_TIME_UPDATE = 1.0
 
 
 async def proposition_fight(ctx:Context, user_1:discord.abc.User, user_2:discord.abc.User, player_1: Player, player_2: Player, bot: Bot, for_fun = False):
@@ -222,6 +222,11 @@ class Fight():
             b.apply_defensive(fighter=self.fighter_1, opponent=self.fighter_2, recap_round=recap_round)
         for b in self.fighter_2.buffs:
             b.apply_defensive(fighter=self.fighter_2, opponent=self.fighter_1, recap_round=recap_round)
+
+        for b in self.fighter_1.buffs:
+            b.on_death(fighter=self.fighter_1, opponent=self.fighter_2, recap_round=recap_round)
+        for b in self.fighter_2.buffs:
+            b.on_death(fighter=self.fighter_2, opponent=self.fighter_1, recap_round=recap_round)
 
     async def end_fight(self):
         if(self.fighter_1.pv <= 0):

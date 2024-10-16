@@ -267,14 +267,11 @@ class Fight():
             texts = self.texts_fight()
             # Création du premier embed avec une miniature (image à gauche) et un texte d'exemple
             self.embed1 = discord.Embed(title=f"{self.fighter_1.combattant.name}", description=texts[0], color=0x3498db)
-            # self.embed1 = discord.Embed(title=f"{self.fighter_1.combattant.name}", color=0x3498db)
             self.embed1.set_thumbnail(url="attachment://bully_image_file_1.png")
 
             # Création du second embed avec une miniature (image à droite) et un texte d'exemple
             self.embed2 = discord.Embed(title=f"{self.fighter_2.combattant.name}", description=texts[1], color=0xe74c3c)
             self.embed2.set_thumbnail(url="attachment://bully_image_file_2.png")
-
-            # self.embed_mid = discord.Embed(title=None, description=texts[2])
 
             # self.message = await self.channel_cible.send(files=[bully_image_file_1, bully_image_file_2], embeds=[self.embed1, self.embed_mid, self.embed2])
             self.message_1 = await self.channel_cible.send(file=bully_image_file_1, embed=self.embed1)
@@ -309,17 +306,6 @@ class Fight():
     def texts_fight(self) -> tuple[str, str, str]:
         barre_pv_1 = value_to_bar_str(self.fighter_1.pv, max_value= self.max_pv_1)
         barre_pv_2 = value_to_bar_str(self.fighter_2.pv, max_value= self.max_pv_2)
-        text_1 = CText(
-            f"⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\nBully 1 : {self.fighter_1.combattant.name}\n{buff_to_str(self.fighter_1.buffs)}\n"
-            # f"HP : {barre_pv_1} ({self.fighter_1.pv:02}/{self.max_pv_1:02}) \t{self.fighter_1.stats.to_str_color()} \n"
-            # f"{''.join(self.emojis_recap[0][-RECAP_MAX_EMOJI:])}\n"
-        ) .str()
-        text_2 =CText(
-            # f"{''.join(self.emojis_recap[1][-RECAP_MAX_EMOJI:])}\n"
-            f"Bully 2 : {self.fighter_2.combattant.name}\n{buff_to_str(self.fighter_2.buffs)}\n"
-            # f"HP : {barre_pv_2} ({self.fighter_2.pv:02}/{self.max_pv_2:02}) \t{self.fighter_2.stats.to_str_color()}\n"
-            "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯"
-        ).str()
         text_1 = buff_to_str(self.fighter_1.buffs)
         text_2 = buff_to_str(self.fighter_2.buffs)
 

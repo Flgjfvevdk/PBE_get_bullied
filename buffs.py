@@ -445,7 +445,17 @@ class Dragon(BuffFight):
             fighter.buffs = [DragonSkin(fighter=fighter), DragonResilience(fighter=fighter), DragonAscension(fighter=fighter)]
         else : 
             print("Fighter devrait être init")
-    
+
+class ShadowMaster(BuffFight):
+    description:str = "Obtient tous les buffs Shadows"
+    description_en:str = ""
+    def __init__(self, fighter:FightingBully|None = None):
+        super().__init__()
+        if fighter is not None : 
+            fighter.buffs = [ShadowEater(fighter=fighter), ProtectiveShadow(fighter=fighter)]
+        else : 
+            print("Fighter devrait être init")
+
 
 
 #Unique Buff (for Unique character)

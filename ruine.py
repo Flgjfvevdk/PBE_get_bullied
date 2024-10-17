@@ -199,7 +199,7 @@ class ConsoRoom():
 
     @staticmethod
     def generate(level: int, rarity: Rarity) -> "ConsoRoom":
-        if random.random() < 1:
+        if random.random() < 0.33:
             Buff = random.choice(BuffsLVL[math.floor(level/10)])
             buff_tag = Buff.__name__
             conso = consumable.ConsumableElixirBuff("Elixir of " + buff_tag, buff_tag)

@@ -73,7 +73,7 @@ dungeon_fighter_bully_list = [DungeonFightingBully(name="Thyr O'Flan", pv_max=5,
                               DungeonFightingBully(name="le gars qu'on choisit en dernier en sport et qui se venge", pv_max=5, seed=bully.Seed(0.1, 0.1, 0.45, 0.35), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER),
                               DungeonFightingBully(name="Plu Didier", pv_max=6, seed=bully.Seed(0.2, 0.4, 0.1, 0.3), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER),
                               DungeonFightingBully(name="Woah", pv_max=6, seed=bully.Seed(0.3, 0.3, 0.2, 0.2), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER),
-                              DungeonFightingBully(name="Gros Problème", pv_max=8, seed=bully.Seed(0.35, 0.55, 0.01, 0.09), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER),
+                              DungeonFightingBully(name="Gros Problème", pv_max=8, seed=bully.Seed(0.35, 0.55, 0.01, 0.09), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER, buff_tag="Rage"),
                               DungeonFightingBully(name="Le Fourbe", pv_max=5, seed=bully.Seed(0.15, 0.1, 0.05, 0.65), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER),
                               DungeonFightingBully(name="Nulos", pv_max=5, seed=bully.Seed(0.1, 0.05, 0.40, 0.45), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER)]
 
@@ -117,7 +117,7 @@ class Dungeon():
     def generate_dungeon_team(self) -> List[FightingBully]:
         enemies_fighters:List[FightingBully] = []
         
-        #DUngeon spécial
+        #Dungeon spécial
         if self.level == 50:
             for df in dungeon_max_lvl_fighters:
                 df.init_fighting_bully(rarity=bully.Rarity.UNIQUE, level = self.level)
@@ -185,6 +185,11 @@ class Dungeon():
                         bully_joueur_recompense.give_exp(round(xp_earned * COEF_XP_WIN, 1))
                     except bully.LevelUpException as lvl_except:
                         await self.thread.send(f"{bully_joueur_recompense.name} {lvl_except.text}")
+
+            if self.level == 50 : 
+                import consumable
+                elixir_dragon = consumable.ConsumableElixirBuff("Dragon Blood", "Dragon")
+                await consumable.add_conso_to_player(self.ctx, self.player, elixir_dragon, channel_cible=self.thread)
 
             #On maj le record du joueur sur son dungeon si nécessaire
             if self.level > self.player.max_dungeon:

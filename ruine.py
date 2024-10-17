@@ -2,7 +2,7 @@ import os
 import random
 from bully import Bully, Rarity, LevelUpException, Stats
 import bully
-from fighting_bully import FightingBully
+from fighting_bully import FightingBully, BuffFight, CategoryBuff
 import consumable
 from consumable import Consumable
 import interact_game
@@ -12,7 +12,8 @@ import keys
 import math
 import asyncio
 from player_info import Player
-
+import buffs
+import inspect
 
 from typing import Any, Optional, overload, Type
 from dataclasses import dataclass, field, KW_ONLY
@@ -30,6 +31,12 @@ MAX_PV_BOSS = 20
 boss_rarity_lvl:dict[int, bully.Rarity] = {k:bully.Rarity.TOXIC for k in range(0,5)} | {k:bully.Rarity.MONSTER for k in range(5,20)} | {k:bully.Rarity.DEVASTATOR for k in range(20,35)} | {k:bully.Rarity.SUBLIME for k in range(35,50)}
 fighter_rarities_lvl:dict[int, list[bully.Rarity]] = {k:[bully.Rarity.TOXIC] for k in range(0,10)} | {k:[bully.Rarity.TOXIC, bully.Rarity.MONSTER] for k in range(10,15)} | {k:[bully.Rarity.MONSTER] for k in range(15,25)} | {k:[bully.Rarity.MONSTER, bully.Rarity.DEVASTATOR] for k in range(25,30)} | {k:[bully.Rarity.DEVASTATOR] for k in range(30,40)} | {k:[bully.Rarity.DEVASTATOR, bully.Rarity.SUBLIME] for k in range(40,45)} | {k:[bully.Rarity.SUBLIME] for k in range(45,50)}
 
+#On load les buffs récupérable
+classes = [member[1] for member in inspect.getmembers(buffs) if inspect.isclass(member[1])]
+BuffsLVL:list[list[type[BuffFight]]] = [[], [], [], [], []]
+for buffClass in classes:
+    if issubclass(buffClass, BuffFight) and buffClass.category.value in [1, 2, 3, 4, 5] :
+        BuffsLVL[buffClass.category.value - 1].append(buffClass)
 
 class Trap :
     def __init__(self, level: int, rarity: Rarity, stat_index: int|None = None, damage = 3):
@@ -70,7 +77,6 @@ class Trap :
 class EnemyRoom():
     enemy: FightingBully
     can_switch: bool = False
-    # can_switch: bool = True
 
     @staticmethod
     def generate(level: int, rarity: Rarity) -> "EnemyRoom":
@@ -193,9 +199,14 @@ class ConsoRoom():
 
     @staticmethod
     def generate(level: int, rarity: Rarity) -> "ConsoRoom":
-        valeur = level * rarity.coef_level_points 
-        aliment = random.choice(list(consumable.AlimentEnum))
-        conso = aliment.new_conso(value=valeur)
+        if random.random() < 1:
+            Buff = random.choice(BuffsLVL[math.floor(level/10)])
+            buff_tag = Buff.__name__
+            conso = consumable.ConsumableElixirBuff("Elixir of " + buff_tag, buff_tag)
+        else :
+            valeur = round(level * rarity.coef_level_points) 
+            aliment = random.choice(list(consumable.AlimentEnum))
+            conso = aliment.new_conso(value=valeur)
         return ConsoRoom(conso)
     
     async def interact(self, ruin: "Ruin"):
@@ -214,6 +225,7 @@ class BossRoom(EnemyRoom, ConsoRoom):
         for _ in range(1, level) :
             boss.level_up_one()
         boss_conso = ConsoRoom.generate(level, rarity).conso
+        boss_conso.apply(boss)
         boss_fighter = FightingBully.create_fighting_bully(boss)
         return BossRoom(boss_conso, boss_fighter, can_switch = True) #reverse MRO for dataclasses
     

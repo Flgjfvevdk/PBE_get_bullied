@@ -665,7 +665,7 @@ async def add_elixir(ctx: Context, buff_name : str):
             if player is None:
                 await ctx.reply(TEXT_JOIN_THE_GAME)
                 return
-            e = consumable.ConsumableElixirBuff(buff_name, buff_name)
+            e = consumable.ConsumableElixirBuff("Elixir of " + buff_name, buff_name)
             player.consumables.append(e)
             await session.commit()
 

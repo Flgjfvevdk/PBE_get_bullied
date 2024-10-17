@@ -24,7 +24,6 @@ import discord
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-# enemies_possibles_names=["Thyr O'Flan", "Grobrah Le Musclé", "Craby", "Fou Fur", "wè wè", "Boss", "Crapcrap", "Eric", "le gars qu'on choisit en dernier en sport et qui se venge" ]
 
 
 DUNGEON_CHOICE_TIMEOUT = 60
@@ -49,10 +48,11 @@ class DungeonFightingBully():
     seed:bully.Seed
     exp_coef:float
     gold_coef:float
-    fighting_bully:FightingBully|None = None
+    buff_tag:str = "NoBuff"
+    # fighting_bully:FightingBully|None = None
 
     def init_fighting_bully(self, rarity, level):
-        b = bully.Bully(name=self.name, rarity=rarity, must_load_image=False, max_pv=self.pv_max, seed=self.seed)
+        b = bully.Bully(name=self.name, rarity=rarity, must_load_image=False, max_pv=self.pv_max, seed=self.seed, buff_fight_tag=self.buff_tag)
         for k in range(1, level) :
             b.level_up_one()
         self.fighting_bully = FightingBully.create_fighting_bully(b=b)
@@ -65,7 +65,7 @@ class DungeonFightingBully():
         gold_earned = int(self.gold_coef * gold_earned)
         return (exp_earned, gold_earned)
 
-dungeon_fighter_bully_list = [DungeonFightingBully(name="Thyr O'Flan", pv_max=5, seed=bully.Seed(0.05, 0.45, 0.2, 0.3), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER),
+dungeon_fighter_bully_list = [DungeonFightingBully(name="Thyr O'Flan", pv_max=5, seed=bully.Seed(0.2, 0.45, 0.2, 0.25), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER),
                               DungeonFightingBully(name="Grobrah Le Musclé", pv_max=7, seed=bully.Seed(0.65, 0.1, 0.2, 0.05), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER),
                               DungeonFightingBully(name="Fou Fur", pv_max=6, seed=bully.Seed(0.2, 0.2, 0.5, 0.1), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER),
                               DungeonFightingBully(name="wè wè", pv_max=6, seed=bully.Seed(0.4, 0.3, 0.1, 0.2), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER),
@@ -77,11 +77,11 @@ dungeon_fighter_bully_list = [DungeonFightingBully(name="Thyr O'Flan", pv_max=5,
                               DungeonFightingBully(name="Le Fourbe", pv_max=5, seed=bully.Seed(0.15, 0.1, 0.05, 0.65), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER),
                               DungeonFightingBully(name="Nulos", pv_max=5, seed=bully.Seed(0.1, 0.05, 0.40, 0.45), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER)]
 
-dungeon_max_lvl_fighters = [DungeonFightingBully(name="Gardien", pv_max=12, seed=bully.Seed(1.3, 0.3, 0.4, 0.0), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER),
-                             DungeonFightingBully(name="Ombre", pv_max=1, seed=bully.Seed(0.0, 2.0, 0.0, 1.0), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER),
-                             DungeonFightingBully(name="Ours Hiboux", pv_max=10, seed=bully.Seed(0.5, 0.4, 0.7, 0.4), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER),
-                             DungeonFightingBully(name="David, ancien héros", pv_max=8, seed=bully.Seed(0.5, 1.0, 0.2, 0.4), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER),
-                             DungeonFightingBully(name="Dragon Primordial, Maitre du donjon", pv_max=20, seed=bully.Seed(1.3, 0.5, 0.3, 0.2), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER)
+dungeon_max_lvl_fighters = [DungeonFightingBully(name="Gardien", pv_max=13, seed=bully.Seed(1.3, 0.3, 0.4, 0.0), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER, buff_tag="Brutal"),
+                             DungeonFightingBully(name="Ombre", pv_max=1, seed=bully.Seed(0.1, 1.5, 0.0, 1.5), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER, buff_tag="ShadowMaster"),
+                             DungeonFightingBully(name="Ours Hiboux", pv_max=10, seed=bully.Seed(0.5, 0.4, 0.7, 0.4), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER, buff_tag="Rage"),
+                             DungeonFightingBully(name="David, ancien héros", pv_max=8, seed=bully.Seed(0.5, 1.0, 0.2, 0.4), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER, buff_tag="GoldenSkin"),
+                             DungeonFightingBully(name="Dragon Primordial, Maitre du donjon", pv_max=20, seed=bully.Seed(1.3, 0.5, 0.2, 0.2), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER, buff_tag="Dragon")
                             ]
 
 @dataclass

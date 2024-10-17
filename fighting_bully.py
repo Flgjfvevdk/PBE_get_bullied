@@ -18,7 +18,7 @@ class CategoryBuff(Enum):
 class BuffFight():
     description:str = "No buff"
     category:CategoryBuff = CategoryBuff.NONE
-    def __init__(self, fighter:FightingBully|None = None):
+    def __init__(self, fighter:FightingBully):
         self.name:str = self.__class__.__name__
         # Ajouter variable si variables nécessaires
     def apply_aggresive(self, fighter:FightingBully, opponent:FightingBully, recap_round:RecapRound) -> tuple[int, int]:
@@ -85,7 +85,7 @@ class RecapRound():
             raise Warning("Input fighter is neither attacker nor defender")
             return 0
 
-def create_buff_instance(class_name: str, fighter:FightingBully|None = None) -> BuffFight: 
+def create_buff_instance(class_name: str, fighter:FightingBully) -> BuffFight: 
     import buffs
     from typing import Type
     # Cherche la classe dans le module
@@ -94,6 +94,6 @@ def create_buff_instance(class_name: str, fighter:FightingBully|None = None) -> 
         if not issubclass(BuffClass, BuffFight):
             print("Le buff du bully est invalide")
             return BuffFight(fighter=fighter)
-        return BuffClass(fighter)  # Crée une instance de la classe
+        return BuffClass(fighter=fighter)  # Crée une instance de la classe
     except AttributeError:
         raise ValueError(f"La classe {class_name} n'existe pas dans le module.")

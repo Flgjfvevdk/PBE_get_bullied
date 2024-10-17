@@ -332,7 +332,8 @@ class Ruin():
         try: 
             # Pop removes the last item
             while not await self.rooms.pop().interact(self):
-                self.reset_stats_bullies()# pass
+                pass
+                # self.reset_stats_bullies()
 
             await self.thread.send(f"Congratulation {self.user}, you beat the boss!")
         except interact_game.CancelChoiceException as e:

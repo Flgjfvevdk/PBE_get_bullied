@@ -156,7 +156,7 @@ class Dungeon():
         try:
             while self.current_floor < len(self.enemies_fighters):
                 await self.handle_fight(can_switch=self.current_floor ==  len(self.enemies_fighters) - 1 or self.level==50)
-                self.reset_stats_bullies()
+                # self.reset_stats_bullies()
 
         except interact_game.CancelChoiceException as e:
             await self.thread.send(f"{self.ctx.author.name} cancelled the fight and left the dungeon")

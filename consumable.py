@@ -126,7 +126,7 @@ class ConsumableElixirBuff(Consumable):
 
     def get_effect(self) -> str:
         BuffClass:type[BuffFight] = getattr(buffs, self.buff_tag)
-        return f"Elixir of {self.name}: {BuffClass.description}"
+        return f"{self.name}: {BuffClass.description}"
 
 #_______________________________________________________________________
 #_______________________________________________________________________

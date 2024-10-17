@@ -527,10 +527,8 @@ def reward_win_fight(b_win:Bully, b_lose:Bully) -> tuple[float, int]:
     exp_earned = 0
     gold_earned = 0
     if(b_win.lvl >= b_lose.lvl + 5):
-        print(f"ici : {b_win.lvl} - {b_lose.lvl}")
         gold_earned = b_lose.gold_give_when_die()
     else : 
-        print(f"la : {b_win.lvl} - {b_lose.lvl}")
         exp_earned = b_lose.exp_give_when_die()
         if b_win.rarity.death_exp_coeff > 1 :
             exp_earned /= b_win.rarity.death_exp_coeff

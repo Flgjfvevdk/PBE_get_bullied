@@ -244,12 +244,11 @@ class Overdrive(BuffFight):
     category:CategoryBuff = CategoryBuff.LVL_4
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
-        if fighter is not None : 
-            bonus = fighter.combattant.lvl * 2
-            fighter.stats.strength += bonus
-            fighter.stats.agility += bonus
-            fighter.stats.lethality += bonus
-            fighter.stats.viciousness += bonus
+        bonus = fighter.combattant.lvl * 2
+        fighter.stats.strength += bonus
+        fighter.stats.agility += bonus
+        fighter.stats.lethality += bonus
+        fighter.stats.viciousness += bonus
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         malus = fighter.combattant.lvl * 0.2
         fighter.stats.strength = max(1, fighter.stats.strength - malus)
@@ -400,8 +399,7 @@ class SublimeTeam(BuffFight):
     category:CategoryBuff = CategoryBuff.TEAM
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
-        if fighter is not None :
-            fighter.pv += 2
+        fighter.pv += 2
 
 #Buff Negatif
 class Poisoned(BuffFight):
@@ -426,11 +424,10 @@ class Haunted(BuffFight):
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
         self.saved_buffs:list[BuffFight] = []
-        if fighter is not None:
-            for b in fighter.buffs:
-                if not isinstance(b, Haunted):
-                    self.saved_buffs.append(b)
-            fighter.buffs = [self]
+        for b in fighter.buffs:
+            if not isinstance(b, Haunted):
+                self.saved_buffs.append(b)
+        fighter.buffs = [self]
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
         if fighter == recap_round.attacker and not recap_round.is_success_block:
             fighter.buffs = self.saved_buffs.copy()
@@ -441,9 +438,8 @@ class Dizzy(BuffFight):
     category:CategoryBuff = CategoryBuff.DEBUFF
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
-        if fighter is not None:
-            self.malus = fighter.stats.agility*0.95
-            fighter.stats.agility -= self.malus
+        self.malus = fighter.stats.agility*0.95
+        fighter.stats.agility -= self.malus
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
         fighter.stats.agility += self.malus
         fighter.buffs.remove(self)
@@ -462,10 +458,7 @@ class Dragon(BuffFight):
     category:CategoryBuff = CategoryBuff.SPECIAL
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
-        if fighter is not None : 
-            fighter.buffs = [DragonSkin(fighter=fighter), DragonResilience(fighter=fighter), DragonAscension(fighter=fighter)]
-        else : 
-            print("Fighter devrait être init")
+        fighter.buffs = [DragonSkin(fighter=fighter), DragonResilience(fighter=fighter), DragonAscension(fighter=fighter)]
 
 class ShadowMaster(BuffFight):
     description:str = "Obtient tous les buffs Shadows"
@@ -473,10 +466,7 @@ class ShadowMaster(BuffFight):
     category:CategoryBuff = CategoryBuff.SPECIAL
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
-        if fighter is not None : 
-            fighter.buffs = [ShadowEater(fighter=fighter), ProtectiveShadow(fighter=fighter)]
-        else : 
-            print("Fighter devrait être init")
+        fighter.buffs = [ShadowEater(fighter=fighter), ProtectiveShadow(fighter=fighter)]
 
 
 

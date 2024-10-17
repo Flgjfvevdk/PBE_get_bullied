@@ -12,8 +12,9 @@ class CategoryBuff(Enum):
     LVL_4 = 4
     LVL_5 = 5
     DEBUFF = -1
-    SPECIAL = -2
-    UNIQUE = -3
+    TEAM = -2
+    SPECIAL = -3
+    UNIQUE = -4
 
 class BuffFight():
     description:str = "No buff"

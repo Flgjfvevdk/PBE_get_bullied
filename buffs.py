@@ -361,6 +361,7 @@ class DragonAscension(BuffFight):
 class ToxicTeam(BuffFight):
     description:str = "Les coups vicieux bloqués font 1 dégât."
     description_en:str = ""
+    category:CategoryBuff = CategoryBuff.TEAM
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
     def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
@@ -372,6 +373,7 @@ class ToxicTeam(BuffFight):
 class MonsterTeam(BuffFight):
     description:str = "Se soigne de 1 HP en faisant un coup critique."
     description_en:str = ""
+    category:CategoryBuff = CategoryBuff.TEAM
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
     def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
@@ -383,6 +385,7 @@ class MonsterTeam(BuffFight):
 class DevastatorTeam(BuffFight):
     description:str = "Les coups non critiques font 1 dégât supplémentaire."
     description_en:str = ""
+    category:CategoryBuff = CategoryBuff.TEAM
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
     def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
@@ -394,6 +397,7 @@ class DevastatorTeam(BuffFight):
 class SublimeTeam(BuffFight):
     description:str = "Commence les combats avec 2 pv supplémentaire."
     description_en:str = ""
+    category:CategoryBuff = CategoryBuff.TEAM
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
         if fighter is not None :
@@ -455,6 +459,7 @@ class Friendship(BuffFight):
 class Dragon(BuffFight):
     description:str = "Obtient tous les buffs Dragons"
     description_en:str = ""
+    category:CategoryBuff = CategoryBuff.SPECIAL
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
         if fighter is not None : 
@@ -465,6 +470,7 @@ class Dragon(BuffFight):
 class ShadowMaster(BuffFight):
     description:str = "Obtient tous les buffs Shadows"
     description_en:str = ""
+    category:CategoryBuff = CategoryBuff.SPECIAL
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
         if fighter is not None : 
@@ -548,4 +554,13 @@ class Bombe(BuffFight):
             opponent.pv -= 1
             return 1, 1
         return 0, 0
-# class Parrain(BuffFight):
+class Parrain(BuffFight):
+    description:str = "Ses coups critiques rendent l'ennemi Dizzy (malus Agility pendant 1 tour)."
+    description_en:str = ""
+    category:CategoryBuff = CategoryBuff.UNIQUE
+    def __init__(self, fighter:FightingBully):
+        super().__init__(fighter)
+    def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
+        if fighter == recap_round.attacker and recap_round.is_success_lethal :
+            opponent.buffs.append(Dizzy(fighter = opponent))
+        return

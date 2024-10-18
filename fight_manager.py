@@ -2,7 +2,7 @@ import os
 import random
 
 import discord
-from bully import Bully, Stats, LevelUpException
+from bully import Bully, Stats, LevelUpException, Rarity
 import fighting_bully
 from fighting_bully import FightingBully
 import interact_game
@@ -238,10 +238,8 @@ class Fight():
         else:
             raise Exception("aucun perdant?")
         
-        if(self.for_fun) :
-            self.ctx.channel
-            await self.channel_cible.send(f"{bully_gagnant.name} won the fight!")
-        else :
+        await self.channel_cible.send(f"{bully_gagnant.name} won the fight!")
+        if (not self.for_fun) :
             (exp_earned, gold_earned) = reward_win_fight(bully_gagnant, bully_perdant)
             pretext = ""
             if (exp_earned > 0):
@@ -255,8 +253,15 @@ class Fight():
                 if user_gagnant is not None and player_gagnant is not None:
                     money.give_money(player_gagnant, montant=gold_earned)
                     pretext += f"{user_gagnant.name} earned {gold_earned}{money.MONEY_ICON}\n"
-            await bully_perdant.kill()
-            await self.channel_cible.send(f"{pretext}{bully_perdant.name} died in terrible agony")
+            
+            if bully_perdant.rarity is Rarity.NOBODY:
+                await self.channel_cible.send(f"{pretext}{bully_perdant.name} died in terrible agony")
+                await bully_perdant.kill()
+            else : 
+                lvl_loss = max(1, math.floor(bully_perdant.lvl/5))
+                lvl_loss = min(lvl_loss, bully_perdant.lvl - 1)
+                bully_perdant.decrease_lvl(lvl_loss)
+                await self.channel_cible.send(f"{pretext}{bully_perdant.name} lost {lvl_loss} level")
         return
         
     

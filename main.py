@@ -697,7 +697,7 @@ async def bully_maj(ctx:Context):
             print(f"{b.name}- diff:{difference_points}")
             nb_points:int = round(b.lvl * (b.lvl + 1) / 2)
             val = difference_points/nb_points
-            b.increase_stat_with_seed(nb_points=nb_points, valeur=val, talkative = False)
+            b.increase_stat_with_seed(nb_points=nb_points, valeur=val)
         await session.commit() 
 
 if __name__ == "__main__":

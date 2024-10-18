@@ -1,6 +1,6 @@
 import os
 import random
-from bully import Bully #ne pas confondre avec bully (le fichier)
+from bully import Bully, Rarity #ne pas confondre avec bully (le fichier)
 import bully #ne pas confondre avec Bully (la class)
 from fighting_bully import FightingBully
 from player_info import Player
@@ -246,9 +246,15 @@ class Dungeon():
             self.current_floor += 1
 
         else : 
-            #Le joueur à perdu. On tue le bully qui est ded
-            await self.thread.send(f"{bully_joueur.name} died in terrible agony.")
-            await bully_joueur.kill()
+            #Le joueur à perdu. 
+            if bully_joueur.rarity == Rarity.NOBODY :
+                await self.thread.send(f"{bully_joueur.name} died in terrible agony.")
+                await bully_joueur.kill()
+            else : 
+                lvl_loss = max(1, math.floor(bully_joueur.lvl/5))
+                lvl_loss = min(lvl_loss, bully_joueur.lvl - 1)
+                bully_joueur.decrease_lvl(lvl_loss)
+                await self.thread.send(f"{bully_joueur.name} lost {lvl_loss} level")
             self.fighters_joueur.pop(num_bully_j)
             self.xp_earned_bullies.pop(num_bully_j)
 

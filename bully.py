@@ -132,6 +132,15 @@ class Stats(MutableComposite):
     def sum_stats(self) -> float:
         return self.strength + self.agility + self.lethality + self.viciousness
     
+    def __sub__(self, other:"Stats") -> "Stats":
+        diff_s = Stats(strength=(self.strength - other.strength)   , agility=(self.agility - other.agility), 
+                       lethality=(self.lethality - other.lethality), viciousness=(self.viciousness - other.viciousness))
+        return diff_s
+    
+    def __add__(self, other:"Stats"):
+        return Stats(strength=(self.strength + other.strength)   , agility=(self.agility + other.agility), 
+                       lethality=(self.lethality + other.lethality), viciousness=(self.viciousness + other.viciousness))
+
     def to_str_color(self)-> str:
         import math
         txt_s = f"{color_str.BlueNode(str(round(self.strength, max(0,2-round(math.log10(self.strength)))))).colorized()}"

@@ -133,6 +133,9 @@ class Fight():
     async def start_fight(self):
         await self.setup_message()
         await asyncio.sleep(FIGHT_MSG_TIME_UPDATE)
+
+        await self.apply_buff_before_fight()
+        
         while self.fighter_1.pv > 0 and self.fighter_2.pv > 0 :
             await self.play_round()
 
@@ -206,6 +209,12 @@ class Fight():
         await self.apply_buff_fight(recap_round=recap_round)
         return
     
+    async def apply_buff_before_fight(self):
+        for b in self.fighter_1.buffs:
+            b.before_fight(fighter=self.fighter_1, opponent=self.fighter_2)
+        for b in self.fighter_2.buffs:
+            b.before_fight(fighter=self.fighter_2, opponent=self.fighter_1)
+
     async def apply_buff_fight(self, recap_round:fighting_bully.RecapRound):
         damage_j1, damage_j2 = 0, 0
         for b in self.fighter_1.buffs:

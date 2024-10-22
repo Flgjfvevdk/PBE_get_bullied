@@ -468,6 +468,21 @@ class ShadowMaster(BuffFight):
         super().__init__(fighter)
         fighter.buffs = [ShadowEater(fighter=fighter), ProtectiveShadow(fighter=fighter)]
 
+class Adaptation(BuffFight):
+    description:str = "Level up jusqu'à atteindre le level de son adversaire."
+    category:CategoryBuff = CategoryBuff.SPECIAL
+    # def __init__(self, fighter:FightingBully):
+    #     super().__init__(fighter)
+    def before_fight(self, fighter: FightingBully, opponent: FightingBully):
+        print(f"\n level self : {fighter.combattant.lvl} - {opponent.combattant.lvl}")
+        for l in range(fighter.combattant.lvl, opponent.combattant.lvl):
+            old_base_stat = fighter.base_stats
+            fighter.combattant.level_up_one()
+            added_stats = fighter.combattant.stats - old_base_stat
+            fighter.base_stats += added_stats
+            fighter.stats += added_stats
+
+    
 
 
 #Unique Buff (for Unique character)

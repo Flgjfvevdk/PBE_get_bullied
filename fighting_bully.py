@@ -18,10 +18,14 @@ class CategoryBuff(Enum):
 
 class BuffFight():
     description:str = "No buff"
+    description_en:str =""
     category:CategoryBuff = CategoryBuff.NONE
     def __init__(self, fighter:FightingBully):
         self.name:str = self.__class__.__name__
         # Ajouter variable si variables nécessaires
+    def before_fight(self, fighter:FightingBully, opponent:FightingBully):
+        """For buff that need an init with knowledge of the opponent"""
+        return
     def apply_aggresive(self, fighter:FightingBully, opponent:FightingBully, recap_round:RecapRound) -> tuple[int, int]:
         """ For buff that could deal damage to a fighter.
         Return : 

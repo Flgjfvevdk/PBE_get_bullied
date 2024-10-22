@@ -17,7 +17,7 @@ class Rage(BuffFight):
         super().__init__(fighter)
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
         if fighter == recap_round.defender and recap_round.damage_receive_defender > 0:
-            fighter.stats.strength += fighter.combattant.lvl * 0.15
+            fighter.stats.strength += fighter.combattant.lvl * 0.4
         return 
     
 class LosingWeight(BuffFight):
@@ -28,7 +28,7 @@ class LosingWeight(BuffFight):
         super().__init__(fighter)
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
         if fighter == recap_round.defender and recap_round.damage_receive_defender > 0:
-            fighter.stats.agility += fighter.combattant.lvl * 0.15
+            fighter.stats.agility += fighter.combattant.lvl * 0.4
         return 
     
 class AngerIssue(BuffFight):
@@ -39,7 +39,7 @@ class AngerIssue(BuffFight):
         super().__init__(fighter)
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
         if fighter == recap_round.defender and recap_round.damage_receive_defender > 0:
-            fighter.stats.lethality += fighter.combattant.lvl * 0.15
+            fighter.stats.lethality += fighter.combattant.lvl * 0.4
         return 
 
 class Brutal(BuffFight):
@@ -110,7 +110,7 @@ class Frustration(BuffFight):
         super().__init__(fighter)
     def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
         if fighter == recap_round.attacker and recap_round.is_success_block:
-            fighter.stats.lethality += fighter.combattant.lvl * 0.1
+            fighter.stats.lethality += fighter.combattant.lvl * 0.3
         return 0, 0
 
 class DragonSkin(BuffFight):

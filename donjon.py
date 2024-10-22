@@ -77,11 +77,11 @@ dungeon_fighter_bully_list = [DungeonFightingBully(name="Thyr O'Flan", pv_max=5,
                               DungeonFightingBully(name="Le Fourbe", pv_max=5, seed=bully.Seed(0.15, 0.1, 0.05, 0.65), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER),
                               DungeonFightingBully(name="Nulos", pv_max=5, seed=bully.Seed(0.1, 0.05, 0.40, 0.45), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER)]
 
-dungeon_max_lvl_fighters = [DungeonFightingBully(name="Gardien", pv_max=13, seed=bully.Seed(1.3, 0.3, 0.4, 0.0), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER, buff_tag="Brutal"),
+dungeon_fighters_lvl50 = [DungeonFightingBully(name="Gardien", pv_max=13, seed=bully.Seed(1.3, 0.3, 0.4, 0.0), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER, buff_tag="Brutal"),
+                             DungeonFightingBully(name="Le Minotaure", pv_max=10, seed=bully.Seed(0.5, 0.4, 0.7, 0.4), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER, buff_tag="SharpTeeth"),
+                             DungeonFightingBully(name="David, ancien héros", pv_max=7, seed=bully.Seed(0.8, 1.0, 0.05, 0.3), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER, buff_tag="CrystalSkin"),
                              DungeonFightingBully(name="Ombre", pv_max=1, seed=bully.Seed(0.1, 1.2, 0.0, 1.2), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER, buff_tag="ShadowMaster"),
-                             DungeonFightingBully(name="Ours Hiboux", pv_max=10, seed=bully.Seed(0.5, 0.4, 0.7, 0.4), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER, buff_tag="Rage"),
-                             DungeonFightingBully(name="David, ancien héros", pv_max=8, seed=bully.Seed(0.8, 1.0, 0.1, 0.3), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER, buff_tag="GoldenSkin"),
-                             DungeonFightingBully(name="Dragon Primordial, Maitre du donjon", pv_max=20, seed=bully.Seed(1.3, 0.6, 0.2, 0.2), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER, buff_tag="Dragon")
+                             DungeonFightingBully(name="Azaan, Dragon Primordial, Maitre du donjon", pv_max=20, seed=bully.Seed(1.3, 0.6, 0.2, 0.2), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER, buff_tag="Dragon")
                             ]
 
 @dataclass
@@ -119,7 +119,7 @@ class Dungeon():
         
         #Dungeon spécial
         if self.level == 50:
-            for df in dungeon_max_lvl_fighters:
+            for df in dungeon_fighters_lvl50:
                 df.init_fighting_bully(rarity=bully.Rarity.UNIQUE, level = self.level)
                 if df.fighting_bully is None:
                     raise Exception("l'initialisation n'a pas été bien faite")

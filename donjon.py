@@ -46,8 +46,8 @@ class DungeonFightingBully():
     pv_max:int
     name:str
     seed:bully.Seed
-    exp_coef:float
-    gold_coef:float
+    exp_coef:float=COEF_XP_FIGHTER
+    gold_coef:float=COEF_GOLD_FIGHTER
     buff_tag:str = "NoBuff"
     # fighting_bully:FightingBully|None = None
 
@@ -65,24 +65,26 @@ class DungeonFightingBully():
         gold_earned = int(self.gold_coef * gold_earned)
         return (exp_earned, gold_earned)
 
-dungeon_fighter_bully_list = [DungeonFightingBully(name="Thyr O'Flan", pv_max=5, seed=bully.Seed(0.2, 0.45, 0.2, 0.25), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER),
-                              DungeonFightingBully(name="Grobrah Le Musclé", pv_max=7, seed=bully.Seed(0.65, 0.1, 0.2, 0.05), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER),
-                              DungeonFightingBully(name="Fou Fur", pv_max=6, seed=bully.Seed(0.2, 0.2, 0.5, 0.1), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER),
-                              DungeonFightingBully(name="wè wè", pv_max=6, seed=bully.Seed(0.4, 0.3, 0.1, 0.2), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER),
-                              DungeonFightingBully(name="Craby", pv_max=6, seed=bully.Seed(0.2, 0.1, 0.4, 0.3), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER),
-                              DungeonFightingBully(name="le gars qu'on choisit en dernier en sport et qui se venge", pv_max=5, seed=bully.Seed(0.1, 0.1, 0.45, 0.35), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER),
-                              DungeonFightingBully(name="Plu Didier", pv_max=6, seed=bully.Seed(0.2, 0.4, 0.1, 0.3), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER),
-                              DungeonFightingBully(name="Woah", pv_max=6, seed=bully.Seed(0.3, 0.3, 0.2, 0.2), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER),
-                              DungeonFightingBully(name="Gros Problème", pv_max=8, seed=bully.Seed(0.35, 0.55, 0.01, 0.09), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER, buff_tag="Rage"),
-                              DungeonFightingBully(name="Le Fourbe", pv_max=5, seed=bully.Seed(0.15, 0.1, 0.05, 0.65), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER),
-                              DungeonFightingBully(name="Nulos", pv_max=5, seed=bully.Seed(0.1, 0.05, 0.40, 0.45), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER)]
+dungeon_fighter_bully_list = [DungeonFightingBully(name="Thyr O'Flan", pv_max=5, seed=bully.Seed(0.2, 0.45, 0.2, 0.25)),
+                              DungeonFightingBully(name="Grobrah Le Musclé", pv_max=7, seed=bully.Seed(0.65, 0.1, 0.2, 0.05)),
+                              DungeonFightingBully(name="Fou Fur", pv_max=6, seed=bully.Seed(0.2, 0.2, 0.5, 0.1)),
+                              DungeonFightingBully(name="wè wè", pv_max=6, seed=bully.Seed(0.4, 0.3, 0.1, 0.2)),
+                              DungeonFightingBully(name="Craby", pv_max=6, seed=bully.Seed(0.2, 0.1, 0.4, 0.3)),
+                              DungeonFightingBully(name="le gars qu'on choisit en dernier en sport et qui se venge", pv_max=5, seed=bully.Seed(0.1, 0.1, 0.45, 0.35)),
+                              DungeonFightingBully(name="Plu Didier", pv_max=6, seed=bully.Seed(0.2, 0.4, 0.1, 0.3)),
+                              DungeonFightingBully(name="Woah", pv_max=6, seed=bully.Seed(0.3, 0.3, 0.2, 0.2)),
+                              DungeonFightingBully(name="Gros Problème", pv_max=8, seed=bully.Seed(0.35, 0.55, 0.01, 0.09), buff_tag="Rage"),
+                              DungeonFightingBully(name="Le Fourbe", pv_max=5, seed=bully.Seed(0.15, 0.1, 0.05, 0.65)),
+                              DungeonFightingBully(name="Nulos", pv_max=5, seed=bully.Seed(0.1, 0.05, 0.40, 0.45))]
 
-dungeon_fighters_lvl50 = [DungeonFightingBully(name="Gardien", pv_max=13, seed=bully.Seed(1.3, 0.3, 0.4, 0.0), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER, buff_tag="Brutal"),
-                             DungeonFightingBully(name="Le Minotaure", pv_max=10, seed=bully.Seed(0.5, 0.4, 0.7, 0.4), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER, buff_tag="SharpTeeth"),
-                             DungeonFightingBully(name="David, ancien héros", pv_max=7, seed=bully.Seed(0.8, 1.0, 0.05, 0.3), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER, buff_tag="CrystalSkin"),
-                             DungeonFightingBully(name="Ombre", pv_max=1, seed=bully.Seed(0.1, 1.2, 0.0, 1.2), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER, buff_tag="ShadowMaster"),
-                             DungeonFightingBully(name="Azaan, Dragon Primordial, Maitre du donjon", pv_max=20, seed=bully.Seed(1.3, 0.6, 0.2, 0.2), exp_coef=COEF_XP_FIGHTER, gold_coef= COEF_GOLD_FIGHTER, buff_tag="Dragon")
+dungeon_fighters_lvl_50 = [DungeonFightingBully(name="Gardien", pv_max=13, seed=bully.Seed(1.3, 0.3, 0.4, 0.0), buff_tag="Brutal"),
+                             DungeonFightingBully(name="Le Minotaure", pv_max=10, seed=bully.Seed(0.5, 0.4, 0.7, 0.4), buff_tag="SharpTeeth"),
+                             DungeonFightingBully(name="David, ancien héros", pv_max=7, seed=bully.Seed(0.8, 1.0, 0.05, 0.3), buff_tag="CrystalSkin"),
+                             DungeonFightingBully(name="Ombre", pv_max=1, seed=bully.Seed(0.1, 1.2, 0.0, 1.2), buff_tag="ShadowMaster"),
+                             DungeonFightingBully(name="Azaan, Dragon Primordial, Maitre du donjon", pv_max=20, seed=bully.Seed(1.3, 0.6, 0.2, 0.2), buff_tag="Dragon")
                             ]
+
+# dungeon_fighters_lvl_666 = [DungeonFightingBully(name="The Devil - Phase 1", pv_max=13, seed=bully.Seed(1.3, 0.3, 0.4, 0.0), buff_tag="Brutal"),]
 
 @dataclass
 class Dungeon():
@@ -119,7 +121,7 @@ class Dungeon():
         
         #Dungeon spécial
         if self.level == 50:
-            for df in dungeon_fighters_lvl50:
+            for df in dungeon_fighters_lvl_50:
                 df.init_fighting_bully(rarity=bully.Rarity.UNIQUE, level = self.level)
                 if df.fighting_bully is None:
                     raise Exception("l'initialisation n'a pas été bien faite")

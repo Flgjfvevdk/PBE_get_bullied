@@ -303,21 +303,6 @@ class Fight():
             await self.message_2.edit(embed=self.embed2)
 
 
-    def text_fight(self) -> str:
-        text_f = ""
-        barre_pv_1 = value_to_bar_str(self.fighter_1.pv, max_value= self.max_pv_1)
-        barre_pv_2 = value_to_bar_str(self.fighter_2.pv, max_value= self.max_pv_2)
-        text_f = CText(
-                f"\t\tBully 1 : {self.fighter_1.combattant.name}\n"
-                f"HP : {barre_pv_1} ({self.fighter_1.pv:02}/{self.max_pv_1:02}) \t{self.fighter_1.stats.to_str_color()} \n{buff_to_str(self.fighter_1.buffs)}\n"
-                f"{''.join(self.emojis_recap[0][-RECAP_MAX_EMOJI:])}\n"
-                "\t\t\t\tVS\n"
-                f"{''.join(self.emojis_recap[1][-RECAP_MAX_EMOJI:])}\n"
-                f"\t\tBully 2 : {self.fighter_2.combattant.name}\n"
-                f"HP : {barre_pv_2} ({self.fighter_2.pv:02}/{self.max_pv_2:02}) \t{self.fighter_2.stats.to_str_color()}\n{buff_to_str(self.fighter_2.buffs)}"
-            )
-        return text_f.str()
-    
     def texts_fight(self) -> tuple[str, str, str]:
         barre_pv_1 = value_to_bar_str(self.fighter_1.pv, max_value= self.max_pv_1)
         barre_pv_2 = value_to_bar_str(self.fighter_2.pv, max_value= self.max_pv_2)
@@ -524,7 +509,7 @@ def buff_to_str(buffs:list[fighting_bully.BuffFight]):
     txt = "\n" if buffs == [] else "\nBuff : \n" 
     for b in buffs : 
         # txt += f" {b.name} |"
-        txt += f" {b.name} \n"
+        txt += f" {b.name} : {b.description}\n"
     return txt
 
 # Les récompenses 

@@ -54,7 +54,7 @@ class Brutal(BuffFight):
             return 0, 1
         return 0, 0
     
-class Ironskin(BuffFight):
+class IronSkin(BuffFight):
     description:str = "Reçoit 1 dégât de moins des coups critiques."
     description_en:str = "Take one less critical damage."
     category:CategoryBuff = CategoryBuff.LVL_1

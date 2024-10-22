@@ -54,6 +54,11 @@ class FightingBully():
             fighter.buffs.append(create_buff_instance(b.buff_fight_tag, fighter=fighter))
         return fighter
     
+    def set_buffs(self, buffs_tags:list[str] = []):
+        self.buffs = []
+        for b_tag in buffs_tags:
+            self.buffs.append(create_buff_instance(b_tag, fighter=self))
+
     def reset_stats(self) -> None:
         self.stats = replace(self.base_stats)
 

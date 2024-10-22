@@ -10,6 +10,7 @@ import money
 import math
 import keys
 import asyncio
+import consumable
 
 from dataclasses import dataclass, field, KW_ONLY, replace
 
@@ -48,14 +49,14 @@ class DungeonFightingBully():
     seed:bully.Seed
     exp_coef:float=COEF_XP_FIGHTER
     gold_coef:float=COEF_GOLD_FIGHTER
-    buff_tag:str = "NoBuff"
-    # fighting_bully:FightingBully|None = None
+    buffs_tags:list[str] = field(default_factory=lambda: [])
 
     def init_fighting_bully(self, rarity, level):
-        b = bully.Bully(name=self.name, rarity=rarity, must_load_image=False, max_pv=self.pv_max, seed=self.seed, buff_fight_tag=self.buff_tag)
+        b = bully.Bully(name=self.name, rarity=rarity, must_load_image=False, max_pv=self.pv_max, seed=self.seed)
         for k in range(1, level) :
             b.level_up_one()
         self.fighting_bully = FightingBully.create_fighting_bully(b=b)
+        self.fighting_bully.set_buffs(buffs_tags=self.buffs_tags)
 
     def reward_kill(self, bully_joueur) -> tuple[float, int]:
         if self.fighting_bully is None : 
@@ -73,15 +74,15 @@ dungeon_fighter_bully_list = [DungeonFightingBully(name="Thyr O'Flan", pv_max=5,
                               DungeonFightingBully(name="le gars qu'on choisit en dernier en sport et qui se venge", pv_max=5, seed=bully.Seed(0.1, 0.1, 0.45, 0.35)),
                               DungeonFightingBully(name="Plu Didier", pv_max=6, seed=bully.Seed(0.2, 0.4, 0.1, 0.3)),
                               DungeonFightingBully(name="Woah", pv_max=6, seed=bully.Seed(0.3, 0.3, 0.2, 0.2)),
-                              DungeonFightingBully(name="Gros Problème", pv_max=8, seed=bully.Seed(0.35, 0.55, 0.01, 0.09), buff_tag="Rage"),
+                              DungeonFightingBully(name="Gros Problème", pv_max=8, seed=bully.Seed(0.35, 0.55, 0.01, 0.09), buffs_tags=["Rage"]),
                               DungeonFightingBully(name="Le Fourbe", pv_max=5, seed=bully.Seed(0.15, 0.1, 0.05, 0.65)),
                               DungeonFightingBully(name="Nulos", pv_max=5, seed=bully.Seed(0.1, 0.05, 0.40, 0.45))]
 
-dungeon_fighters_lvl_50 = [DungeonFightingBully(name="Gardien", pv_max=13, seed=bully.Seed(1.3, 0.3, 0.4, 0.0), buff_tag="Brutal"),
-                             DungeonFightingBully(name="Le Minotaure", pv_max=10, seed=bully.Seed(0.5, 0.4, 0.7, 0.4), buff_tag="SharpTeeth"),
-                             DungeonFightingBully(name="David, ancien héros", pv_max=7, seed=bully.Seed(0.8, 1.0, 0.05, 0.3), buff_tag="CrystalSkin"),
-                             DungeonFightingBully(name="Ombre", pv_max=1, seed=bully.Seed(0.1, 1.2, 0.0, 1.2), buff_tag="ShadowMaster"),
-                             DungeonFightingBully(name="Azaan, Dragon Primordial, Maitre du donjon", pv_max=20, seed=bully.Seed(1.3, 0.6, 0.2, 0.2), buff_tag="Dragon")
+dungeon_fighters_lvl_50 = [DungeonFightingBully(name="Gardien", pv_max=13, seed=bully.Seed(1.3, 0.3, 0.4, 0.0), buffs_tags=["Brutal", "IronSkin"]),
+                             DungeonFightingBully(name="Le Minotaure", pv_max=10, seed=bully.Seed(0.5, 0.4, 0.7, 0.4), buffs_tags=["SharpTeeth"]),
+                             DungeonFightingBully(name="David, ancien héros", pv_max=7, seed=bully.Seed(0.8, 1.0, 0.05, 0.3), buffs_tags=["CrystalSkin"]),
+                             DungeonFightingBully(name="Ombre", pv_max=1, seed=bully.Seed(0.1, 1.2, 0.0, 1.2), buffs_tags=["ShadowMaster"]),
+                             DungeonFightingBully(name="Azaan, Dragon Primordial, Maitre du donjon", pv_max=20, seed=bully.Seed(1.3, 0.6, 0.2, 0.2), buffs_tags=["Dragon"])
                             ]
 
 # dungeon_fighters_lvl_666 = [DungeonFightingBully(name="The Devil - Phase 1", pv_max=13, seed=bully.Seed(1.3, 0.3, 0.4, 0.0), buff_tag="Brutal"),]
@@ -104,6 +105,8 @@ class Dungeon():
     xp_earned_bullies: List[float] = field(init=False)
     thread: Thread = field(init=False)
 
+    reward_conso:consumable.Consumable|None = None
+
     def __post_init__(self):
         self.user = self.ctx.author
         self.enemies_fighters = self.generate_dungeon_team()
@@ -121,12 +124,15 @@ class Dungeon():
         
         #Dungeon spécial
         if self.level == 50:
+            elixir_dragon = consumable.ConsumableElixirBuff("Dragon Blood", "Dragon")
             for df in dungeon_fighters_lvl_50:
                 df.init_fighting_bully(rarity=bully.Rarity.UNIQUE, level = self.level)
                 if df.fighting_bully is None:
                     raise Exception("l'initialisation n'a pas été bien faite")
                 enemies_fighters.append(df.fighting_bully)
+            self.reward_conso = elixir_dragon
             return enemies_fighters
+        
         
         #Donjon classique
         fighter_rarities:list[bully.Rarity] = fighter_rarities_lvl[self.level]
@@ -188,10 +194,8 @@ class Dungeon():
                     except bully.LevelUpException as lvl_except:
                         await self.thread.send(f"{bully_joueur_recompense.name} {lvl_except.text}")
 
-            if self.level == 50 : 
-                import consumable
-                elixir_dragon = consumable.ConsumableElixirBuff("Dragon Blood", "Dragon")
-                await consumable.add_conso_to_player(self.ctx, self.player, elixir_dragon, channel_cible=self.thread)
+            if self.reward_conso is not None :
+                await consumable.add_conso_to_player(self.ctx, player=self.player, c=self.reward_conso, channel_cible=self.thread)
 
             #On maj le record du joueur sur son dungeon si nécessaire
             if self.level > self.player.max_dungeon:

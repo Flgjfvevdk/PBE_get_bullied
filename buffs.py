@@ -87,7 +87,9 @@ class SlimyBody(BuffFight):
         super().__init__(fighter)
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if fighter == recap_round.defender and not recap_round.is_success_block:
-            opponent.stats.agility *= 0.9
+            opponent.stats.agility -= fighter.bully.lvl
+            if opponent.stats.agility <= 1 :
+                opponent.stats.agility = 1
         return
 
 class ThornSkin(BuffFight):

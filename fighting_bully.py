@@ -41,7 +41,7 @@ class BuffFight():
     
 @dataclass
 class FightingBully():
-    combattant: Bully
+    bully: Bully
     pv: int
     base_stats: Stats
     stats: Stats
@@ -49,7 +49,7 @@ class FightingBully():
 
     @staticmethod
     def create_fighting_bully(b:Bully) -> "FightingBully":
-        fighter = FightingBully(combattant=b, pv=b.max_pv, base_stats=replace(b.stats), stats=replace(b.stats))#, buffs=create_buff_instance(b.buff_fight_tag))
+        fighter = FightingBully(bully=b, pv=b.max_pv, base_stats=replace(b.stats), stats=replace(b.stats))#, buffs=create_buff_instance(b.buff_fight_tag))
         if (b.buff_fight_tag != "NoBuff"):
             fighter.buffs.append(create_buff_instance(b.buff_fight_tag, fighter=fighter))
         return fighter

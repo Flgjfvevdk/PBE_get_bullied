@@ -61,7 +61,7 @@ class Item(Base):
         if(self.is_bfr_fight) :
             stat_self = replace(fighting_bully_self.base_stats)
             fighting_bully_self.pv += self.buff_start_self.pv
-            lvl_self = fighting_bully_self.combattant.lvl
+            lvl_self = fighting_bully_self.bully.lvl
             stat_self.strength += self.buff_start_self.strength + lvl_self * self.buff_start_self_mult_lvl.strength
             stat_self.agility += self.buff_start_self.agility + lvl_self * self.buff_start_self_mult_lvl.agility
             stat_self.lethality += self.buff_start_self.lethality + lvl_self * self.buff_start_self_mult_lvl.lethality

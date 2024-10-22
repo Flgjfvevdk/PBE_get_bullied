@@ -255,9 +255,9 @@ def str_fighting_bully(fighting_bully:list[FightingBully], print_images=False) -
 
     for f in fighting_bully:
         text += "\n___________\n"
-        text += f.combattant.get_print(compact_print=True, current_hp=f.pv)
+        text += f.bully.get_print(compact_print=True, current_hp=f.pv)
         if print_images:
-            image_path = f.combattant.image_file_path
+            image_path = f.bully.image_file_path
             if image_path is not None:
                 images.append(image_path)
 
@@ -332,7 +332,7 @@ async def player_choose_fighting_bully(ctx:Context, fighting_bullies:list[Fighti
     var:Dict[str, Bully | None] = {"choix" : None}
     text, _ = str_fighting_bully(fighting_bully=fighting_bullies, print_images=False)
 
-    bullies_available = [f.combattant for f in fighting_bullies]
+    bullies_available = [f.bully for f in fighting_bullies]
 
     #On affiche le message
     message_bullies = await channel_cible.send(content=text, view=ViewBullyChoice(user=user, event=event, list_choix=bullies_available, variable_pointer = var))

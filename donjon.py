@@ -61,7 +61,7 @@ class DungeonFightingBully():
     def reward_kill(self, bully_joueur) -> tuple[float, int]:
         if self.fighting_bully is None : 
             raise Exception("fighting bully must be initiated")
-        (exp_earned, gold_earned) = fight_manager.reward_win_fight(bully_joueur, self.fighting_bully.combattant)
+        (exp_earned, gold_earned) = fight_manager.reward_win_fight(bully_joueur, self.fighting_bully.bully)
         exp_earned *= self.exp_coef
         gold_earned = int(self.gold_coef * gold_earned)
         return (exp_earned, gold_earned)
@@ -188,7 +188,7 @@ class Dungeon():
             for i,fighter in enumerate(self.fighters_joueur):
                 xp_earned = self.xp_earned_bullies[i]
                 if xp_earned > 0:
-                    bully_joueur_recompense = fighter.combattant
+                    bully_joueur_recompense = fighter.bully
                     try:
                         bully_joueur_recompense.give_exp(round(xp_earned * COEF_XP_WIN, 1))
                     except bully.LevelUpException as lvl_except:
@@ -206,7 +206,7 @@ class Dungeon():
     async def handle_fight(self, can_switch = False):
         #On affiche le prochain ennemy
         fighting_bully_enemy = self.enemies_fighters[self.current_floor]
-        text_enemy_coming = f"An enemy is coming! {fighting_bully_enemy.combattant.get_print(compact_print=True, current_hp=fighting_bully_enemy.pv)}"
+        text_enemy_coming = f"An enemy is coming! {fighting_bully_enemy.bully.get_print(compact_print=True, current_hp=fighting_bully_enemy.pv)}"
         await self.thread.send(f"{bully.mise_en_forme_str(text_enemy_coming)}") 
         
         fighting_bully_joueur, num_bully_j = await interact_game.player_choose_fighting_bully(ctx=self.ctx, fighting_bullies=self.fighters_joueur, user=self.ctx.author, channel_cible=self.thread, timeout=DUNGEON_CHOICE_TIMEOUT)
@@ -227,11 +227,11 @@ class Dungeon():
             else:
                 break
         
-        bully_joueur = fighting_bully_joueur.combattant
+        bully_joueur = fighting_bully_joueur.bully
         #On regarde qui a perdu (le joueur ou l'ennemi)
         if(fighting_bully_joueur.pv > 0) :
             #Le joueur a gagné. On calcul les récompenses, on les affiches et on les stocks
-            (exp_earned, gold_earned) = fight_manager.reward_win_fight(bully_joueur, fighting_bully_enemy.combattant)
+            (exp_earned, gold_earned) = fight_manager.reward_win_fight(bully_joueur, fighting_bully_enemy.bully)
             exp_earned *= COEF_XP_FIGHTER
             gold_earned = int(COEF_GOLD_FIGHTER * gold_earned)
             pretext = ""
@@ -248,7 +248,7 @@ class Dungeon():
                 pretext += f"{self.ctx.author} earned {gold_earned}{money.MONEY_ICON}!\n"
 
             #On envoie le message de succès et on progress dans le dungeon
-            await self.thread.send(f"{pretext}{fighting_bully_enemy.combattant.name} is dead! You progress in the dungeon.")
+            await self.thread.send(f"{pretext}{fighting_bully_enemy.bully.name} is dead! You progress in the dungeon.")
             self.current_floor += 1
 
         else : 
@@ -269,11 +269,11 @@ class Dungeon():
             fighter, new_num_bully_j = await interact_game.player_choose_fighting_bully(ctx=self.ctx, fighting_bullies=self.fighters_joueur, user=self.ctx.author, channel_cible=self.thread, timeout=DUNGEON_CHOICE_TIMEOUT)
 
         except interact_game.CancelChoiceException:
-            await self.thread.send(f"{fighter.combattant.name} stays in fight.")
+            await self.thread.send(f"{fighter.bully.name} stays in fight.")
         except asyncio.exceptions.TimeoutError:
-            await self.thread.send(f"Too slow, {fighter.combattant.name} stays in fight.")
+            await self.thread.send(f"Too slow, {fighter.bully.name} stays in fight.")
         except IndexError:
-            await self.thread.send(f"Error, {fighter.combattant.name} stays in fight.")
+            await self.thread.send(f"Error, {fighter.bully.name} stays in fight.")
         return fighter
     
     def reset_stats_bullies(self) -> None:

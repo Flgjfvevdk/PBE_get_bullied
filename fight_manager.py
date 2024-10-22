@@ -101,8 +101,8 @@ class Fight():
             channel_cible = ctx.channel
         self.channel_cible:discord.abc.Messageable = channel_cible
 
-        self.max_pv_1 = self.fighter_1.combattant.max_pv
-        self.max_pv_2 = self.fighter_2.combattant.max_pv
+        self.max_pv_1 = self.fighter_1.bully.max_pv
+        self.max_pv_2 = self.fighter_2.bully.max_pv
 
         # self.message:discord.Message
         # self.embed1:discord.Embed
@@ -239,11 +239,11 @@ class Fight():
 
     async def end_fight(self):
         if(self.fighter_1.pv <= 0):
-            bully_gagnant = self.fighter_2.combattant 
-            bully_perdant = self.fighter_1.combattant 
+            bully_gagnant = self.fighter_2.bully 
+            bully_perdant = self.fighter_1.bully 
         elif(self.fighter_2.pv <= 0):
-            bully_gagnant = self.fighter_1.combattant 
-            bully_perdant = self.fighter_2.combattant 
+            bully_gagnant = self.fighter_1.bully 
+            bully_perdant = self.fighter_2.bully 
         else:
             raise Exception("aucun perdant?")
         
@@ -258,7 +258,7 @@ class Fight():
                     await self.channel_cible.send(f"{bully_gagnant.name} {lvl_except.text}")
                 pretext += f"{bully_gagnant.name} earned {exp_earned} xp\n"
             if (gold_earned > 0):
-                user_gagnant, player_gagnant = (self.user_1, self.player_1) if bully_gagnant == self.fighter_1.combattant else (self.user_2, self.player_2)
+                user_gagnant, player_gagnant = (self.user_1, self.player_1) if bully_gagnant == self.fighter_1.bully else (self.user_2, self.player_2)
                 if user_gagnant is not None and player_gagnant is not None:
                     money.give_money(player_gagnant, montant=gold_earned)
                     pretext += f"{user_gagnant.name} earned {gold_earned}{money.MONEY_ICON}\n"
@@ -279,17 +279,17 @@ class Fight():
         #     self.message = await self.channel_cible.send(self.text_fight(),  view=interact_game.ViewClickBoolMultiple(users=self.users_can_swap, events=self.events_click_swap, labels=self.labels_swap, emoji="🔁"))
         # else :
         #     self.message = await self.channel_cible.send(self.text_fight())
-        with open(self.fighter_1.combattant.get_image(), "rb") as bully_image_file_1, open(self.fighter_2.combattant.get_image(), "rb") as bully_image_file_2:
+        with open(self.fighter_1.bully.get_image(), "rb") as bully_image_file_1, open(self.fighter_2.bully.get_image(), "rb") as bully_image_file_2:
             bully_image_file_1 = discord.File(bully_image_file_1, filename="bully_image_file_1.png") 
             bully_image_file_2 = discord.File(bully_image_file_2, filename="bully_image_file_2.png")
             
             texts = self.texts_fight()
             # Création du premier embed avec une miniature (image à gauche) et un texte d'exemple
-            self.embed1 = discord.Embed(title=f"{self.fighter_1.combattant.name}", description=texts[0], color=0x3498db)
+            self.embed1 = discord.Embed(title=f"{self.fighter_1.bully.name}", description=texts[0], color=0x3498db)
             self.embed1.set_thumbnail(url="attachment://bully_image_file_1.png")
 
             # Création du second embed avec une miniature (image à droite) et un texte d'exemple
-            self.embed2 = discord.Embed(title=f"{self.fighter_2.combattant.name}", description=texts[1], color=0xe74c3c)
+            self.embed2 = discord.Embed(title=f"{self.fighter_2.bully.name}", description=texts[1], color=0xe74c3c)
             self.embed2.set_thumbnail(url="attachment://bully_image_file_2.png")
 
             # self.message = await self.channel_cible.send(files=[bully_image_file_1, bully_image_file_2], embeds=[self.embed1, self.embed_mid, self.embed2])

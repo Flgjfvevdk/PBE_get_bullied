@@ -88,7 +88,7 @@ class EnemyRoom():
         return EnemyRoom(enemy_fighter)
     
     async def interact(self, ruin: "Ruin") -> bool:
-        await ruin.thread.send(f"An enemy stands in your way! \n{bully.mise_en_forme_str(self.enemy.combattant.get_print(compact_print=True))}")
+        await ruin.thread.send(f"An enemy stands in your way! \n{bully.mise_en_forme_str(self.enemy.bully.get_print(compact_print=True))}")
         while True:
             fighter = await self.fighter_choice(ruin)
             fight_won = await self.fight(ruin, fighter)
@@ -125,11 +125,11 @@ class EnemyRoom():
         try :
             fighter, new_num_bully_j = await interact_game.player_choose_fighting_bully(ctx=ruin.ctx, fighting_bullies=ruin.fighters_joueur, user=ruin.user, channel_cible=ruin.thread, timeout=RUIN_CHOICE_TIMEOUT)
         except interact_game.CancelChoiceException:
-            await ruin.thread.send(f"{fighter.combattant.name} stays in fight.")
+            await ruin.thread.send(f"{fighter.bully.name} stays in fight.")
         except asyncio.exceptions.TimeoutError:
-            await ruin.thread.send(f"Too slow, {fighter.combattant.name} stays in fight.")
+            await ruin.thread.send(f"Too slow, {fighter.bully.name} stays in fight.")
         except IndexError:
-            await ruin.thread.send(f"Error, {fighter.combattant.name} stays in fight.")
+            await ruin.thread.send(f"Error, {fighter.bully.name} stays in fight.")
         return fighter
     
     async def fight(self, ruin: "Ruin", fighter: FightingBully) -> bool:
@@ -156,7 +156,7 @@ class EnemyRoom():
                 break
         
         pv_restant_joueur = fighter.pv
-        bully_joueur = fighter.combattant
+        bully_joueur = fighter.bully
 
         #On regarde qui a perdu (le joueur ou l'ennemi)
         if(pv_restant_joueur > 0) :
@@ -164,7 +164,7 @@ class EnemyRoom():
             is_success = True
 
             #On calcule les récompenses, on les affiches et on les stock
-            (exp_earned, gold_earned) = fight_manager.reward_win_fight(bully_joueur, self.enemy.combattant)
+            (exp_earned, gold_earned) = fight_manager.reward_win_fight(bully_joueur, self.enemy.bully)
             exp_earned *= COEF_XP_FIGHTER
             # exp_earned = COEF_XP_FIGHTER * self.enemy.combattant.lvl if exp_earned > 0 else 0
             gold_earned = int(COEF_GOLD_FIGHTER * gold_earned)
@@ -174,21 +174,21 @@ class EnemyRoom():
                     bully_joueur.give_exp(exp_earned)
                 except LevelUpException as lvl_except:
                     await ruin.thread.send(f"{bully_joueur.name} {lvl_except.text}")
-                pretext += f"{fighter.combattant.name} earned {exp_earned} xp\n"
+                pretext += f"{fighter.bully.name} earned {exp_earned} xp\n"
             if (gold_earned > 0):
                 money.give_money(ruin.player, montant=gold_earned)
                 pretext += f"{ruin.user.name} earned {gold_earned}{money.MONEY_ICON}\n"
 
             #On envoie le message de succès et on progress dans le dungeon
-            await ruin.thread.send(f"{pretext}{self.enemy.combattant.name} is dead! You progress in the ruin.")
+            await ruin.thread.send(f"{pretext}{self.enemy.bully.name} is dead! You progress in the ruin.")
             
         else : 
             #Le joueur à perdu
             is_success = False
 
             #On tue le bully qui est ded
-            await ruin.thread.send(f"{fighter.combattant.name} died in terrible agony")
-            await fighter.combattant.kill()
+            await ruin.thread.send(f"{fighter.bully.name} died in terrible agony")
+            await fighter.bully.kill()
             ruin.fighters_joueur.remove(fighter)
 
         return is_success

@@ -33,6 +33,7 @@ from sqlalchemy.orm import configure_mappers
 
 import asyncio
 from utils.color_str import CText
+from utils.paginate import paginate, paginate_dict
 
 from discord.ext.commands import Bot, Context, CommandNotFound
 from discord import Embed
@@ -215,21 +216,25 @@ async def tuto_shop(ctx: Context):
 @bot.command(aliases=['tuto_lb', 'tuto_l'])
 async def tuto_lootbox(ctx: Context):
     await ctx.channel.send(tuto_text.tuto_lootbox)
-@bot.command(aliases=['tuto_bf', 'tuto_buff', 'list_buff', 'list_buffs'])
+@bot.command(aliases=['tuto_bf', 'tuto_buff', 'list_buff', 'list_buffs', 'buffs', 'buff'])
 async def tuto_buffs(ctx: Context):
     txt = ""
     import inspect, buffs, fighting_bully
+    dict_text:dict[str, str] = {"Buffs Positifs":"", "Buffs Négatifs":""}
     
     classes = [member[1] for member in inspect.getmembers(buffs) if inspect.isclass(member[1])]
     txt += "\tPositive Buffs:\n"
     for buffClass in classes:
-        if issubclass(buffClass, fighting_bully.BuffFight) and buffClass.category not in [fighting_bully.CategoryBuff.UNIQUE, fighting_bully.CategoryBuff.NONE, fighting_bully.CategoryBuff.DEBUFF] and buffClass != fighting_bully.BuffFight:
-            txt+=f"{buffClass.__name__} : {buffClass.description}\n"
-    txt += "\n\tNegative Buffs:\n"
-    for buffClass in classes:
-        if issubclass(buffClass, fighting_bully.BuffFight) and buffClass.category == fighting_bully.CategoryBuff.DEBUFF :
-            txt+=f"{buffClass.__name__} : {buffClass.description}\n"
-    await ctx.channel.send(CText(txt).str())
+        key = "Null"
+        if issubclass(buffClass, fighting_bully.BuffFight):
+            if buffClass.category not in [fighting_bully.CategoryBuff.UNIQUE, fighting_bully.CategoryBuff.NONE, fighting_bully.CategoryBuff.DEBUFF] and buffClass != fighting_bully.BuffFight:
+                key = "Buffs Positifs"
+            elif buffClass.category == fighting_bully.CategoryBuff.DEBUFF :
+                key = "Buffs Négatifs"
+            else :
+                continue
+            dict_text[key] += f"{buffClass.__name__} : {buffClass.description}\n"
+    await paginate_dict(ctx, dict_text=dict_text)
 
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////

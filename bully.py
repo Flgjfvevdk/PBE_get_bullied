@@ -349,7 +349,8 @@ class Bully(Base):
         #On change l'image : 
         self.image_file_path = self.new_possible_image_random()
 
-    def decrease_lvl(self, lvl_loss):
+    def decrease_lvl(self, lvl_loss, lose_xp = True):
+        self.exp = 0
         lvl_loss = min(self.lvl - 1, lvl_loss)
         for k in range(lvl_loss):
             self.decrease_stat_with_seed(nb_points=self.lvl, valeur=self.rarity.coef_level_points)

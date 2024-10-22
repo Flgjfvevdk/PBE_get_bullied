@@ -261,7 +261,7 @@ class Fight():
                 lvl_loss = max(1, math.floor(bully_perdant.lvl/5))
                 lvl_loss = min(lvl_loss, bully_perdant.lvl - 1)
                 bully_perdant.decrease_lvl(lvl_loss)
-                await self.channel_cible.send(f"{pretext}{bully_perdant.name} lost {lvl_loss} level")
+                await self.channel_cible.send(f"{pretext}{bully_perdant.name} lost {lvl_loss} levels")
         return
         
     

@@ -120,13 +120,20 @@ class ConsumableElixirBuff(Consumable):
 
     def get_print(self) -> CText:
         BuffClass:type[BuffFight] = getattr(buffs, self.buff_tag)
-        return (
-            CText().txt(f"{self.name}: {BuffClass.description}")
-        )
+        try :
+            BuffClass = buffs.name_to_buffs_class[self.buff_tag]
+            return (
+                CText().txt(f"{self.name}: {BuffClass.description}")
+            )
+        except Exception: 
+            return CText().txt(f"ERROR ELIXIR")
 
     def get_effect(self) -> str:
-        BuffClass:type[BuffFight] = getattr(buffs, self.buff_tag)
-        return f"{BuffClass.description}"
+        try : 
+            BuffClass:type[BuffFight] = getattr(buffs, self.buff_tag)
+            return f"{BuffClass.description}"
+        except Exception:
+            return f"ERROR ELIXIR"
 
 #_______________________________________________________________________
 #_______________________________________________________________________

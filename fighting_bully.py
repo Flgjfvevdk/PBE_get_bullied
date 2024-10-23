@@ -97,13 +97,10 @@ class RecapRound():
 
 def create_buff_instance(class_name: str, fighter:FightingBully) -> BuffFight: 
     import buffs
-    from typing import Type
     # Cherche la classe dans le module
     try:
-        BuffClass = getattr(buffs, class_name)
-        if not issubclass(BuffClass, BuffFight):
-            print("Le buff du bully est invalide")
-            return BuffFight(fighter=fighter)
-        return BuffClass(fighter=fighter)  # Crée une instance de la classe
-    except AttributeError:
-        raise ValueError(f"La classe {class_name} n'existe pas dans le module.")
+        BuffClass = buffs.name_to_buffs_class[class_name]
+        return BuffClass(fighter=fighter)
+    except Exception as e:
+        print("Le buff du bully est invalide")
+        return BuffFight(fighter=fighter)

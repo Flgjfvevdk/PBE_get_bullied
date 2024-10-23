@@ -275,10 +275,6 @@ class Fight():
         
     
     async def setup_message(self):
-        # if(len(self.users_can_swap)>0):  
-        #     self.message = await self.channel_cible.send(self.text_fight(),  view=interact_game.ViewClickBoolMultiple(users=self.users_can_swap, events=self.events_click_swap, labels=self.labels_swap, emoji="🔁"))
-        # else :
-        #     self.message = await self.channel_cible.send(self.text_fight())
         with open(self.fighter_1.bully.get_image(), "rb") as bully_image_file_1, open(self.fighter_2.bully.get_image(), "rb") as bully_image_file_2:
             bully_image_file_1 = discord.File(bully_image_file_1, filename="bully_image_file_1.png") 
             bully_image_file_2 = discord.File(bully_image_file_2, filename="bully_image_file_2.png")

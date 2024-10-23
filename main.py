@@ -221,19 +221,16 @@ async def tuto_buffs(ctx: Context):
     txt = ""
     import inspect, buffs, fighting_bully
     dict_text:dict[str, str] = {"Buffs Positifs":"", "Buffs Négatifs":""}
+    for buffClass in buffs.name_to_buffs_class.values():
+        if buffClass.category not in [fighting_bully.CategoryBuff.UNIQUE, fighting_bully.CategoryBuff.NONE, fighting_bully.CategoryBuff.DEBUFF] and buffClass != fighting_bully.BuffFight:
+            key = "Buffs Positifs"
+        elif buffClass.category == fighting_bully.CategoryBuff.DEBUFF :
+            key = "Buffs Négatifs"
+        else :
+            continue
+        dict_text[key] += f"{buffClass.__name__} : {buffClass.description}\n"
+
     
-    classes = [member[1] for member in inspect.getmembers(buffs) if inspect.isclass(member[1])]
-    txt += "\tPositive Buffs:\n"
-    for buffClass in classes:
-        key = "Null"
-        if issubclass(buffClass, fighting_bully.BuffFight):
-            if buffClass.category not in [fighting_bully.CategoryBuff.UNIQUE, fighting_bully.CategoryBuff.NONE, fighting_bully.CategoryBuff.DEBUFF] and buffClass != fighting_bully.BuffFight:
-                key = "Buffs Positifs"
-            elif buffClass.category == fighting_bully.CategoryBuff.DEBUFF :
-                key = "Buffs Négatifs"
-            else :
-                continue
-            dict_text[key] += f"{buffClass.__name__} : {buffClass.description}\n"
     await paginate_dict(ctx, dict_text=dict_text)
 
 

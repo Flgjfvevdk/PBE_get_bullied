@@ -638,8 +638,26 @@ class FirePunch(BuffFight) :
 class Phoenix(BuffFight):
     description:str = "Renaît de ses cendres dans une aura de feu."
     def on_death(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
+
         if fighter.pv <= 0 :
             fighter.pv = 5
             fighter.buffs.remove(self)
             fighter.buffs.append(FireAura(fighter, 3))
         return
+    
+
+
+import inspect, buffs
+classes = [member[1] for member in inspect.getmembers(buffs) if inspect.isclass(member[1])]
+name_to_buffs_class:dict[str, type[BuffFight]] = {}
+for buffClass in classes :
+    if issubclass(buffClass, BuffFight):
+        if buffClass != BuffFight:
+            name_to_buffs_class[buffClass.__name__] = buffClass
+
+
+
+
+
+
+

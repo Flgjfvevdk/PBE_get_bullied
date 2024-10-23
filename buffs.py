@@ -358,7 +358,7 @@ class DragonAscension(BuffFight):
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
-        bonus = fighter.bully.lvl * 0.2
+        bonus = fighter.bully.lvl * 0.15
         fighter.stats.strength += bonus
         fighter.stats.agility += bonus
         fighter.stats.lethality += bonus

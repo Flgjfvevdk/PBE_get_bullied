@@ -131,10 +131,10 @@ class Fight():
         self.do_end_fight = True
 
     async def start_fight(self):
+        await self.apply_buff_before_fight()
         await self.setup_message()
         await asyncio.sleep(FIGHT_MSG_TIME_UPDATE)
 
-        await self.apply_buff_before_fight()
         
         while self.fighter_1.pv > 0 and self.fighter_2.pv > 0 :
             await self.play_round()

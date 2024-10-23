@@ -462,15 +462,16 @@ class Burning(BuffFight):
         self.compteur:int = compteur
         self.update_description()
     def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
-        damage = self.compteur
-        fighter.pv -= damage
+        if self.compteur > 0 : 
+            damage = self.compteur
+            fighter.pv -= damage
 
-        self.compteur -= 1
-        self.update_description()
-        if self.compteur <= 0 : 
-            fighter.buffs.remove(self)
-
-        return damage, 0
+            self.compteur -= 1
+            self.update_description()
+            # if self.compteur <= 0 : 
+            #     fighter.buffs.remove(self)
+            return damage, 0
+        return 0, 0
     
     def update_description(self):
         self.description = f"Reçoit {self.compteur} dégâts à chaque round et diminue cette valeur."
@@ -578,7 +579,7 @@ class StrangeGift(BuffFight):
             opponent.buffs = [Poisoned(fighter=opponent, difficulty=fighter.stats.viciousness)]
         return 
 class ExplosiveTouch(BuffFight):
-    description:str = "Inflige 1 dégât aux 2 combattants quand il bloque ou réussit une attaque."
+    description:str = "Les blocages et attaques réussient inflige 1 dégât à tous."
     description_en:str = ""
     category:CategoryBuff = CategoryBuff.UNIQUE
     def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
@@ -617,17 +618,24 @@ class FireAura(BuffFight):
             fighter.buffs.remove(self)
         return 0, 1
 class FirePunch(BuffFight) :
-    description:str = "Ses coups critiques brulent son adversaire au lieu de faire des dégâts bonus."
+    description:str = "Ses coups critiques brulent l'adversaire."
     category:CategoryBuff = CategoryBuff.UNIQUE
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if fighter == recap_round.attacker and recap_round.is_success_lethal :
             burn_defuffs = [b for b in opponent.buffs if isinstance(b, Burning)]
             if len(burn_defuffs) == 0:
-                opponent.buffs.append(Poisoned(fighter= opponent, difficulty=fighter.stats.lethality))
+                opponent.buffs.append(Burning(fighter= opponent, compteur=2))
             else :
                 burn_defuffs[0].add_compteur(2)
+
+            if recap_round.damage_bonus_lethal > 0:
+                dmg_bonus = recap_round.damage_bonus_lethal
+                heal = min(dmg_bonus, recap_round.get_damage_receive(opponent))
+                opponent.pv += heal
+                recap_round.damage_bonus_lethal = 0
+                    
         return
-class PhoenixResurrection(BuffFight):
+class Phoenix(BuffFight):
     description:str = "Renaît de ses cendres dans une aura de feu."
     def on_death(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if fighter.pv <= 0 :

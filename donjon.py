@@ -85,7 +85,11 @@ dungeon_fighters_lvl_50 = [DungeonFightingBully(name="Gardien", pv_max=13, seed=
                              DungeonFightingBully(name="Azaan, Dragon Primordial, Maitre du donjon", pv_max=20, seed=bully.Seed(1.3, 0.6, 0.2, 0.2), buffs_tags=["Dragon"])
                             ]
 
-# dungeon_fighters_lvl_666 = [DungeonFightingBully(name="The Devil - Phase 1", pv_max=13, seed=bully.Seed(1.3, 0.3, 0.4, 0.0), buff_tag="Brutal"),]
+# dungeon_fighters_lvl_666 = [DungeonFightingBully(name="The Devil - Phase 1", pv_max=13, seed=bully.Seed(1.3, 0.3, 0.4, 0.0), buffs_tags=["Brutal"]),]
+dungeon_fighters_lvl_legendary = [DungeonFightingBully(name="Phoenix - L'oiseau magnifique", pv_max=14, seed=bully.Seed(0.4, 1.0, 0.7, 0.1), buffs_tags=["Adaptation", "FirePunch"]),
+                              DungeonFightingBully(name="Phoenix - L'oeuf de résurrection", pv_max=16, seed=bully.Seed(1.0, 0.0, 0.1, 0.25), buffs_tags=["Adaptation", "FireAura"]),
+                              DungeonFightingBully(name="Phoenix - L'abomination de flamme", pv_max=20, seed=bully.Seed(0.8, 0.6, 0.5, 0.1), buffs_tags=["Adaptation", "ExplosiveTouch", "FirePunch"])
+                              ]
 
 @dataclass
 class Dungeon():
@@ -133,6 +137,16 @@ class Dungeon():
             self.reward_conso = elixir_dragon
             return enemies_fighters
         
+        if self.level == 111 :
+            self.level = 15
+            elixir_dragon = consumable.ConsumableElixirBuff("Phoenix's Feather", "Phoenix")
+            for df in dungeon_fighters_lvl_legendary:
+                df.init_fighting_bully(rarity=bully.Rarity.UNIQUE, level = self.level)
+                if df.fighting_bully is None:
+                    raise Exception("l'initialisation n'a pas été bien faite")
+                enemies_fighters.append(df.fighting_bully)
+            self.reward_conso = elixir_dragon
+            return enemies_fighters
         
         #Donjon classique
         fighter_rarities:list[bully.Rarity] = fighter_rarities_lvl[self.level]

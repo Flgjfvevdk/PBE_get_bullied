@@ -338,16 +338,14 @@ async def challenge_error(ctx: Context, error: commands.CommandError):
 @bot.command(aliases=['dungeon', 'donjon', 'dj', 'dg'])
 #@decorators.author_is_free
 async def explore_dungeon(ctx: Context, level:int):
+    
     if(level <= 0) :
         await ctx.channel.send("Dungeon level must be greater than 0.")
         return
-    if(level > 50) :
+    if level > 50 and level != 111 :
         await ctx.channel.send("Level max is 50.")
         return
-    # if(level == 50) :
-    #     await ctx.channel.send("The mysterious lvl 50 dungeon seems completly lock ... for now.")
-    #     return
-    
+
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():

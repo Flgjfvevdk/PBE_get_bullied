@@ -337,8 +337,14 @@ async def challenge_error(ctx: Context, error: commands.CommandError):
     
 @bot.command(aliases=['dungeon', 'donjon', 'dj', 'dg'])
 #@decorators.author_is_free
-async def explore_dungeon(ctx: Context, level:int):
-    
+async def explore_dungeon(ctx: Context, level:int|str):
+    if isinstance(level, str):
+        if level == "Legendary" or level == "legendary" :
+            level = 111
+        else : 
+            await ctx.channel.send("Dungeon level must be a number (or a specific keyword).")
+            return
+        
     if(level <= 0) :
         await ctx.channel.send("Dungeon level must be greater than 0.")
         return

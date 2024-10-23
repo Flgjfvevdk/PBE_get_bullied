@@ -113,6 +113,7 @@ class Dungeon():
 
     def __post_init__(self):
         self.user = self.ctx.author
+        self.name = f"Dungeon Level {self.level}"
         self.enemies_fighters = self.generate_dungeon_team()
 
         #On initialise les pv et xp gagné par les bullies
@@ -139,6 +140,7 @@ class Dungeon():
         
         if self.level == 111 :
             self.level = 15
+            self.name = "Legendary Boss Dungeon"
             elixir_dragon = consumable.ConsumableElixirBuff("Phoenix's Feather", "Phoenix")
             for df in dungeon_fighters_lvl_legendary:
                 df.init_fighting_bully(rarity=bully.Rarity.UNIQUE, level = self.level)
@@ -168,9 +170,9 @@ class Dungeon():
         return enemies_fighters
 
     async def enter(self) -> None:
-        message = await self.ctx.channel.send(f"{self.ctx.author.mention} enters the dungeon level : {self.level}")
+        message = await self.ctx.channel.send(f"{self.ctx.author.mention} enters the {self.name}")
         try :
-            self.thread = await self.ctx.channel.create_thread(name=f"Dungeon - Level {self.level}", message=message) #type: ignore
+            self.thread = await self.ctx.channel.create_thread(name=f"{self.name}", message=message) #type: ignore
         except Exception as e:
             print(e)
             return
@@ -195,8 +197,8 @@ class Dungeon():
         else:
             #On est plus dans le combat, le joueur à vaincu le donjon
             #On écrit le message de victoire dans les 2 channels
-            await self.ctx.channel.send(f"{self.ctx.author.name} has beaten the level {self.level} dungeon!") 
-            await self.thread.send(f"{self.ctx.author.name} has beaten the level {self.level} dungeon!") 
+            await self.ctx.channel.send(f"{self.ctx.author.name} has beaten the {self.name}!") 
+            await self.thread.send(f"{self.ctx.author.name} has beaten the {self.name}!") 
 
             #on donne la récompense d'xp aux joueurs encore en vie
             for i,fighter in enumerate(self.fighters_joueur):

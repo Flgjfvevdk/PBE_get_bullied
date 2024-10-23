@@ -199,12 +199,19 @@ class DragonResilience(BuffFight):
 
 #31-40
 class Lycanthropy(BuffFight):
-    description:str = "Échange la Lethality et la Viciousness selon les HP de l'adversaire."
+    description:str = "Échange la Lethality et la Viciousness selon les HP de l'adversaire. Buff la Lethality"
     description_en:str = "Swap Lethality and Viciousness depending on enemy's HP."
     category:CategoryBuff = CategoryBuff.LVL_4
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
+        fighter.stats.lethality += fighter.bully.lvl * 2
+    def before_fight(self, fighter: FightingBully, opponent: FightingBully):
+        self.swap_stat_if_needed(fighter, opponent)
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
+        self.swap_stat_if_needed(fighter, opponent)
+        return 
+    
+    def swap_stat_if_needed(self, fighter: FightingBully, opponent: FightingBully):
         best_s = max(fighter.stats.lethality, fighter.stats.viciousness)
         worst_s = min(fighter.stats.lethality, fighter.stats.viciousness)
         if opponent.pv < opponent.bully.max_pv / 2:
@@ -213,14 +220,14 @@ class Lycanthropy(BuffFight):
         else:
             fighter.stats.lethality = worst_s
             fighter.stats.viciousness = best_s
-        return 
 
-class VampireCharm(BuffFight):
-    description:str = "À chaque coup vicieux blessant l'adversaire, régénère 1 HP."
+class Vampire(BuffFight):
+    description:str = "À chaque coup vicieux blessant l'adversaire, régénère 1 HP. Buff la Viciousness"
     description_en:str = "When deal vicious damage on the enemy, regen HP."
     category:CategoryBuff = CategoryBuff.LVL_4
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
+        fighter.stats.viciousness += fighter.bully.lvl * 1.5
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if fighter == recap_round.attacker and not recap_round.is_success_block and recap_round.is_success_vicious:
             fighter.pv = min(fighter.bully.max_pv, fighter.pv + 1)
@@ -246,7 +253,7 @@ class Overdrive(BuffFight):
     category:CategoryBuff = CategoryBuff.LVL_4
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
-        bonus = fighter.bully.lvl * 2
+        bonus = fighter.bully.lvl * 3
         fighter.stats.strength += bonus
         fighter.stats.agility += bonus
         fighter.stats.lethality += bonus
@@ -440,13 +447,38 @@ class Dizzy(BuffFight):
     category:CategoryBuff = CategoryBuff.DEBUFF
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
-        self.malus = fighter.stats.agility*0.95
+        self.malus = fighter.stats.agility*0.5
         fighter.stats.agility -= self.malus
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
         fighter.stats.agility += self.malus
         fighter.buffs.remove(self)
         return 
  
+class Burning(BuffFight):
+    description:str = "Reçoit X dégât à chaque round. Diminue le compteur à chaque tour."
+    category:CategoryBuff = CategoryBuff.DEBUFF
+    def __init__(self, fighter:FightingBully, compteur = 1):
+        super().__init__(fighter)
+        self.compteur:int = compteur
+        self.update_description()
+    def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
+        damage = self.compteur
+        fighter.pv -= damage
+
+        self.compteur -= 1
+        self.update_description()
+        if self.compteur <= 0 : 
+            fighter.buffs.remove(self)
+
+        return damage, 0
+    
+    def update_description(self):
+        self.description = f"Reçoit {self.compteur} dégâts à chaque round et diminue cette valeur."
+
+    def add_compteur(self, val:int):
+        self.compteur += val
+        self.update_description()
+
 
 #Special Buff (for special occasion)
 class Friendship(BuffFight):
@@ -498,7 +530,7 @@ class Cat(BuffFight):
     def on_death(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if fighter.pv <= 0 and self.vies > 0:
             self.vies -= 1
-            self.name = f"{self.vies} vie{'s' if self.vies>1 else ''} !"
+            self.description = f"{self.vies} vie{'s' if self.vies>1 else ''} !"
             fighter.pv = fighter.bully.max_pv
         return
 class Vilain(BuffFight):
@@ -545,12 +577,10 @@ class StrangeGift(BuffFight):
         if fighter.pv <= 0:
             opponent.buffs = [Poisoned(fighter=opponent, difficulty=fighter.stats.viciousness)]
         return 
-class Bombe(BuffFight):
+class ExplosiveTouch(BuffFight):
     description:str = "Inflige 1 dégât aux 2 combattants quand il bloque ou réussit une attaque."
-    description_en:str = "When struck to death, deal 5 damage to the enemy."
+    description_en:str = ""
     category:CategoryBuff = CategoryBuff.UNIQUE
-    def __init__(self, fighter:FightingBully):
-        super().__init__(fighter)
     def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
         if fighter == recap_round.defender and recap_round.is_success_block:
             fighter.pv -= 1
@@ -565,9 +595,43 @@ class Parrain(BuffFight):
     description:str = "Ses coups critiques rendent l'ennemi Dizzy (malus Agility pendant 1 tour)."
     description_en:str = ""
     category:CategoryBuff = CategoryBuff.UNIQUE
-    def __init__(self, fighter:FightingBully):
-        super().__init__(fighter)
     def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if fighter == recap_round.attacker and recap_round.is_success_lethal :
             opponent.buffs.append(Dizzy(fighter = opponent))
+        return
+
+#Pour le phoenix
+class FireAura(BuffFight):
+    description:str = "Inflige 1 dégât à l'adversaire."
+    description_en:str = ""
+    category:CategoryBuff = CategoryBuff.UNIQUE
+    def __init__(self, fighter:FightingBully, tour_restant=math.inf):
+        super().__init__(fighter)
+        self.tour = tour_restant
+        if self.tour < math.inf:
+            self.description = f"Inflige 1 dégât à l'adversaire [{self.tour} tours restants]"
+    def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
+        opponent.pv -= 1
+        self.tour -= 1
+        if self.tour <= 0 :
+            fighter.buffs.remove(self)
+        return 0, 1
+class FirePunch(BuffFight) :
+    description:str = "Ses coups critiques brulent son adversaire au lieu de faire des dégâts bonus."
+    category:CategoryBuff = CategoryBuff.UNIQUE
+    def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
+        if fighter == recap_round.attacker and recap_round.is_success_lethal :
+            burn_defuffs = [b for b in opponent.buffs if isinstance(b, Burning)]
+            if len(burn_defuffs) == 0:
+                opponent.buffs.append(Poisoned(fighter= opponent, difficulty=fighter.stats.lethality))
+            else :
+                burn_defuffs[0].add_compteur(2)
+        return
+class PhoenixResurrection(BuffFight):
+    description:str = "Renaît de ses cendres dans une aura de feu."
+    def on_death(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
+        if fighter.pv <= 0 :
+            fighter.pv = 5
+            fighter.buffs.remove(self)
+            fighter.buffs.append(FireAura(fighter, 3))
         return

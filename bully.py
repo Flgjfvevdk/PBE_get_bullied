@@ -478,7 +478,7 @@ def str_text_stat(value_stat:int):
 
 def mise_en_forme_str(text):
     new_text:str = "```ansi\n" + text + "```"
-    new_text = new_text.replace("UNIQUE", "[2;35m[1;35mUn[0m[2;35m[0m[2;34m[1;34mi[0m[2;34m[0m[2;31m[1;31mq[0m[2;31m[0m[2;32m[1;32mu[0m[2;32m[0m[2;33m[1;33me[0m[2;33m[0m")
+    new_text = new_text.replace("UNIQUE", "[2;35m[1;35mU[0m[2;35m[0m[2;34m[1;34mn[0m[2;34m[0m[2;31m[1;31mi[0m[2;31m[0m[2;32m[1;32mq[0m[2;32m[0m[2;33m[1;33mu[0m[2;33m[0m[2;35m[1;35me[0m[2;35m[0m")
     new_text = new_text.replace("SUBLIME", "[2;35m[1;35mSublime[0m[2;35m[0m")
     new_text = new_text.replace("DEVASTATOR", "[2;34m[1;34mDevastator[0m[2;34m[0m")
     new_text = new_text.replace("MONSTER", "[2;31m[1;31mMonster[0m[2;31m[0m")

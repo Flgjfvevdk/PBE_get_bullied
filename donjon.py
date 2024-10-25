@@ -34,7 +34,7 @@ COEF_XP_WIN = 1
 ENEMIES_FIGHTER_PV = 5
 COEF_XP_FIGHTER = 0.6
 COEF_XP_BOSS = 0.6
-COEF_GOLD_FIGHTER = 0.05
+COEF_GOLD_FIGHTER = 1
 ENEMIES_BOSS_PV = 20
 ENEMIES_GROUP_SIZE = 6
 
@@ -82,7 +82,7 @@ dungeon_fighters_lvl_50 = [DungeonFightingBully(name="Gardien", pv_max=13, seed=
                              DungeonFightingBully(name="Chimère", pv_max=10, seed=bully.Seed(0.5, 0.4, 0.7, 0.4), buffs_tags=["SharpTeeth"]),
                              DungeonFightingBully(name="David, ancien héros", pv_max=7, seed=bully.Seed(0.8, 1.0, 0.05, 0.3), buffs_tags=["CrystalSkin"]),
                              DungeonFightingBully(name="Ombre", pv_max=1, seed=bully.Seed(0.1, 1.2, 0.0, 1.2), buffs_tags=["ShadowMaster"]),
-                             DungeonFightingBully(name="Azaan, Dragon Primordial, Maitre du donjon", pv_max=20, seed=bully.Seed(1.3, 0.6, 0.2, 0.2), buffs_tags=["Dragon"])
+                             DungeonFightingBully(name="Azaan - Dragon Primordial - Maitre du donjon", pv_max=20, seed=bully.Seed(1.3, 0.6, 0.2, 0.2), buffs_tags=["Dragon"])
                             ]
 
 # dungeon_fighters_lvl_666 = [DungeonFightingBully(name="The Devil - Phase 1", pv_max=13, seed=bully.Seed(1.3, 0.3, 0.4, 0.0), buffs_tags=["Brutal"]),]
@@ -127,45 +127,37 @@ class Dungeon():
     def generate_dungeon_team(self) -> List[FightingBully]:
         enemies_fighters:List[FightingBully] = []
         
-        #Dungeon spécial
+        # Initialisation par défaut
+        dungeon_fighters = []
+        fighters_rarities = []
+
+        # Configuration pour les niveaux spéciaux
         if self.level == 50:
-            elixir_dragon = consumable.ConsumableElixirBuff("Dragon Blood", "Dragon")
-            for df in dungeon_fighters_lvl_50:
-                df.init_fighting_bully(rarity=bully.Rarity.UNIQUE, level = self.level)
-                if df.fighting_bully is None:
-                    raise Exception("l'initialisation n'a pas été bien faite")
-                enemies_fighters.append(df.fighting_bully)
-            self.reward_conso = elixir_dragon
-            return enemies_fighters
-        
-        if self.level == 111 :
+            dungeon_fighters = dungeon_fighters_lvl_50
+            fighters_rarities = [bully.Rarity.UNIQUE] * len(dungeon_fighters) 
+            self.reward_conso = consumable.ConsumableElixirBuff("Dragon Blood", "Dragon")
+
+        elif self.level == 111:
             self.level = 15
             self.name = "Legendary Boss Dungeon"
-            elixir_dragon = consumable.ConsumableElixirBuff("Phoenix's Feather", "Phoenix")
-            for df in dungeon_fighters_lvl_legendary:
-                df.init_fighting_bully(rarity=bully.Rarity.UNIQUE, level = self.level)
-                if df.fighting_bully is None:
-                    raise Exception("l'initialisation n'a pas été bien faite")
-                enemies_fighters.append(df.fighting_bully)
-            self.reward_conso = elixir_dragon
-            return enemies_fighters
-        
-        #Donjon classique
-        fighter_rarities:list[bully.Rarity] = fighter_rarities_lvl[self.level]
-        boss_rarity:bully.Rarity = boss_rarity_lvl[self.level]
-        for k in range(self.size):
-            rarity = random.choice(fighter_rarities) if k < self.size - 1 else boss_rarity
-            if k < self.size - 1:
-                enemy_fighter = replace(random.choice(dungeon_fighter_bully_list))
-            else : 
-                #C'est le boss : 
-                seed = bully.Seed.generate_seed_stat()
-                enemy_fighter = DungeonFightingBully(name="Boss", pv_max=ENEMIES_BOSS_PV, seed=seed, exp_coef=COEF_XP_BOSS, gold_coef= COEF_GOLD_FIGHTER)
+            dungeon_fighters = dungeon_fighters_lvl_legendary
+            fighters_rarities = [bully.Rarity.UNIQUE] * len(dungeon_fighters)
+            self.reward_conso = consumable.ConsumableElixirBuff("Phoenix's Feather", "Phoenix")
 
-            enemy_fighter.init_fighting_bully(rarity=rarity, level = self.level)
-            if enemy_fighter.fighting_bully is None:
-                raise Exception("l'initialisation n'a pas été bien faite")
-            enemies_fighters.append(enemy_fighter.fighting_bully)
+        # Configuration pour les autres niveaux
+        else:
+            dungeon_fighters = random.sample(dungeon_fighter_bully_list, self.size - 1)
+            seed = bully.Seed.generate_seed_stat()
+            boss_fighter = DungeonFightingBully(name="Boss", pv_max=ENEMIES_BOSS_PV, seed=seed, exp_coef=COEF_XP_BOSS)
+            dungeon_fighters.append(boss_fighter)  # Ajout du boss en dernier
+            fighters_rarities = [random.choice(fighter_rarities_lvl[self.level]) for _ in range(self.size - 1)] + [boss_rarity_lvl[self.level]]
+
+        # Initialisation des combattants avec les raretés définies
+        for df, rarity in zip(dungeon_fighters, fighters_rarities):
+            df.init_fighting_bully(rarity=rarity, level=self.level)
+            if df.fighting_bully is None:
+                raise Exception("L'initialisation n'a pas été bien faite")
+            enemies_fighters.append(df.fighting_bully)
 
         return enemies_fighters
 

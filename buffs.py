@@ -116,16 +116,25 @@ class Frustration(BuffFight):
         return 0, 0
 
 class DragonSkin(BuffFight):
-    description:str = "Ne reçoit pas de dégât des attaques non critiques."
+    description:str = "Peut bloquer 1 dégât. Augmente la probabilité à chaque coup donné."
     description_en:str = ""
     category:CategoryBuff = CategoryBuff.LVL_2
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
-    def apply_defensive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
-        if recap_round.defender == fighter and not recap_round.is_success_lethal and not recap_round.is_success_block and recap_round.get_damage_receive(fighter) > 0:
+        self.proba = 0.0
+        self.description = f"{round(self.proba*100)}% de bloquer 1 dégât. Augmente la proba à chaque coup donné."
+    def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[float, float] :
+        if recap_round.attacker == fighter and not recap_round.is_success_block:
+            self.proba = min(1.0, self.proba + 0.2)
+            self.description = f"{round(self.proba*100)}% de bloquer 1 dégât. Augmente la proba à chaque coup donné."
+
+        elif recap_round.defender == fighter and not recap_round.is_success_block and recap_round.get_damage_receive(fighter) > 0 and random.random() < self.proba:
             fighter.pv += 1
             recap_round.add_damage_receive(fighter, -1)
-        return 
+            self.proba = 0
+            self.description = f"{round(self.proba*100)}% de bloquer 1 dégât. Augmente la proba à chaque coup donné."
+            return -1, 0
+        return 0,0
     
 class ShadowEater(BuffFight):
     description:str = "Ses attaques réussies augmente sa Viciousness."
@@ -187,7 +196,7 @@ class SharpTeeth(BuffFight):
         return 0, 0
 
 class DragonResilience(BuffFight):
-    description:str = "À chaque attaque vicieuse subit, augmente sa Strength."
+    description:str = "Attaque vicieuse subit => augmentation Strength."
     description_en:str = ""
     category:CategoryBuff = CategoryBuff.LVL_3
     def __init__(self, fighter:FightingBully):

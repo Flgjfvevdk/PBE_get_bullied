@@ -336,7 +336,8 @@ class Bully(Base):
         
         mini = self.rarity.death_min_gold
         maxi = self.rarity.death_max_gold
-        gold = lerp(mini, maxi, (self.lvl - 1)/9)
+        x = min((self.lvl - 1)/9, 1.0)
+        gold = lerp(mini, maxi, x)
         return gold
 
     def nobody_evolution(self):

@@ -50,9 +50,13 @@ class DungeonFightingBully():
     exp_coef:float=COEF_XP_FIGHTER
     gold_coef:float=COEF_GOLD_FIGHTER
     buffs_tags:list[str] = field(default_factory=lambda: [])
+    rarity:Rarity|None = field(default=None)
+    can_swap:bool = field(default=False)
 
-    def init_fighting_bully(self, rarity, level):
-        b = bully.Bully(name=self.name, rarity=rarity, must_load_image=False, max_pv=self.pv_max, seed=self.seed)
+    def init_fighting_bully(self, level):
+        if self.rarity is None : 
+            self.rarity = Rarity.NOBODY
+        b = bully.Bully(name=self.name, rarity=self.rarity, must_load_image=False, max_pv=self.pv_max, seed=self.seed)
         for k in range(1, level) :
             b.level_up_one()
         self.fighting_bully = FightingBully.create_fighting_bully(b=b)
@@ -78,17 +82,17 @@ dungeon_fighter_bully_list = [DungeonFightingBully(name="Thyr O'Flan", pv_max=5,
                               DungeonFightingBully(name="Le Fourbe", pv_max=5, seed=bully.Seed(0.15, 0.1, 0.05, 0.65)),
                               DungeonFightingBully(name="Nulos", pv_max=5, seed=bully.Seed(0.1, 0.05, 0.40, 0.45))]
 
-dungeon_fighters_lvl_50 = [DungeonFightingBully(name="Gardien", pv_max=13, seed=bully.Seed(1.3, 0.3, 0.4, 0.0), buffs_tags=["Brutal", "IronSkin"]),
-                             DungeonFightingBully(name="Chimère", pv_max=10, seed=bully.Seed(0.5, 0.4, 0.7, 0.4), buffs_tags=["SharpTeeth"]),
-                             DungeonFightingBully(name="David, ancien héros", pv_max=7, seed=bully.Seed(0.8, 1.0, 0.05, 0.3), buffs_tags=["CrystalSkin"]),
-                             DungeonFightingBully(name="Ombre", pv_max=1, seed=bully.Seed(0.1, 1.2, 0.0, 1.2), buffs_tags=["ShadowMaster"]),
-                             DungeonFightingBully(name="Azaan - Dragon Primordial - Maitre du donjon", pv_max=20, seed=bully.Seed(1.3, 0.6, 0.2, 0.2), buffs_tags=["Dragon"])
+dungeon_fighters_lvl_50 = [DungeonFightingBully(name="Gardien", pv_max=13, seed=bully.Seed(1.3, 0.3, 0.4, 0.0), buffs_tags=["Brutal", "IronSkin"], rarity=Rarity.UNIQUE, can_swap=True),
+                             DungeonFightingBully(name="Chimère", pv_max=10, seed=bully.Seed(0.5, 0.4, 0.7, 0.4), buffs_tags=["SharpTeeth"], rarity=Rarity.UNIQUE, can_swap=True),
+                             DungeonFightingBully(name="David, ancien héros", pv_max=7, seed=bully.Seed(0.8, 1.0, 0.05, 0.3), buffs_tags=["CrystalSkin"], rarity=Rarity.UNIQUE, can_swap=True),
+                             DungeonFightingBully(name="Ombre", pv_max=1, seed=bully.Seed(0.1, 1.2, 0.0, 1.2), buffs_tags=["ShadowMaster"], rarity=Rarity.UNIQUE, can_swap=True),
+                             DungeonFightingBully(name="Azaan - Dragon Primordial - Maitre du donjon", pv_max=20, seed=bully.Seed(1.3, 0.6, 0.2, 0.2), buffs_tags=["Dragon"], rarity=Rarity.UNIQUE, can_swap=True)
                             ]
 
 # dungeon_fighters_lvl_666 = [DungeonFightingBully(name="The Devil - Phase 1", pv_max=13, seed=bully.Seed(1.3, 0.3, 0.4, 0.0), buffs_tags=["Brutal"]),]
-dungeon_fighters_lvl_legendary = [DungeonFightingBully(name="Phoenix - L'oiseau magnifique", pv_max=14, seed=bully.Seed(0.4, 1.0, 0.7, 0.1), buffs_tags=["Adaptation", "FirePunch"]),
-                              DungeonFightingBully(name="Phoenix - L'oeuf de résurrection", pv_max=16, seed=bully.Seed(1.0, 0.0, 0.1, 0.25), buffs_tags=["Adaptation", "FireAura"]),
-                              DungeonFightingBully(name="Phoenix - L'abomination de flamme", pv_max=20, seed=bully.Seed(0.8, 0.6, 0.5, 0.1), buffs_tags=["Adaptation", "ExplosiveTouch", "FirePunch"])
+dungeon_fighters_lvl_legendary = [DungeonFightingBully(name="Phoenix - L'oiseau magnifique", pv_max=14, seed=bully.Seed(0.4, 1.0, 0.7, 0.1), buffs_tags=["Adaptation", "FirePunch"], rarity=Rarity.UNIQUE, can_swap=True),
+                              DungeonFightingBully(name="Phoenix - L'oeuf de résurrection", pv_max=16, seed=bully.Seed(1.0, 0.0, 0.1, 0.25), buffs_tags=["Adaptation", "FireAura"], rarity=Rarity.UNIQUE, can_swap=True),
+                              DungeonFightingBully(name="Phoenix - L'abomination de flamme", pv_max=20, seed=bully.Seed(0.8, 0.6, 0.5, 0.1), buffs_tags=["Adaptation", "ExplosiveTouch", "FirePunch"], rarity=Rarity.UNIQUE, can_swap=True)
                               ]
 
 @dataclass
@@ -104,8 +108,9 @@ class Dungeon():
 
     user: discord.abc.User = field(init=False)
     current_floor: int  = field(init = False, default=0)
-    enemies_fighters: List[FightingBully] = field(init=False)
+    enemies_fighters: list[FightingBully] = field(init=False)
     fighters_joueur: list[FightingBully] = field(init=False)
+    can_swap_enemies:list[FightingBully] = field(default_factory=list) #Liste des ennemies contre lesquelles on peut swap (vide = aucun swap contre aucun ennemie)
     xp_earned_bullies: List[float] = field(init=False)
     thread: Thread = field(init=False)
 
@@ -134,27 +139,29 @@ class Dungeon():
         # Configuration pour les niveaux spéciaux
         if self.level == 50:
             dungeon_fighters = dungeon_fighters_lvl_50
-            fighters_rarities = [bully.Rarity.UNIQUE] * len(dungeon_fighters) 
             self.reward_conso = consumable.ConsumableElixirBuff("Dragon Blood", "Dragon")
 
         elif self.level == 111:
             self.level = 15
             self.name = "Legendary Boss Dungeon"
             dungeon_fighters = dungeon_fighters_lvl_legendary
-            fighters_rarities = [bully.Rarity.UNIQUE] * len(dungeon_fighters)
             self.reward_conso = consumable.ConsumableElixirBuff("Phoenix's Feather", "Phoenix")
 
         # Configuration pour les autres niveaux
         else:
             dungeon_fighters = random.sample(dungeon_fighter_bully_list, self.size - 1)
             seed = bully.Seed.generate_seed_stat()
-            boss_fighter = DungeonFightingBully(name="Boss", pv_max=ENEMIES_BOSS_PV, seed=seed, exp_coef=COEF_XP_BOSS)
+            boss_fighter = DungeonFightingBully(name="Boss", pv_max=ENEMIES_BOSS_PV, seed=seed, exp_coef=COEF_XP_BOSS, can_swap=True)
             dungeon_fighters.append(boss_fighter)  # Ajout du boss en dernier
             fighters_rarities = [random.choice(fighter_rarities_lvl[self.level]) for _ in range(self.size - 1)] + [boss_rarity_lvl[self.level]]
+            for df, rarity in zip(dungeon_fighters, fighters_rarities) :
+                df.rarity = rarity
 
         # Initialisation des combattants avec les raretés définies
-        for df, rarity in zip(dungeon_fighters, fighters_rarities):
-            df.init_fighting_bully(rarity=rarity, level=self.level)
+        for df in dungeon_fighters:
+            df.init_fighting_bully(level=self.level)
+            if df.can_swap:
+                self.can_swap_enemies.append(df.fighting_bully)
             if df.fighting_bully is None:
                 raise Exception("L'initialisation n'a pas été bien faite")
             enemies_fighters.append(df.fighting_bully)
@@ -171,7 +178,8 @@ class Dungeon():
         #On fait la boucle de combat
         try:
             while self.current_floor < len(self.enemies_fighters):
-                await self.handle_fight(can_switch=self.current_floor ==  len(self.enemies_fighters) - 1 or self.level==50)
+                fighting_bully_enemy = self.enemies_fighters[self.current_floor]
+                await self.handle_fight(can_switch = (fighting_bully_enemy in self.can_swap_enemies))
                 # self.reset_stats_bullies()
 
         except interact_game.CancelChoiceException as e:

@@ -26,13 +26,19 @@ class BuffFight():
     def before_fight(self, fighter:FightingBully, opponent:FightingBully):
         """For buff that need an init with knowledge of the opponent"""
         return
-    def apply_aggresive(self, fighter:FightingBully, opponent:FightingBully, recap_round:RecapRound) -> tuple[int, int]:
+    def apply_damage(self, fighter:FightingBully, opponent:FightingBully, recap_round:RecapRound) -> tuple[int, int]:
         """ For buff that could deal damage to a fighter.
         Return : 
             - damage_self, damage_opponent. damage_self = damage this buff done to self. damage_opponent = damage this buff done to opponent. Use to update recap_round
         """
         return 0, 0
-    def apply_defensive(self, fighter:FightingBully, opponent:FightingBully, recap_round:RecapRound) -> None:
+    def apply_heal(self, fighter:FightingBully, opponent:FightingBully, recap_round:RecapRound) -> tuple[int, int]:
+        """ For buff that could heal a fighter.
+        Return : 
+            - heal_self, heal_opponent. heal_self = heal this buff done to self. heal_opponent = heal this buff done to opponent. Use to update recap_round
+        """
+        return 0, 0
+    def apply_effect(self, fighter:FightingBully, opponent:FightingBully, recap_round:RecapRound) -> None:
         """For buff that use damage infos as conditions."""
         return
     def on_death(self, fighter:FightingBully, opponent:FightingBully, recap_round:RecapRound) -> None:

@@ -218,19 +218,32 @@ class Fight():
     async def apply_buff_fight(self, recap_round:fighting_bully.RecapRound):
         damage_j1, damage_j2 = 0, 0
         for b in self.fighter_1.buffs:
-            d1, d2 = b.apply_aggresive(fighter=self.fighter_1, opponent=self.fighter_2, recap_round=recap_round)
+            d1, d2 = b.apply_damage(fighter=self.fighter_1, opponent=self.fighter_2, recap_round=recap_round)
             damage_j1 += d1
             damage_j2 += d2
         for b in self.fighter_2.buffs:
-            d2, d1 = b.apply_aggresive(fighter=self.fighter_2, opponent=self.fighter_1, recap_round=recap_round)
+            d2, d1 = b.apply_damage(fighter=self.fighter_2, opponent=self.fighter_1, recap_round=recap_round)
             damage_j1 += d1
             damage_j2 += d2
         recap_round.add_damage_receive(self.fighter_1, damage_j1)
         recap_round.add_damage_receive(self.fighter_2, damage_j2)
+
+        heal_j1, heal_j2 = 0, 0
         for b in self.fighter_1.buffs:
-            b.apply_defensive(fighter=self.fighter_1, opponent=self.fighter_2, recap_round=recap_round)
+            h1, h2 = b.apply_heal(fighter=self.fighter_1, opponent=self.fighter_2, recap_round=recap_round)
+            heal_j1 += h1
+            heal_j2 += h2
         for b in self.fighter_2.buffs:
-            b.apply_defensive(fighter=self.fighter_2, opponent=self.fighter_1, recap_round=recap_round)
+            h2, h1 = b.apply_heal(fighter=self.fighter_2, opponent=self.fighter_1, recap_round=recap_round)
+            heal_j1 += h1
+            heal_j2 += h2
+        recap_round.add_damage_receive(self.fighter_1, -heal_j1)
+        recap_round.add_damage_receive(self.fighter_2, -heal_j2)
+
+        for b in self.fighter_1.buffs:
+            b.apply_effect(fighter=self.fighter_1, opponent=self.fighter_2, recap_round=recap_round)
+        for b in self.fighter_2.buffs:
+            b.apply_effect(fighter=self.fighter_2, opponent=self.fighter_1, recap_round=recap_round)
 
         for b in self.fighter_1.buffs:
             b.on_death(fighter=self.fighter_1, opponent=self.fighter_2, recap_round=recap_round)

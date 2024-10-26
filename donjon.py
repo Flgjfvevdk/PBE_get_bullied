@@ -98,7 +98,7 @@ dungeon_fighters_lvl_666 = [DungeonFightingBully(name="Le Diable - Rédigeant un
                             DungeonFightingBully(name="Le Diable - Rédigeant un contrat", pv_max=1, seed=bully.Seed(0, 0, 0, 0), buffs_tags=["DevilDeal", "FinalCountdown"], rarity=Rarity.UNIQUE, can_swap=True),
                             DungeonFightingBully(name="Sbire - Celui qui tue", pv_max=12, seed=bully.Seed(0.5, 0.1, 0.4, 0), buffs_tags=["DevilMinion", "SharpTeeth"], rarity=Rarity.MONSTER, can_swap=True),
                             
-                            DungeonFightingBully(name="Le Diable - Jouant la montre", pv_max=10, seed=bully.Seed(0.2, 0, 0.8, 0), buffs_tags=["FinalCountdown"], rarity=Rarity.UNIQUE, can_swap=True),
+                            DungeonFightingBully(name="Le Diable - Jouant la montre", pv_max=10, seed=bully.Seed(0.2, 0, 0.8, 0), buffs_tags=["FinalCountdown", "GoldenSkin"], rarity=Rarity.UNIQUE, can_swap=True),
                             DungeonFightingBully(name="Le Diable - Serpent Vicieux", pv_max=5, seed=bully.Seed(0, 1, 0, 2), buffs_tags=["RootOfEvil"], rarity=Rarity.UNIQUE, can_swap=True),
                             DungeonFightingBully(name="Le Diable - Maitre des morts", pv_max=10, seed=bully.Seed(0.8, 0.8, 0.8, 0), buffs_tags=["RootOfEvil"], rarity=Rarity.UNIQUE, can_swap=True),
                             ]

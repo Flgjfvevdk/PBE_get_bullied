@@ -89,7 +89,20 @@ dungeon_fighters_lvl_50 = [DungeonFightingBully(name="Gardien", pv_max=13, seed=
                              DungeonFightingBully(name="Azaan - Dragon Primordial - Maitre du donjon", pv_max=20, seed=bully.Seed(1.3, 0.6, 0.2, 0.2), buffs_tags=["Dragon"], rarity=Rarity.UNIQUE, can_swap=True)
                             ]
 
-# dungeon_fighters_lvl_666 = [DungeonFightingBully(name="The Devil - Phase 1", pv_max=13, seed=bully.Seed(1.3, 0.3, 0.4, 0.0), buffs_tags=["Brutal"]),]
+dungeon_fighters_lvl_666 = [DungeonFightingBully(name="Le Diable - Rédigeant un contrat", pv_max=1, seed=bully.Seed(0, 0, 0, 0), buffs_tags=["DevilDeal", "FinalCountdown"], rarity=Rarity.UNIQUE, can_swap=True),
+                            DungeonFightingBully(name="Sbire - Celui qui doute", pv_max=8, seed=bully.Seed(0.2, 0.4, 0.3, 0.1), buffs_tags=["DevilMinion"], rarity=Rarity.MONSTER, can_swap=True),
+
+                            DungeonFightingBully(name="Le Diable - Rédigeant un contrat", pv_max=1, seed=bully.Seed(0, 0, 0, 0), buffs_tags=["DevilDeal", "FinalCountdown"], rarity=Rarity.UNIQUE, can_swap=True),
+                            DungeonFightingBully(name="Sbire - Celui qui blesse", pv_max=9, seed=bully.Seed(0.2, 0.3, 0.5, 0.0), buffs_tags=["DevilMinion"], rarity=Rarity.MONSTER, can_swap=True),
+                            
+                            DungeonFightingBully(name="Le Diable - Rédigeant un contrat", pv_max=1, seed=bully.Seed(0, 0, 0, 0), buffs_tags=["DevilDeal", "FinalCountdown"], rarity=Rarity.UNIQUE, can_swap=True),
+                            DungeonFightingBully(name="Sbire - Celui qui tue", pv_max=12, seed=bully.Seed(0.5, 0.1, 0.4, 0), buffs_tags=["DevilMinion", "SharpTeeth"], rarity=Rarity.MONSTER, can_swap=True),
+                            
+                            DungeonFightingBully(name="Le Diable - Jouant la montre", pv_max=10, seed=bully.Seed(0.2, 0, 0.8, 0), buffs_tags=["FinalCountdown"], rarity=Rarity.UNIQUE, can_swap=True),
+                            DungeonFightingBully(name="Le Diable - Serpent Vicieux", pv_max=5, seed=bully.Seed(0, 1, 0, 2), buffs_tags=["RootOfEvil"], rarity=Rarity.UNIQUE, can_swap=True),
+                            DungeonFightingBully(name="Le Diable - Maitre des morts", pv_max=10, seed=bully.Seed(0.8, 0.8, 0.8, 0), buffs_tags=["RootOfEvil"], rarity=Rarity.UNIQUE, can_swap=True),
+                            ]
+
 dungeon_fighters_lvl_legendary = [DungeonFightingBully(name="Phoenix - L'oiseau magnifique", pv_max=14, seed=bully.Seed(0.4, 1.0, 0.7, 0.1), buffs_tags=["Adaptation", "FirePunch"], rarity=Rarity.UNIQUE, can_swap=True),
                               DungeonFightingBully(name="Phoenix - L'oeuf de résurrection", pv_max=16, seed=bully.Seed(1.0, 0.0, 0.1, 0.25), buffs_tags=["Adaptation", "FireAura"], rarity=Rarity.UNIQUE, can_swap=True),
                               DungeonFightingBully(name="Phoenix - L'abomination de flamme", pv_max=20, seed=bully.Seed(0.8, 0.6, 0.5, 0.1), buffs_tags=["Adaptation", "ExplosiveTouch", "FirePunch"], rarity=Rarity.UNIQUE, can_swap=True)
@@ -140,12 +153,16 @@ class Dungeon():
         if self.level == 50:
             dungeon_fighters = dungeon_fighters_lvl_50
             self.reward_conso = consumable.ConsumableElixirBuff("Dragon Blood", "Dragon")
-
         elif self.level == 111:
             self.level = 15
             self.name = "Legendary Boss Dungeon"
             dungeon_fighters = dungeon_fighters_lvl_legendary
             self.reward_conso = consumable.ConsumableElixirBuff("Phoenix's Feather", "Phoenix")
+        elif self.level == 666:
+            self.level = 50
+            self.name = "Hell"
+            dungeon_fighters = dungeon_fighters_lvl_666
+            # self.reward_conso = consumable.ConsumableElixirBuff("Phoenix's Feather", "Phoenix")
 
         # Configuration pour les autres niveaux
         else:

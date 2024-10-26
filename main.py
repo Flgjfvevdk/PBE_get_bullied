@@ -345,7 +345,7 @@ async def explore_dungeon(ctx: Context, level:int|str):
     if(level <= 0) :
         await ctx.channel.send("Dungeon level must be greater than 0.")
         return
-    if level > 50 and level != 111 :
+    if level > 50 and level != 111 and level != 666 :
         await ctx.channel.send("Level max is 50.")
         return
 

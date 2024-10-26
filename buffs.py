@@ -152,7 +152,7 @@ class RoyalSlimyBody(BuffFight):
         return 
 
 class RootOfEvil(BuffFight):
-    description:str = "À chaque attaque vicieuse subit, augmente sa Viciousness."
+    description:str = "Attaque vicieuse subit => augmentation Viciousness."
     description_en:str = "When get vicious debuff, increase your Viciousness."
     category:CategoryBuff = CategoryBuff.LVL_3
     def __init__(self, fighter:FightingBully):
@@ -511,7 +511,6 @@ class Adaptation(BuffFight):
     # def __init__(self, fighter:FightingBully):
     #     super().__init__(fighter)
     def before_fight(self, fighter: FightingBully, opponent: FightingBully):
-        print(f"\n level self : {fighter.bully.lvl} - {opponent.bully.lvl}")
         for l in range(fighter.bully.lvl, opponent.bully.lvl):
             old_base_stat = fighter.base_stats
             fighter.bully.level_up_one()
@@ -699,7 +698,7 @@ class DevilMinion(BuffFight):
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
         self.name = "Devil's Minion"
-    def apply_effect(self, fighter: FightingBully, opponent: FightingBully):
+    def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if len([b for b in opponent.buffs if isinstance(b, YourSoulIsMine)]) == 0:
             drain_val = fighter.bully.lvl * 0.15
             fighter.stats.strength += drain_val

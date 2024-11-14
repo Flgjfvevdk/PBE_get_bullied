@@ -1,5 +1,5 @@
 from fighting_bully import BuffFight, FightingBully, RecapRound, CategoryBuff
-from bully import Bully
+from bully import Bully, Stats
 import random
 import math
 
@@ -116,15 +116,24 @@ class Frustration(BuffFight):
         return
 
 class DragonSkin(BuffFight):
-    description:str = "Ne reçoit pas de dégât des attaques non critiques."
+    description:str = "Peut bloquer 1 dégât. Augmente la probabilité à chaque coup donné."
     description_en:str = ""
     category:CategoryBuff = CategoryBuff.LVL_2
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
-    def apply_heal(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
-        if recap_round.defender == fighter and not recap_round.is_success_lethal and not recap_round.is_success_block and recap_round.get_damage_receive(fighter) > 0:
+        self.proba = 0.0
+        self.description = f"{round(self.proba*100)}% de bloquer 1 dégât. Augmente la proba à chaque coup donné."
+    def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[float, float] :
+        if recap_round.attacker == fighter and not recap_round.is_success_block:
+            self.proba = min(1.0, self.proba + 0.2)
+            self.description = f"{round(self.proba*100)}% de bloquer 1 dégât. Augmente la proba à chaque coup donné."
+
+        elif recap_round.defender == fighter and not recap_round.is_success_block and recap_round.get_damage_receive(fighter) > 0 and random.random() < self.proba:
             fighter.pv += 1
-            return 1, 0
+            recap_round.add_damage_receive(fighter, -1)
+            self.proba = 0
+            self.description = f"{round(self.proba*100)}% de bloquer 1 dégât. Augmente la proba à chaque coup donné."
+            return -1, 0
         return 0,0
     
 class ShadowEater(BuffFight):
@@ -187,7 +196,7 @@ class SharpTeeth(BuffFight):
         return 
 
 class DragonResilience(BuffFight):
-    description:str = "À chaque attaque vicieuse subit, augmente sa Strength."
+    description:str = "Attaque vicieuse subit => augmentation Strength."
     description_en:str = ""
     category:CategoryBuff = CategoryBuff.LVL_3
     def __init__(self, fighter:FightingBully):
@@ -518,7 +527,7 @@ class Adaptation(BuffFight):
             fighter.base_stats += added_stats
             fighter.stats += added_stats
 
-    
+
 
 
 #Unique Buff (for Unique character)
@@ -637,6 +646,7 @@ class FirePunch(BuffFight) :
         return
 class Phoenix(BuffFight):
     description:str = "Renaît de ses cendres dans une aura de feu."
+    category:CategoryBuff = CategoryBuff.SPECIAL
     def on_death(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if fighter.pv <= 0 :
             fighter.pv = 5
@@ -670,7 +680,7 @@ class YourSoulIsMine(BuffFight):
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
         self.round = self.max_round
-        self.description:str = f"Meurt dans {self.round} rounds."
+        self.description:str = f"N'a plus d'âme. Meurt dans {self.round} rounds."
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> None:
         if self.round <= 0 :
             fighter.pv = 0
@@ -693,7 +703,7 @@ class FinalCountdown(BuffFight):
             self.round -= 1
             self.description:str = f"Tue l'adversaire dans {self.round} rounds."
 class DevilMinion(BuffFight):
-    description:str = "Vole des stats des enemies avec des âmes."
+    description:str = "Vole des stats aux adversaires avec un âme."
     category:CategoryBuff = CategoryBuff.UNIQUE
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
@@ -710,6 +720,24 @@ class DevilMinion(BuffFight):
             opponent.stats.agility = max(1, opponent.stats.agility - drain_val)
             opponent.stats.lethality = max(1, opponent.stats.lethality - drain_val)
             opponent.stats.viciousness = max(1, opponent.stats.viciousness - drain_val)
+
+
+class OriginalSin(BuffFight):
+    description:str = "Se transforme en serpent à la place de mourir."
+    category:CategoryBuff = CategoryBuff.UNIQUE
+
+    def on_death(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> None:
+        if fighter.pv <= 0 :
+            fighter.buffs.remove(self)
+            fighter.pv = 5
+            coef = fighter.bully.lvl * (fighter.bully.lvl + 1) / 2
+            fighter.base_stats = Stats(1, 10 + 1.6*coef, 1, 10 + 2*coef)
+            fighter.stats = Stats(1, 10 + 1.6*coef, 1, 10 + 2*coef)
+
+            snake_buff = BuffFight(fighter)
+            snake_buff.name = "Shapeshifter"
+            snake_buff.description = "Sous forme de serpent."
+            fighter.buffs.append(snake_buff)
 
 import inspect, buffs
 classes = [member[1] for member in inspect.getmembers(buffs) if inspect.isclass(member[1])]

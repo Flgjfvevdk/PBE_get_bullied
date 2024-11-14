@@ -68,6 +68,9 @@ class FightingBully():
     def reset_stats(self) -> None:
         self.stats = replace(self.base_stats)
 
+    def copy(self)-> 'FightingBully':
+        fb = FightingBully(bully=self.bully, pv = self.pv, base_stats=replace(self.base_stats), stats=replace(self.stats), buffs=(self.buffs).copy())
+        return fb
 
 class RecapRound():
     def __init__(self, attacker:FightingBully, defender:FightingBully, is_success_agility:bool, is_success_block:bool, is_success_lethal:bool, is_success_vicious:bool
@@ -101,12 +104,15 @@ class RecapRound():
             raise Warning("Input fighter is neither attacker nor defender")
             return 0
 
-def create_buff_instance(class_name: str, fighter:FightingBully) -> BuffFight: 
+def create_buff_instance(buff_name: str, fighter:FightingBully) -> BuffFight: 
     import buffs
     # Cherche la classe dans le module
     try:
-        BuffClass = buffs.name_to_buffs_class[class_name]
+        BuffClass = buffs.name_to_buffs_class[buff_name]
         return BuffClass(fighter=fighter)
+    except KeyError as e :
+        print(f"Le buff du bully est invalide [{buff_name}]")
+        return BuffFight(fighter=fighter)
     except Exception as e:
-        print("Le buff du bully est invalide")
+        print(f"Erreur lors de l'init du buff [{buff_name}]")
         return BuffFight(fighter=fighter)

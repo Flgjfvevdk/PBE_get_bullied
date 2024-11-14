@@ -162,7 +162,7 @@ class Dungeon():
             self.level = 50
             self.name = "Hell"
             dungeon_fighters = dungeon_fighters_lvl_666
-            # self.reward_conso = consumable.ConsumableElixirBuff("Phoenix's Feather", "Phoenix")
+            self.reward_conso = consumable.ConsumableElixirBuff("The Apple", "OriginalSin")
 
         # Configuration pour les autres niveaux
         else:

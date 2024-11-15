@@ -1,8 +1,9 @@
 from __future__ import annotations # Replace type hints to their string form (Item => "Item"), which resolves circular dependencies
                                    # WARNING: Should only be used for type hints
 from dataclasses import dataclass, replace, field
-from bully import Bully, Stats
+from bully import Bully, Stats, Rarity
 from enum import Enum
+import player_info
 
 class CategoryBuff(Enum):
     NONE = 0
@@ -72,6 +73,29 @@ class FightingBully():
         fb = FightingBully(bully=self.bully, pv = self.pv, base_stats=replace(self.base_stats), stats=replace(self.stats), buffs=(self.buffs).copy())
         return fb
 
+    def get_print(self) -> str:
+        text = ""
+        hp_text = f"HP : {self.pv}/{self.pv}"
+        buff_text = self.buffs_str()
+        def good_print_float(x:float) -> float|int:
+            xf:float = float(x)
+            return int(xf) if xf.is_integer() else round(xf, 1)
+        text += self.bully.name + " | lvl : " + str(self.bully.lvl) + " | Rarity : " + self.bully.rarity.name + " | " + hp_text + " | " + buff_text + "\n\t" 
+        text += " |S : "+ str(good_print_float(self.stats.strength))
+        text += " |A : "+ str(good_print_float(self.stats.agility))
+        text += " |L : "+ str(good_print_float(self.stats.lethality))
+        text += " |V : "+ str(good_print_float(self.stats.viciousness))
+        return text
+
+    def buffs_str(self):
+        text = ""
+        if len(self.buffs) > 0:
+            text +="Buff : "
+        for b in self.buffs :
+            text+= b.name
+            text += " ; "
+        return text
+
 class RecapRound():
     def __init__(self, attacker:FightingBully, defender:FightingBully, is_success_agility:bool, is_success_block:bool, is_success_lethal:bool, is_success_vicious:bool
                  , damage_receive:int, malus_vicious:float = 0, damage_bonus_lethal:int = 0):
@@ -103,6 +127,28 @@ class RecapRound():
         else : 
             raise Warning("Input fighter is neither attacker nor defender")
             return 0
+
+def get_player_team(player:player_info.Player, is_team_buff_active = True):
+    fighters:list[FightingBully] = []
+    compteur_rarity:dict[Rarity, int] = {r:0 for r in Rarity}
+    for b in player.get_equipe():
+        new_fighter = FightingBully.create_fighting_bully(b)
+        fighters.append(new_fighter)
+        compteur_rarity[b.rarity] += 1
+    if is_team_buff_active:
+        team_buff_tag:str|None = None
+        if compteur_rarity[Rarity.TOXIC] >= 3:
+            team_buff_tag = "ToxicTeam"
+        elif compteur_rarity[Rarity.MONSTER] >= 3:
+            team_buff_tag = "MonsterTeam"
+        elif compteur_rarity[Rarity.DEVASTATOR] >= 3:
+            team_buff_tag = "DevastatorTeam"
+        elif compteur_rarity[Rarity.SUBLIME] >= 3:
+            team_buff_tag = "SublimeTeam"
+        if team_buff_tag is not None:
+            for f in fighters:
+                f.buffs.append(create_buff_instance(team_buff_tag, fighter=f))
+    return fighters
 
 def create_buff_instance(buff_name: str, fighter:FightingBully) -> BuffFight: 
     import buffs

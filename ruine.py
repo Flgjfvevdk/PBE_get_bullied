@@ -2,7 +2,7 @@ import os
 import random
 from bully import Bully, Rarity, LevelUpException, Stats
 import bully
-from fighting_bully import FightingBully, BuffFight, CategoryBuff
+from fighting_bully import FightingBully, BuffFight, get_player_team
 import consumable
 from consumable import Consumable
 import interact_game
@@ -88,7 +88,8 @@ class EnemyRoom():
         return EnemyRoom(enemy_fighter)
     
     async def interact(self, ruin: "Ruin") -> bool:
-        await ruin.thread.send(f"An enemy stands in your way! \n{bully.mise_en_forme_str(self.enemy.bully.get_print(compact_print=True))}")
+        # await ruin.thread.send(f"An enemy stands in your way! \n{bully.mise_en_forme_str(self.enemy.bully.get_print(compact_print=True))}")
+        await ruin.thread.send(f"An enemy stands in your way! \n{bully.mise_en_forme_str(self.enemy.get_print())}")
         while True:
             fighter = await self.fighter_choice(ruin)
             fight_won = await self.fight(ruin, fighter)
@@ -327,7 +328,7 @@ class Ruin():
             return
 
         #On initialise les pv des bullies
-        self.fighters_joueur = [FightingBully.create_fighting_bully(b) for b in self.player.get_equipe()]
+        self.fighters_joueur = get_player_team(player=self.player)
 
         try: 
             # Pop removes the last item

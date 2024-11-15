@@ -255,7 +255,8 @@ def str_fighting_bully(fighting_bully:list[FightingBully], print_images=False) -
 
     for f in fighting_bully:
         text += "\n___________\n"
-        text += f.bully.get_print(compact_print=True, current_hp=f.pv)
+        # text += f.bully.get_print(compact_print=True, current_hp=f.pv)
+        text += f.get_print()
         if print_images:
             image_path = f.bully.image_file_path
             if image_path is not None:

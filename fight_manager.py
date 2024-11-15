@@ -4,7 +4,7 @@ import random
 import discord
 from bully import Bully, Stats, LevelUpException, Rarity
 import fighting_bully
-from fighting_bully import FightingBully
+from fighting_bully import FightingBully, get_player_team
 import interact_game
 import money
 import asyncio
@@ -408,13 +408,13 @@ class TeamFight():
         if team_1 is not None:
             self.team_1 = team_1.copy()
         elif self.player_1 is not None:
-            self.team_1 = [FightingBully.create_fighting_bully(b) for b in self.player_1.get_equipe()]
+            self.team_1 = get_player_team(self.player_1) #[FightingBully.create_fighting_bully(b) for b in self.player_1.get_equipe()]
         else :
             raise Warning("Team 1 failed to setup")
         if team_2 is not None:
             self.team_2 = team_2.copy()
         elif self.player_2 is not None:
-            self.team_2 = [FightingBully.create_fighting_bully(b) for b in self.player_2.get_equipe()]
+            self.team_2 =  get_player_team(self.player_2) #[FightingBully.create_fighting_bully(b) for b in self.player_2.get_equipe()]
         else :
             raise Warning("Team 2 failed to setup")
 

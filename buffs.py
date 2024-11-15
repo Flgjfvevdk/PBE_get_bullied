@@ -123,17 +123,16 @@ class DragonSkin(BuffFight):
         super().__init__(fighter)
         self.proba = 0.0
         self.description = f"{round(self.proba*100)}% de bloquer 1 dégât. Augmente la proba à chaque coup donné."
-    def apply_aggresive(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[float, float] :
+    def apply_heal(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[float, float] :
         if recap_round.attacker == fighter and not recap_round.is_success_block:
             self.proba = min(1.0, self.proba + 0.2)
             self.description = f"{round(self.proba*100)}% de bloquer 1 dégât. Augmente la proba à chaque coup donné."
 
         elif recap_round.defender == fighter and not recap_round.is_success_block and recap_round.get_damage_receive(fighter) > 0 and random.random() < self.proba:
             fighter.pv += 1
-            recap_round.add_damage_receive(fighter, -1)
             self.proba = 0
             self.description = f"{round(self.proba*100)}% de bloquer 1 dégât. Augmente la proba à chaque coup donné."
-            return -1, 0
+            return 1, 0
         return 0,0
     
 class ShadowEater(BuffFight):
@@ -177,12 +176,12 @@ class GoldenSkin(BuffFight):
     category:CategoryBuff = CategoryBuff.LVL_3
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
-    def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
+    def apply_heal(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[float, float]:
         if recap_round.get_damage_receive(fighter) > 2:
             heal = recap_round.get_damage_receive(fighter) - 2
             fighter.pv += heal
-            recap_round.add_damage_receive(fighter, -heal)
-        return 
+            return heal, 0
+        return 0,0
     
 class SharpTeeth(BuffFight):
     description:str = "Ses coups critiques diminuent la Strength de l'adversaire."
@@ -239,7 +238,7 @@ class Vampire(BuffFight):
         fighter.stats.viciousness += fighter.bully.lvl * 1.5
     def apply_heal(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
         if fighter == recap_round.attacker and not recap_round.is_success_block and recap_round.is_success_vicious:
-            heal = min(1, fighter.bully.max_pv - fighter.pv )
+            heal = 1 if fighter.pv + 1 <= fighter.bully.max_pv else 0
             fighter.pv += heal
             return heal, 0
         return 0,0
@@ -335,7 +334,7 @@ class CrystalSkin(BuffFight):
         if recap_round.damage_bonus_lethal > 0:
             dmg_bonus = recap_round.damage_bonus_lethal
             if recap_round.attacker == fighter :
-                heal = min(dmg_bonus, recap_round.get_damage_receive(opponent))
+                heal = min(dmg_bonus, max(0, recap_round.get_damage_receive(opponent)))
                 opponent.pv += heal
                 recap_round.damage_bonus_lethal = 0
                 return -heal, 0 
@@ -408,7 +407,7 @@ class DevastatorTeam(BuffFight):
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
     def apply_damage(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
-        if fighter == recap_round.attacker and not recap_round.is_success_lethal:
+        if fighter == recap_round.attacker and not recap_round.is_success_lethal and not recap_round.is_success_block:
             opponent.pv -= 1
             return 0, 1
         return 0, 0

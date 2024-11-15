@@ -2,7 +2,7 @@ import os
 import random
 from bully import Bully, Rarity #ne pas confondre avec bully (le fichier)
 import bully #ne pas confondre avec Bully (la class)
-from fighting_bully import FightingBully
+from fighting_bully import FightingBully, get_player_team
 from player_info import Player
 import interact_game
 import fight_manager
@@ -135,12 +135,8 @@ class Dungeon():
         self.enemies_fighters = self.generate_dungeon_team()
 
         #On initialise les pv et xp gagné par les bullies
-        self.fighters_joueur: List[FightingBully] = []
-        self.xp_earned_bullies: List[float] = [] #L'xp gagné par chaque bully
-        for b in self.player.get_equipe():
-            new_fighter = FightingBully.create_fighting_bully(b)
-            self.fighters_joueur.append(new_fighter)
-            self.xp_earned_bullies.append(0)
+        self.fighters_joueur: List[FightingBully] = get_player_team(self.player)
+        self.xp_earned_bullies: List[float] = [0]*len(self.fighters_joueur) #L'xp gagné par chaque bully
 
     def generate_dungeon_team(self) -> List[FightingBully]:
         enemies_fighters:List[FightingBully] = []
@@ -239,7 +235,8 @@ class Dungeon():
     async def handle_fight(self, can_switch = False):
         #On affiche le prochain ennemy
         fighting_bully_enemy = self.enemies_fighters[self.current_floor]
-        text_enemy_coming = f"An enemy is coming! {fighting_bully_enemy.bully.get_print(compact_print=True, current_hp=fighting_bully_enemy.pv)}"
+        # text_enemy_coming = f"An enemy is coming! {fighting_bully_enemy.bully.get_print(compact_print=True, current_hp=fighting_bully_enemy.pv)}"
+        text_enemy_coming = f"An enemy is coming! {fighting_bully_enemy.get_print()}"
         await self.thread.send(f"{bully.mise_en_forme_str(text_enemy_coming)}") 
         
         fighting_bully_joueur, num_bully_j = await interact_game.player_choose_fighting_bully(ctx=self.ctx, fighting_bullies=self.fighters_joueur, user=self.ctx.author, channel_cible=self.thread, timeout=DUNGEON_CHOICE_TIMEOUT)

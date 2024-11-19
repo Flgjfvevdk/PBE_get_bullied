@@ -660,18 +660,15 @@ class DevilDeal(BuffFight):
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
         self.name = "Devil's Deal"
-        self.contract_phase = 0
+        self.deal_done = False
     def before_fight(self, fighter: FightingBully, opponent: FightingBully):
-        if self.contract_phase == 0 :
-            self.contract_phase = 1
-            self.description:str = "Choisissez qui signe le contrat."
-        elif self.contract_phase == 1 and len([b for b in opponent.buffs if isinstance(b, YourSoulIsMine)]) == 0:
-            self.contract_phase = 2
+        if not self.deal_done and len([b for b in opponent.buffs if isinstance(b, YourSoulIsMine)]) == 0:
             self.description:str = "DEAL !"
             opponent.buffs.append(YourSoulIsMine(opponent))
-            fighter.buffs.remove(self)
+            # fighter.buffs.remove(self)
+            self.deal_done = True
     def on_death(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> None:
-        fighter.pv = 1        
+        if not self.deal_done : fighter.pv = 1
 class YourSoulIsMine(BuffFight):
     description:str = "N'a plus d'âme. Meurt dans quelques rounds."
     category:CategoryBuff = CategoryBuff.UNIQUE

@@ -622,6 +622,8 @@ class FireAura(BuffFight):
     def apply_damage(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
         opponent.pv -= 1
         self.tour -= 1
+        if self.tour < math.inf:
+            self.description = f"Inflige 1 dégât à l'adversaire [{self.tour} tours restants]"
         if self.tour <= 0 :
             fighter.buffs.remove(self)
         return 0, 1
@@ -717,6 +719,32 @@ class DevilMinion(BuffFight):
             opponent.stats.lethality = max(1, opponent.stats.lethality - drain_val)
             opponent.stats.viciousness = max(1, opponent.stats.viciousness - drain_val)
 
+class DevilPocketWatch(BuffFight):
+    description:str = "Inflige régulièrement des dégâts à l'adversaire."
+    category:CategoryBuff = CategoryBuff.UNIQUE
+    max_round = 3
+    base_damage = 1
+    buffed_damage = 2
+    def __init__(self, fighter:FightingBully):
+        super().__init__(fighter)
+        self.name = "Devil's Pocket Watch"
+        self.round = self.max_round
+        self.description:str = f"Inflige entre {self.base_damage} et {self.buffed_damage} dégâts dans {self.round} rounds."
+    def apply_damage(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
+        if self.round <= 0 :
+            dmg = self.compute_damage(fighter.stats.viciousness, opponent.stats.viciousness)
+            opponent.pv -= dmg
+            self.round = self.max_round
+            return 0, dmg
+        else : 
+            self.round -= 1
+            self.description:str = f"Inflige {self.compute_damage(fighter.stats.viciousness, opponent.stats.viciousness)} dégâts dans {self.round} rounds."
+        return 0, 0
+    def compute_damage(self, viciousness:float, opponent_viciousness:float) -> int:
+        if viciousness > opponent_viciousness :
+            return self.buffed_damage
+        else : 
+            return self.base_damage
 
 class OriginalSin(BuffFight):
     description:str = "Se transforme en serpent à la place de mourir."

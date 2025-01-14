@@ -505,11 +505,6 @@ def nb_points_tot_rarity(lvl, rarity=Rarity.NOBODY) -> float:
             tot += l*coef
     else :
         print(f"Le bully est unique et ne peux pas être mis à jour comme ça.")
-    # elif coef_unique is not None :
-    #     for l in range(1 +1, lvl +1):
-    #         tot += l * coef_unique
-    # else : 
-    #     raise Exception("Unique coef seed must be provided")
     
     return tot
 

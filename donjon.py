@@ -151,14 +151,14 @@ class Dungeon():
             self.reward_conso = consumable.ConsumableElixirBuff("Dragon Blood", "Dragon")
         elif self.level == 111:
             self.level = 15
-            self.name = "Legendary Boss Dungeon"
+            self.name = "Phoenix nest"
             dungeon_fighters = dungeon_fighters_lvl_legendary
             self.reward_conso = consumable.ConsumableElixirBuff("Phoenix's Feather", "Phoenix")
         elif self.level == 666:
             self.level = 50
             self.name = "Hell"
             dungeon_fighters = dungeon_fighters_lvl_666
-            self.reward_conso = consumable.ConsumableElixirBuff("The Apple", "OriginalSin")
+            self.reward_conso = consumable.ConsumableElixirBuff("Strange Pocket Watch", "DevilPocketWatch")
 
         # Configuration pour les autres niveaux
         else:
@@ -235,7 +235,6 @@ class Dungeon():
     async def handle_fight(self, can_switch = False):
         #On affiche le prochain ennemy
         fighting_bully_enemy = self.enemies_fighters[self.current_floor]
-        # text_enemy_coming = f"An enemy is coming! {fighting_bully_enemy.bully.get_print(compact_print=True, current_hp=fighting_bully_enemy.pv)}"
         text_enemy_coming = f"An enemy is coming! {fighting_bully_enemy.get_print()}"
         await self.thread.send(f"{bully.mise_en_forme_str(text_enemy_coming)}") 
         

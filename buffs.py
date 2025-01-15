@@ -310,19 +310,19 @@ class Venomous(BuffFight):
                 opponent.buffs.append(Poisoned(fighter= opponent, difficulty=fighter.stats.lethality))
         return
 
-class Scary(BuffFight):
-    description:str = "Ses coups vicieux, même raté, peuvent hanter l'ennemi (Haunted Debuff)."
-    description_en:str = "Vicious debuff can haunt the enemy."
-    category:CategoryBuff = CategoryBuff.LVL_5
-    def __init__(self, fighter:FightingBully):
-        super().__init__(fighter)
-        self.proba = 0.3
-    def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
-        if fighter == recap_round.attacker and recap_round.is_success_vicious and random.random() < self.proba:
-            not_haunted = len([b for b in opponent.buffs if isinstance(b, Haunted)]) == 0
-            if not_haunted:
-                opponent.buffs.append(Haunted(fighter=opponent))
-        return
+# class Scary(BuffFight):
+#     description:str = "Ses coups vicieux, même raté, peuvent hanter l'ennemi (Haunted Debuff)."
+#     description_en:str = "Vicious debuff can haunt the enemy."
+#     category:CategoryBuff = CategoryBuff.LVL_5
+#     def __init__(self, fighter:FightingBully):
+#         super().__init__(fighter)
+#         self.proba = 0.3
+#     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
+#         if fighter == recap_round.attacker and recap_round.is_success_vicious and random.random() < self.proba:
+#             not_haunted = len([b for b in opponent.buffs if isinstance(b, Haunted)]) == 0
+#             if not_haunted:
+#                 opponent.buffs.append(Haunted(fighter=opponent))
+#         return
 
 class CrystalSkin(BuffFight):
     description:str = "Annule les dégâts supplémentaires des coups critiques."
@@ -436,20 +436,20 @@ class Poisoned(BuffFight):
             return 1, 0
         return 0, 0
     
-class Haunted(BuffFight):
-    description:str = "Les buffs sont désactivés jusqu'à la prochaine attaque réussie contre un ennemi."
-    description_en:str = "Deactivate buffs until successfully hitting an enemy."
-    category:CategoryBuff = CategoryBuff.DEBUFF
-    def __init__(self, fighter:FightingBully):
-        super().__init__(fighter)
-        self.saved_buffs:list[BuffFight] = []
-        for b in fighter.buffs:
-            if not isinstance(b, Haunted):
-                self.saved_buffs.append(b)
-        fighter.buffs = [self]
-    def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
-        if fighter == recap_round.attacker and not recap_round.is_success_block:
-            fighter.buffs = self.saved_buffs.copy()
+# class Haunted(BuffFight):
+#     description:str = "Les buffs sont désactivés jusqu'à la prochaine attaque réussie contre un ennemi."
+#     description_en:str = "Deactivate buffs until successfully hitting an enemy."
+#     category:CategoryBuff = CategoryBuff.DEBUFF
+#     def __init__(self, fighter:FightingBully):
+#         super().__init__(fighter)
+#         self.saved_buffs:list[BuffFight] = []
+#         for b in fighter.buffs:
+#             if not isinstance(b, Haunted):
+#                 self.saved_buffs.append(b)
+#         fighter.buffs = [self]
+#     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
+#         if fighter == recap_round.attacker and not recap_round.is_success_block:
+#             fighter.buffs = self.saved_buffs.copy()
 
 class Dizzy(BuffFight):
     description:str = "Agility divisé par 2 pendant 1 round."
@@ -525,7 +525,6 @@ class Adaptation(BuffFight):
             added_stats = fighter.bully.stats - old_base_stat
             fighter.base_stats += added_stats
             fighter.stats += added_stats
-
 
 
 
@@ -762,6 +761,36 @@ class OriginalSin(BuffFight):
             snake_buff.name = "Shapeshifter"
             snake_buff.description = "Sous forme de serpent."
             fighter.buffs.append(snake_buff)
+
+#Pour le BG
+class TooPerfect(BuffFight):
+    description:str = "Annule les attaques vicieuses."
+    category:CategoryBuff = CategoryBuff.UNIQUE
+    def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
+        if recap_round.is_success_vicious:
+            if opponent == recap_round.attacker:
+                if hasattr(fighter.stats, recap_round.vicious_target_str):
+                    current_value = getattr(fighter.stats, recap_round.vicious_target_str)
+                    new_value = current_value + recap_round.malus_vicious
+                    setattr(fighter.stats, recap_round.vicious_target_str, new_value)
+            else : 
+                if hasattr(opponent.stats, recap_round.vicious_target_str):
+                    current_value = getattr(opponent.stats, recap_round.vicious_target_str)
+                    new_value = current_value + recap_round.malus_vicious
+                    setattr(opponent.stats, recap_round.vicious_target_str, new_value)
+        return
+    
+class PerfectSkin(BuffFight):
+    description:str = "Annule buffs négatifs à chaque round."
+    category:CategoryBuff = CategoryBuff.UNIQUE
+    def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
+        for b in fighter.buffs:
+            if isinstance(b, BuffFight) and b.category == CategoryBuff.DEBUFF:
+                fighter.buffs.remove(b)
+        return
+    
+
+
 
 import inspect, buffs
 classes = [member[1] for member in inspect.getmembers(buffs) if inspect.isclass(member[1])]

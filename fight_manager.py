@@ -168,6 +168,7 @@ class Fight():
         if challenge_block(attacker.stats, defender.stats) :
             recap_round.is_success_block = True
             if challenge_viciousness(attacker.stats, defender.stats):
+                recap_round.vicious_target_str = defender.stats.max_stat()
                 malus_vicious = apply_viciousness(attacker.stats, defender.stats, is_attack_success=False, is_attacker=True)
                 self.emojis_recap[0].append("🗡️" if self.tour==0 else "🛡️")
                 self.emojis_recap[1].append("🛡️" if self.tour==0 else "🗡️")
@@ -195,6 +196,7 @@ class Fight():
                 recap_round.damage_receive_defender = pv_perdu
             
             if challenge_viciousness(attacker.stats, defender.stats):
+                recap_round.vicious_target_str = defender.stats.max_stat()
                 malus_vicious = apply_viciousness(attacker.stats, defender.stats, is_attack_success=True, is_attacker=True)
                 em_att = "🔪" if lethal_buff > 0 else "🗡️"
                 em_def = "💔"

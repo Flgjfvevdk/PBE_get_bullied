@@ -108,6 +108,9 @@ dungeon_fighters_lvl_legendary = [DungeonFightingBully(name="Phoenix - L'oiseau 
                               DungeonFightingBully(name="Phoenix - L'abomination de flamme", pv_max=20, seed=bully.Seed(0.8, 0.6, 0.5, 0.1), buffs_tags=["Adaptation", "ExplosiveTouch", "FirePunch"], rarity=Rarity.UNIQUE, can_swap=True)
                               ]
 
+dungeon_fighters_lvl_bg = [DungeonFightingBully(name="Elisha le BG", pv_max=50, seed=bully.Seed(1.1, 0.4, 0.2, 0), buffs_tags=["Adaptation", "TooPerfect", "PerfectSkin"], rarity=Rarity.UNIQUE, can_swap=True)
+                              ]
+
 @dataclass
 class Dungeon():
     ctx: Context
@@ -159,6 +162,11 @@ class Dungeon():
             self.name = "Hell"
             dungeon_fighters = dungeon_fighters_lvl_666
             self.reward_conso = consumable.ConsumableElixirBuff("Devil's Pocket Watch", "DevilPocketWatch")
+        elif self.level == 432:
+            self.level = 10
+            self.name = "Elisha's house"
+            dungeon_fighters = dungeon_fighters_lvl_bg
+            self.reward_conso = consumable.ConsumableElixirBuff("Perfect lotion", "PerfectSkin")
 
         # Configuration pour les autres niveaux
         else:

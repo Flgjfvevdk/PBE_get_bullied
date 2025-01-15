@@ -75,7 +75,7 @@ class FightingBully():
 
     def get_print(self) -> str:
         text = ""
-        hp_text = f"HP : {self.pv}/{self.pv}"
+        hp_text = f"HP : {self.pv}/{self.bully.max_pv}"
         buff_text = self.buffs_str()
         def good_print_float(x:float) -> float|int:
             xf:float = float(x)
@@ -98,7 +98,7 @@ class FightingBully():
 
 class RecapRound():
     def __init__(self, attacker:FightingBully, defender:FightingBully, is_success_agility:bool, is_success_block:bool, is_success_lethal:bool, is_success_vicious:bool
-                 , damage_receive:int, malus_vicious:float = 0, damage_bonus_lethal:int = 0):
+                 , damage_receive:int, malus_vicious:float = 0, damage_bonus_lethal:int = 0, vicious_target_str:str =""):
         self.attacker = attacker
         self.defender = defender
 
@@ -108,10 +108,11 @@ class RecapRound():
         self.is_success_vicious = is_success_vicious
 
         self.damage_bonus_lethal = damage_bonus_lethal
-        self.damage_receive_attacker = 0 #Les dégâts reçus.
-        self.damage_receive_defender = damage_receive #Les dégâts reçus.
+        self.damage_receive_attacker = 0 
+        self.damage_receive_defender = damage_receive
 
         self.malus_vicious = malus_vicious
+        self.vicious_target_str:str = vicious_target_str
     
     def add_damage_receive(self, fighter:FightingBully, added_value:int):
         if fighter == self.attacker:

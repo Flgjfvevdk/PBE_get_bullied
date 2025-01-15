@@ -338,6 +338,8 @@ async def explore_dungeon(ctx: Context, level:int|str):
     if isinstance(level, str):
         if level == "Legendary" or level == "legendary" :
             level = 111
+        elif level == "bg" or level == "BG" :
+            level= 432
         else : 
             await ctx.channel.send("Dungeon level must be a number (or a specific keyword).")
             return
@@ -345,7 +347,7 @@ async def explore_dungeon(ctx: Context, level:int|str):
     if(level <= 0) :
         await ctx.channel.send("Dungeon level must be greater than 0.")
         return
-    if level > 50 and level != 111 and level != 666 :
+    if level > 50 and level != 111 and level != 666 and level != 432:
         await ctx.channel.send("Level max is 50.")
         return
 

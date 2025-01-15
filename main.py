@@ -435,6 +435,9 @@ async def print_reserve(ctx: Context, user:Optional[discord.User |discord.Member
 @bot.command(aliases=['exchange', 'trade_offer'])
 async def trade(ctx: Context, other:discord.Member):
     user = ctx.author
+    if user == other:
+        await ctx.send("You can't trade with yourself.")
+        return
 
     lock1 = PlayerLock(user.id)
     if not lock1.check():

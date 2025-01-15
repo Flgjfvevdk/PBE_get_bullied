@@ -41,6 +41,21 @@ class ButtonChoice(discord.ui.Button):
             self.event.set()
             await interaction.response.defer() #Le bot ne renvoie pas de réponse automatique, mais pour faire comprendre à discord que l'interaction n'a pas fail, on fait ça
 
+class ButtonMultipleChoice(discord.ui.Button):
+    def __init__(self, users: List[discord.abc.User], events: List[asyncio.Event], variable_pointers: List[Dict], valeur_assigne, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.users = users
+        self.events = events
+        self.variable_pointers = variable_pointers
+        self.valeur_assigne = valeur_assigne
+
+    async def callback(self, interaction):
+        if interaction.user in self.users:
+            user_index = self.users.index(interaction.user)
+            self.variable_pointers[user_index]["choix"] = self.valeur_assigne
+            self.events[user_index].set()
+            await interaction.response.defer()
+
 class ButtonShopChoice(discord.ui.Button):
     def __init__(self, event:asyncio.Event, variable_pointer:Dict[str, Bully | discord.abc.User | None ], valeur_assigne:Bully, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -108,6 +123,22 @@ class ViewYesNo(discord.ui.View):
                                    user = user, event=event, variable_pointer= variable_pointer, valeur_assigne=True))
         self.add_item(ButtonChoice(style=discord.ButtonStyle.secondary, label="Decline", emoji="❌",
                                    user = user, event=event, variable_pointer= variable_pointer, valeur_assigne=False))
+
+class ViewMultipleYesNo(discord.ui.View):
+    def __init__(self, users: List[discord.abc.User], events: List[asyncio.Event], variable_pointers: List[Dict[str, bool]]):
+        super().__init__()
+
+        if not (len(users) == len(events) == len(variable_pointers)):
+            raise ValueError("Les listes users, events et variable_pointers doivent avoir la même longueur.")
+
+        self.users = users
+        self.events = events
+        self.variable_pointers = variable_pointers
+
+        self.add_item(ButtonMultipleChoice(style=discord.ButtonStyle.secondary, label="Accept", emoji="✅",
+                                           users=users, events=events, variable_pointers=variable_pointers, valeur_assigne=True))
+        self.add_item(ButtonMultipleChoice(style=discord.ButtonStyle.secondary, label="Decline", emoji="❌",
+                                           users=users, events=events, variable_pointers=variable_pointers, valeur_assigne=False))
 
 class ViewClickBool(discord.ui.View):
     def __init__(self, user:discord.abc.User, event:asyncio.Event, label:str, emoji:str|None = None):

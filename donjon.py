@@ -158,7 +158,7 @@ class Dungeon():
             self.level = 50
             self.name = "Hell"
             dungeon_fighters = dungeon_fighters_lvl_666
-            self.reward_conso = consumable.ConsumableElixirBuff("Strange Pocket Watch", "DevilPocketWatch")
+            self.reward_conso = consumable.ConsumableElixirBuff("Devil's Pocket Watch", "DevilPocketWatch")
 
         # Configuration pour les autres niveaux
         else:

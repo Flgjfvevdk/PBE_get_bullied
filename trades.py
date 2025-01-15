@@ -42,15 +42,37 @@ async def trade_offer(ctx:Context, user_1:discord.abc.User, user_2:discord.abc.U
     
     bully_1 = await interact_game.select_bully(ctx, user_1, player_1, timeout=CHOICE_TIMEOUT)
     bully_2 = await interact_game.select_bully(ctx, user_2, player_2, timeout=CHOICE_TIMEOUT)
-    # await ctx.channel.send(trade_str(user_1, user_2, bully_1, bully_2))
-    pass
-    #PAS FINI
+    await ctx.channel.send(trade_str(user_1, user_2, bully_1, bully_2))
+    
+    # Confirm trade
+    event_confirm_1 = asyncio.Event()
+    event_confirm_2 = asyncio.Event()
+    var_confirm_1: Dict[str, bool] = {"choix": False}
+    var_confirm_2: Dict[str, bool] = {"choix": False}
+    message_confirm = await ctx.channel.send(content="Do both users confirm the trade?", view=interact_game.ViewMultipleYesNo(users=[user_1, user_2], events=[event_confirm_1, event_confirm_2], variable_pointers=[var_confirm_1, var_confirm_2]))
+
+    try:
+        await asyncio.wait_for(asyncio.gather(event_confirm_1.wait(), event_confirm_2.wait()), timeout=CHOICE_TIMEOUT)
+    except asyncio.exceptions.TimeoutError:
+        await message_confirm.reply("Trade confirmation timed out.")
+        return
+
+    if var_confirm_1["choix"] and var_confirm_2["choix"]:
+        # Execute trade
+        player_1.bullies.remove(bully_1)
+        player_2.bullies.remove(bully_2)
+        player_1.bullies.append(bully_2)
+        player_2.bullies.append(bully_1)
+        await ctx.channel.send("Trade completed successfully!")
+    else:
+        await ctx.channel.send("Trade canceled.")
+    
 
 
 def trade_str(user_1:discord.abc.User, user_2:discord.abc.User, bully_1:Bully, bully_2:Bully) -> str:
     txt_b1 = f"{bully_1.get_print(compact_print=True)}"
     txt_b2 = f"{bully_2.get_print(compact_print=True)}"
     return CText(
-            f"{user_1.name} offers : {txt_b1}"
+            f"{user_1.name} offers : {txt_b1}\n\n"
             f"{user_2.name} offers : {txt_b2}"
         ).str()

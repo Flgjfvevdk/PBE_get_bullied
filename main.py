@@ -22,6 +22,8 @@ import shop
 import bully
 import utils.database as database
 from player_info import Player
+import arena_info
+from arena_info import Arena
 import tuto_text
 import lootbox
 import consumable
@@ -62,8 +64,8 @@ async def on_ready():
     print(f'{bot.user} is now running !')
     await shop.init_shop()
     await keys.init_keys_restock()
-    
-    print("on est bien là")
+    await check_add_bot_database(bot)
+    await arena_info.update_arenas(bot)
 
 @bot.event
 async def on_command_error(ctx: Context, error):
@@ -71,6 +73,10 @@ async def on_command_error(ctx: Context, error):
     if isinstance(error, CommandNotFound):
         return
     
+async def check_add_bot_database(bot: Bot) -> None:
+    if bot.user is None: return
+    async with database.new_session() as session:
+        await interact_game.make_bot_join(bot.user, session)
 
 # Command général ____________________________________________________________________________________
 @bot.command()
@@ -189,8 +195,6 @@ async def suicide(ctx: Context):
             await session.commit()
 
     return
-
-# //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -484,6 +488,23 @@ async def hire(ctx: Context):
             await interact_game.add_random_bully_to_player(ctx, player, interact_game.generate_name())
             await session.commit()
 
+@bot.command(aliases=['h_all'])
+async def hire_all(ctx: Context):
+    user = ctx.author
+    lock = PlayerLock(user.id)
+    if not lock.check():
+        await ctx.send("You are already in an action.")
+        return
+
+    with lock:
+        async with database.new_session() as session:
+            player = await session.get(Player, ctx.author.id)
+            if player is None:
+                await ctx.reply(TEXT_JOIN_THE_GAME)
+                return
+            for _ in range(interact_game.BULLY_NUMBER_MAX):
+                await interact_game.add_random_bully_to_player(ctx, player, interact_game.generate_name(), talkative=False)
+            await session.commit()
 
 @bot.command()
 async def kill_all(ctx: Context):
@@ -542,10 +563,8 @@ async def show_consumables(ctx: Context):
 @bot.command()
 @decorators.is_admin()
 async def admin_give(ctx: Context,user: discord.User, name: str, lvl:int, rarity:str , strength: float, agility: float, lethality: float, viciousness: float, path_image: str = "", seed_str:str = "", max_pv:int = bully.BULLY_MAX_BASE_HP, buff_tag:str = "NoBuff"):
-    # # Création de l'objet Stats
     stats = bully.Stats(strength, agility, lethality, viciousness)
     
-    # Création de l'objet Bully
     b = bully.Bully(name=name, rarity= bully.Rarity[rarity], stats=stats)
     b.lvl = lvl
     b.max_pv = max_pv
@@ -617,8 +636,6 @@ async def py_admin(ctx: Context):
         )
         await session.commit()
     
-
-# JUSTE POUR LE PBE JUSTE POUR LE PBE
 @bot.command()
 @decorators.is_admin()
 @decorators.pbe_only()
@@ -639,7 +656,6 @@ async def give_lvl(ctx: Context, nombre_lvl : Optional[int] = None ):
             nb_level = 1 if nombre_lvl is None else nombre_lvl
             await interact_game.increase_all_lvl(ctx, player, nb_level = nb_level)
             await session.commit()
-
 
 @bot.command()
 @decorators.is_admin()
@@ -696,6 +712,78 @@ async def del_c(ctx: Context):
                 return
             player.consumables = []
             await session.commit()
+
+
+@bot.command(aliases=['ua', 'update_arena'])
+@decorators.is_admin()
+async def update_arenas(ctx: Context):
+    await arena_info.update_arenas(bot)
+    await ctx.send("Arenas updated successfully.")
+        
+
+@bot.command()
+async def add_rt(ctx: Context):
+    if (ctx.guild is None):
+        return 
+    server_id = ctx.guild.id
+
+    if bot.user is None: return
+    bot_player_id = bot.user.id
+
+    async with database.new_session() as session:
+        arena = await session.get(Arena, server_id)
+        if arena is None:
+            await ctx.send("No arena found for this server. Please create an arena first.")
+            return
+        # player = await session.get(Player, user.id)
+        bot_player = await session.get(Player, bot_player_id)
+        if bot_player is None:
+            await ctx.send("Error: Could not create the bot player.")
+            return
+
+        arena.add_empty_team(bot_player_id)
+        for _ in range(2):
+            new_bully = bully.Bully(name=interact_game.generate_name())
+            bot_player.bullies.append(new_bully)
+            await session.flush()  # Ensure the new bully gets an ID
+            arena.add_bully_to_team(bot_player_id, new_bully.id)
+        arena.teams = arena.teams
+        await session.commit()
+        await ctx.send(f"Added a random team of 2 bullies to the arena for server {ctx.guild.name}.")
+
+@bot.command()
+async def print_arena(ctx: Context):
+    if ctx.guild is None:
+        return
+
+    server_id = ctx.guild.id
+    async with database.new_session() as session:
+        arena = await session.get(Arena, server_id)
+        if arena is None:
+            await ctx.send("No arena found for this server. Please create an arena first.")
+            return
+
+        # Check if there are any teams
+        if not arena.teams:
+            await ctx.send("No teams in the arena yet.")
+            return
+
+        # Display all bullies in the arena
+        arena_info = f"Arena: {arena.name}\n"
+        for player_id, bully_ids in arena.teams.items():
+            player = await session.get(Player, player_id)
+            if player:
+                user:discord.User = await bot.fetch_user(player_id)
+                arena_info += f"{user}'s Team:\n"
+                # Retrieve the bullies for this player
+                bullies = await arena.get_team(player_id, session)
+                for b in bullies:
+                    arena_info += f"{b.get_print(compact_print=True)}\n"
+        if arena_info == f"**Arena: {arena.name}**\n":
+            await ctx.send("No bullies in the arena.")
+        else:
+            arena_info = bully.mise_en_forme_str(arena_info)
+            await ctx.send(arena_info)
 
 @bot.command()
 @decorators.is_admin()

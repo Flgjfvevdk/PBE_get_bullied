@@ -243,7 +243,7 @@ class Vampire(BuffFight):
             return heal, 0
         return 0,0
 
-class BossStage(BuffFight):
+class LastWhisper(BuffFight):
     description:str = "Augmente toutes ses stats après avoir perdu la moitié de ses HP."
     description_en:str = "Increase stats when below half HP."
     category:CategoryBuff = CategoryBuff.LVL_4

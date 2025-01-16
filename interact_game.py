@@ -202,19 +202,31 @@ async def invite_join(ctx: Context, parrain:Player, user:discord.Member|discord.
                 return            
 
 
-async def add_random_bully_to_player(ctx: Context, player: Player, name_brute: str, channel_cible=None) -> None:
+async def make_bot_join(bot_user : discord.ClientUser, session: AsyncSession) -> Player|None:
+    bot_player = Player(0)
+    bot_player.id = bot_user.id
+    try:
+        session.add(bot_player)
+        await session.commit()
+    except IntegrityError:
+        return
+    return bot_player
+
+
+async def add_random_bully_to_player(ctx: Context, player: Player, name_brute: str, channel_cible=None, talkative=True) -> None:
     name_bully:str = name_brute
     new_bully = Bully(name_bully)
 
-    await add_bully_to_player(ctx, player, new_bully, channel_cible)
+    await add_bully_to_player(ctx, player, new_bully, channel_cible, talkative=talkative)
 
-async def add_bully_to_player(ctx: Context, player: Player, b: Bully, channel_cible=None) -> None:
+async def add_bully_to_player(ctx: Context, player: Player, b: Bully, channel_cible=None, talkative=True) -> None:
     #Par défaut, le channel d'envoie est le channel du contexte
     if(channel_cible==None):
         channel_cible = ctx.channel
 
     if len(player.get_equipe()) >= BULLY_NUMBER_MAX:
-        await channel_cible.send(f"You cannot have more than {BULLY_NUMBER_MAX} bullies!")
+        if talkative :
+            await channel_cible.send(f"You cannot have more than {BULLY_NUMBER_MAX} bullies!")
         return
     
     player.bullies.append(b)

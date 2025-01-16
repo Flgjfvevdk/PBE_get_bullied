@@ -4,7 +4,6 @@ from sqlalchemy.orm import Mapped, relationship, MappedAsDataclass, mapped_colum
 from sqlalchemy import Table, Column, Integer, ForeignKey
 from datetime import datetime
 import bully
-# import item
 import consumable
 
 

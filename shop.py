@@ -23,25 +23,23 @@ from discord.ext import tasks
 from discord.ext.commands import Context, Bot
 
 
-RARITY_DROP_CHANCES = [0, 25, 45, 20, 10, 0] #Mettre 0 en proba d'avoir unique
+RARITY_DROP_CHANCES = [0, 30, 40, 21, 9, 0] #Mettre 0 en proba d'avoir unique
 RARITY_PRICES = [10, 80, 200, 600, 1400]
 
 SHOP_MAX_BULLY = 6
 #Le temps pendant lequel le shop reste actif
 SHOP_TIMEOUT = 60
-#Le temps entre chaque restock
 SHOP_RESTOCK_TIMEOUT = 10 * 60
 #Le temps pendant lequel le shop est fermé pendant le restockage. Les achats sont possibles mais on ne peut pas afficher un nouveau shop 
 #(permet d'éviter que quelqu'un affiche le shop alors qu'il change bientot)
-SHOP_CLOSE_WAIT_TIME = 1 #30 #doit être > à SHOP_TIMEOUT (sinon quelqu'un pourrait acheter un truc qu'il veut pas)
+SHOP_CLOSE_WAIT_TIME = 1
 #Si c'est à True, alors la commande shop n'affiche pas le shop mais un message qui demande d'attendre.
 is_shop_restocking = False
 
-SHOP_SERVER_FILENAME = 'shop_servers.json'
+SHOP_SERVER_FILENAME = 'discord_servers.json'
 
 
 # Les bullies disponibles
-# bullies_in_shop: List[Bully] = []
 bullies_in_shop_server : dict[int, List[Bully]] = {}
 
 # On lock le shop lors des modifs pour éviter les conflits
@@ -88,14 +86,11 @@ async def print_shop(ctx: Context, bot: Bot) -> None:
         await ctx.channel.send(restock_message())
         return
     
-    # text = bullies_in_shop_to_text()
     text = bullies_in_shop_to_text(ctx.guild.id)
-    # images = bullies_in_shop_to_images()
     images = bullies_in_shop_to_images(ctx.guild.id)
 
     event = asyncio.Event()
     var:Dict[str, Bully | discord.abc.User| None] = {"choix" : None, "user" : None}
-    # list_bully: List[Bully] = bullies_in_shop
     list_bully: List[Bully] = bullies_in_shop_server[ctx.guild.id]
     if images:
         files = [discord.File(image) for image in images]
@@ -156,7 +151,6 @@ async def handle_shop_click(ctx:Context, variable_pointer:Dict[str, Bully | disc
 
             if ctx.guild is None: #$$
                 raise Exception("On est pas censé être ici. ctx doit être un server pour handle une shop reaction")
-            # bullies_in_shop.remove(choix_bully)
             bullies_in_shop_server[ctx.guild.id].remove(choix_bully)
             
             variable_pointer["choix"] = None
@@ -165,7 +159,6 @@ async def handle_shop_click(ctx:Context, variable_pointer:Dict[str, Bully | disc
             text = bullies_in_shop_to_text(ctx.guild.id)
             images = bullies_in_shop_to_images(ctx.guild.id)
             files = [discord.File(image) for image in images]
-            # await shop_msg.edit(content=text, attachments=files, view=interact_game.ViewBullyShop(event=event, list_choix=bullies_in_shop, variable_pointer = variable_pointer))
             await shop_msg.edit(content=text, attachments=files, view=interact_game.ViewBullyShop(event=event, list_choix=bullies_in_shop_server[ctx.guild.id], variable_pointer = variable_pointer))
             await ctx.channel.send(f"{user.mention} has purchased {choix_bully.name} for {cout_bully(choix_bully)}🩹!")
 
@@ -192,10 +185,7 @@ def new_bully_shop() -> Bully:
 
 def bullies_in_shop_to_text(server_id) -> str:
     text = "Bullies in the shop : "
-    #for k in bullies_in_shop :
-    # for k in range(len(bullies_in_shop)) :
     for k in range(len(bullies_in_shop_server[server_id])) :
-        # b = bullies_in_shop[k]
         b = bullies_in_shop_server[server_id][k]
         text += "\n___________\n"
         text += b.get_print(compact_print = True)
@@ -205,10 +195,7 @@ def bullies_in_shop_to_text(server_id) -> str:
 
 def bullies_in_shop_to_images(server_id) -> List[Path]:
     images: List[Path] = []
-    #for k in bullies_in_shop :
-    # for k in range(len(bullies_in_shop)) :
     for k in range(len(bullies_in_shop_server[server_id])) :
-        # b = bullies_in_shop[k]
         b = bullies_in_shop_server[server_id][k]
         image_path = b.image_file_path
         if image_path is not None:

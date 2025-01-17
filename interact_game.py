@@ -239,7 +239,6 @@ async def print_bullies(ctx: Context, player: Player, compact_print=False, print
     if(channel_cible==None):
         channel_cible = ctx.channel
 
-
     text = "Your bullies:"
     images: list[Path] = []
 

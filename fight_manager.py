@@ -139,7 +139,6 @@ class Fight():
         while self.fighter_1.pv > 0 and self.fighter_2.pv > 0 :
             await self.play_round()
 
-            # await self.message.edit(content=self.text_fight())
             await self.update_message()
             await asyncio.sleep(FIGHT_MSG_TIME_UPDATE)
 
@@ -291,8 +290,14 @@ class Fight():
     
     async def setup_message(self):
         with open(self.fighter_1.bully.get_image(), "rb") as bully_image_file_1, open(self.fighter_2.bully.get_image(), "rb") as bully_image_file_2:
-            bully_image_file_1 = discord.File(bully_image_file_1, filename="bully_image_file_1.png") 
-            bully_image_file_2 = discord.File(bully_image_file_2, filename="bully_image_file_2.png")
+            if (self.fighter_1.bully.image_file_path is not None):
+                bully_image_file_1 = discord.File(bully_image_file_1, filename="bully_image_file_1.png")
+            else : bully_image_file_1 = None
+            # bully_image_file_1 = discord.File(bully_image_file_1, filename="bully_image_file_1.png") 
+            if (self.fighter_2.bully.image_file_path is not None):
+                bully_image_file_2 = discord.File(bully_image_file_2, filename="bully_image_file_2.png")
+            else : bully_image_file_2 = None
+            # bully_image_file_2 = discord.File(bully_image_file_2, filename="bully_image_file_2.png")
             
             texts = self.texts_fight()
             # Création du premier embed avec une miniature (image à gauche) et un texte d'exemple
@@ -303,13 +308,12 @@ class Fight():
             self.embed2 = discord.Embed(title=f"{self.fighter_2.bully.name}", description=texts[1], color=0xe74c3c)
             self.embed2.set_thumbnail(url="attachment://bully_image_file_2.png")
 
-            # self.message = await self.channel_cible.send(files=[bully_image_file_1, bully_image_file_2], embeds=[self.embed1, self.embed_mid, self.embed2])
-            self.message_1 = await self.channel_cible.send(file=bully_image_file_1, embed=self.embed1)
+            self.message_1 = await self.channel_cible.send(file=bully_image_file_1, embed=self.embed1) #type: ignore
             self.message_mid = await self.channel_cible.send(texts[2])
             if (len(self.users_can_swap)>0) : 
-                self.message_2 = await self.channel_cible.send(file=bully_image_file_2, embed=self.embed2,  view=interact_game.ViewClickBoolMultiple(users=self.users_can_swap, events=self.events_click_swap, labels=self.labels_swap, emoji="🔁"))
+                self.message_2 = await self.channel_cible.send(file=bully_image_file_2, embed=self.embed2,  view=interact_game.ViewClickBoolMultiple(users=self.users_can_swap, events=self.events_click_swap, labels=self.labels_swap, emoji="🔁"))#type: ignore
             else :
-                self.message_2 = await self.channel_cible.send(file=bully_image_file_2, embed=self.embed2)
+                self.message_2 = await self.channel_cible.send(file=bully_image_file_2, embed=self.embed2)#type: ignore
         
     async def update_message(self):
         texts = self.texts_fight()
@@ -338,7 +342,7 @@ class Fight():
 
         return text_1, text_2, text_mid
     
-async def proposition_team_fight(ctx:Context, user_1:discord.abc.User, user_2:discord.abc.User, player_1: Player, player_2: Player, for_fun = False):
+async def proposition_team_fight(ctx:Context, user_1:discord.abc.User, user_2:discord.abc.User, player_1: Player, player_2: Player, for_fun = True):
     text_challenge = f"{user_1.mention} challenges {user_2.mention} in a teamfight!"
     if for_fun :
         text_challenge = f"{user_1.mention} challenges {user_2.mention} to a fun teamfight (no death, no xp)!"
@@ -410,13 +414,13 @@ class TeamFight():
         if team_1 is not None:
             self.team_1 = team_1.copy()
         elif self.player_1 is not None:
-            self.team_1 = get_player_team(self.player_1) #[FightingBully.create_fighting_bully(b) for b in self.player_1.get_equipe()]
+            self.team_1 = get_player_team(self.player_1)
         else :
             raise Warning("Team 1 failed to setup")
         if team_2 is not None:
             self.team_2 = team_2.copy()
         elif self.player_2 is not None:
-            self.team_2 =  get_player_team(self.player_2) #[FightingBully.create_fighting_bully(b) for b in self.player_2.get_equipe()]
+            self.team_2 =  get_player_team(self.player_2) 
         else :
             raise Warning("Team 2 failed to setup")
 
@@ -455,9 +459,11 @@ class TeamFight():
 
         if len(self.team_1) > 0 :
             await self.ctx.send(f"{self.user_1.name if self.user_1 is not None else 'Team 1'} won the teamfight!")
+            return True
         if len(self.team_2) > 0 :
             await self.ctx.send(f"{self.user_2.name if self.user_2 is not None else 'Team 2'} won the teamfight!")
-                
+            return False
+        raise Exception("No winner found")
     async def select_next_fighter(self, user:discord.abc.User|None, player:Player|None, team:list[FightingBully]) -> FightingBully:
         if user is None or player is None :
             return team[0]

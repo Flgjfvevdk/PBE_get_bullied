@@ -137,14 +137,12 @@ class Dungeon():
         self.name = f"Dungeon Level {self.level}"
         self.enemies_fighters = self.generate_dungeon_team()
 
-        #On initialise les pv et xp gagné par les bullies
         self.fighters_joueur: List[FightingBully] = get_player_team(self.player)
         self.xp_earned_bullies: List[float] = [0]*len(self.fighters_joueur) #L'xp gagné par chaque bully
 
     def generate_dungeon_team(self) -> List[FightingBully]:
         enemies_fighters:List[FightingBully] = []
         
-        # Initialisation par défaut
         dungeon_fighters = []
         fighters_rarities = []
 
@@ -201,7 +199,6 @@ class Dungeon():
             while self.current_floor < len(self.enemies_fighters):
                 fighting_bully_enemy = self.enemies_fighters[self.current_floor]
                 await self.handle_fight(can_switch = (fighting_bully_enemy in self.can_swap_enemies))
-                # self.reset_stats_bullies()
 
         except interact_game.CancelChoiceException as e:
             await self.thread.send(f"{self.ctx.author.name} cancelled the fight and left the dungeon")
@@ -209,15 +206,13 @@ class Dungeon():
             await self.thread.send(f"Your team left the dungeon. Choose faster next time {self.ctx.author}.")
         except IndexError as e:
             await self.thread.send(
-                f"[{self.ctx.author}] -> You don't have this bully.\n" #TODO: fix with ui
-                "Your team left the dungeon."
+                f"Your team left the dungeon."
             )
         except Exception as e:
             print(e)
 
         else:
             #On est plus dans le combat, le joueur à vaincu le donjon
-            #On écrit le message de victoire dans les 2 channels
             await self.ctx.channel.send(f"{self.ctx.author.name} has beaten the {self.name}!") 
             await self.thread.send(f"{self.ctx.author.name} has beaten the {self.name}!") 
 

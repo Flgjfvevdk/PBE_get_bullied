@@ -87,9 +87,10 @@ class SlimyBody(BuffFight):
         super().__init__(fighter)
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if fighter == recap_round.defender and not recap_round.is_success_block:
-            opponent.stats.agility -= fighter.bully.lvl
-            if opponent.stats.agility <= 1 :
-                opponent.stats.agility = 1
+            if (opponent.stats.agility > 1):
+                opponent.stats.agility -= fighter.bully.lvl
+                if opponent.stats.agility <= 1 :
+                    opponent.stats.agility = 1
         return
 
 class ThornSkin(BuffFight):
@@ -112,7 +113,7 @@ class Frustration(BuffFight):
         super().__init__(fighter)
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
         if fighter == recap_round.attacker and recap_round.is_success_block:
-            fighter.stats.lethality += fighter.bully.lvl * 0.3
+            fighter.stats.lethality += fighter.bully.lvl * 0.15
         return
 
 class DragonSkin(BuffFight):
@@ -251,7 +252,7 @@ class LastWhisper(BuffFight):
         super().__init__(fighter)
         self.first_stage = True
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
-        if self.first_stage and fighter.pv < fighter.bully.max_pv / 2:
+        if self.first_stage and fighter.pv <= fighter.bully.max_pv / 2:
             fighter.stats.strength += fighter.bully.lvl * 1.5
             fighter.stats.agility += fighter.bully.lvl * 1.5
             self.first_stage = False

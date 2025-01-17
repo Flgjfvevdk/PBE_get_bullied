@@ -22,8 +22,8 @@ import shop
 import bully
 import utils.database as database
 from player_info import Player
-import arena_info
-from arena_info import Arena
+import arena_system
+from arena_system import Arena
 import tuto_text
 import lootbox
 import consumable
@@ -65,7 +65,7 @@ async def on_ready():
     await shop.init_shop()
     await keys.init_keys_restock()
     await check_add_bot_database(bot)
-    await arena_info.update_arenas(bot)
+    await arena_system.update_arenas(bot)
 
 @bot.event
 async def on_command_error(ctx: Context, error):
@@ -301,9 +301,9 @@ async def fun_challenge(ctx: Context, opponent:discord.Member):
 async def team_challenge(ctx: Context, opponent:discord.Member):
     user = ctx.author
 
-    # if user == opponent:
-    #     await ctx.send("You can't team challenge yourself.")
-    #     return
+    if user == opponent:
+        await ctx.send("You can't team challenge yourself.")
+        return
     
     lock1 = PlayerLock(user.id)
     if not lock1.check():
@@ -717,7 +717,7 @@ async def del_c(ctx: Context):
 @bot.command(aliases=['ua', 'update_arena'])
 @decorators.is_admin()
 async def update_arenas(ctx: Context):
-    await arena_info.update_arenas(bot)
+    await arena_system.update_arenas(bot)
     await ctx.send("Arenas updated successfully.")
         
 
@@ -750,6 +750,32 @@ async def add_rt(ctx: Context):
         arena.teams = arena.teams
         await session.commit()
         await ctx.send(f"Added a random team of 2 bullies to the arena for server {ctx.guild.name}.")
+
+@bot.command()
+async def arena(ctx: Context):
+    if ctx.guild is None:
+        return
+
+    server_id = ctx.guild.id
+    async with database.new_session() as session:
+        arena = await session.get(Arena, server_id)
+        if arena is None:
+            await ctx.send("No arena found for this server. Please create an arena first.")
+            return
+
+        if not arena.teams:
+            await ctx.send("No teams in the arena yet.")
+            return
+
+        player = await session.get(Player, ctx.author.id)
+        if player is None:
+            await ctx.reply(TEXT_JOIN_THE_GAME)
+            return
+
+        arena_fight = arena_system.ArenaFight(arena, session=session, bot=bot, user=ctx.author, player=player)
+        await arena_fight.setup()
+
+        await arena_fight.enter_hall(ctx)
 
 @bot.command()
 async def print_arena(ctx: Context):

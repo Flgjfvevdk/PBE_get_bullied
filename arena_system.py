@@ -18,8 +18,10 @@ import json
 from discord.ext.commands import Bot, Context
 import utils.database as database
 from player_info import Player
+from utils.locks import ArenaLock
 
-CHOICE_TIMEOUT = 30
+CHOICE_TIMEOUT = 10
+MAX_ARENA_TEAMS = 3
 
 class Arena(Base):
     __tablename__ = "arena"
@@ -49,16 +51,20 @@ class Arena(Base):
 
     async def get_print(self, session: AsyncSession, bot: Bot) -> str:
         arena_info = f"Arena: {self.name}\n"
+        rank = 1
         for player_id, bully_ids in self.teams_ids.items():
             player = await session.get(Player, player_id)
             if player:
+                arena_team_str = ""
                 user:discord.User = await bot.fetch_user(player_id)
-                arena_info += f"\n________________________________________\n{user}'s Team:\n"
+                arena_team_str += f"{user}'s Team:\n"
                 bullies = await self.get_team(player_id, session)
                 for b in bullies:
-                    arena_info += f"{b.get_print(compact_print=True)}\n"
-                    
-        return arena_info
+                    arena_team_str += f"{b.get_print(compact_print=True)}\n\n"
+                arena_team_str = bully.mise_en_forme_str(arena_team_str)
+                arena_info += f"\nRang : {rank}\n{arena_team_str}"
+                rank +=1
+        return (arena_info)
 
     async def get_team(self, player_id: int, session) -> List[bully.Bully]:
         bully_ids = self.teams_ids.get(player_id, [])
@@ -105,18 +111,19 @@ class ArenaFight:
     async def enter_hall(self, ctx:Context):
         txt_arena = await self.arena.get_print(self.session, self.bot)
         event = asyncio.Event()
-        txt_arena += f"\n{self.user.mention}, voulez-vous entrer dans l'arène ?"
-        message = await ctx.channel.send(content=txt_arena, view=interact_game.ViewClickBool(user=self.user, event=event, label="Enter The Arena", emoji="⚔️"))
+        txt_demande = f"\n{self.user.mention}, voulez-vous entrer dans l'arène ?"
+        message = await ctx.channel.send(content=txt_arena+txt_demande, view=interact_game.ViewClickBool(user=self.user, event=event, label="Enter The Arena", emoji="⚔️"))
         try:
             await asyncio.wait_for(event.wait(), timeout=CHOICE_TIMEOUT)
         except asyncio.exceptions.TimeoutError as e:
-            await message.delete()
+            await message.edit(content = txt_arena, view=None)
+            # await message.delete()
             return
         
         await ctx.send(f"{self.user.mention} has entered the arena!")
-        await self.start_fight(ctx)
+        await self.fight(ctx)
 
-    async def start_fight(self, ctx:Context):
+    async def fight(self, ctx:Context):
         while len(self.teams) > 0:
             enemy_player_team = self.teams.popitem()
             enemy_teamfighters:list[FightingBully] = [FightingBully.create_fighting_bully(b) for b in enemy_player_team[1]]
@@ -125,20 +132,25 @@ class ArenaFight:
             player_won = await teamfight.start_teamfight()
             if player_won:
                 self.beaten_teams[enemy_player_team[0]] = enemy_player_team[1]
+                for b in self.player_teamfighters:
+                    b.reset()
             else:
                 await self.end_arena(ctx)
                 return
         await self.end_arena(ctx)
 
     async def end_arena(self, ctx:Context):
-        await ctx.send(f"{self.user.mention} has beaten these teams: {self.print_teams(self.beaten_teams)}")
-        await self.session.refresh(self.arena)
-        
-        await self.update_arena_teams()
-        await self.session.commit()
-        print("end")
+        async with ArenaLock(self.arena.id):
+            await self.session.refresh(self.arena)
+            
+            rank = await self.update_arena_teams()
+            if rank > 0:
+                await ctx.send(f"{self.user.mention} has reached rank {rank} in the arena!")
+            else:
+                await ctx.send(f"{self.user.mention} did not improve their rank in the arena.")
+            await self.session.commit()
     
-    async def update_arena_teams(self):
+    async def update_arena_teams(self) -> int:
         arena_teams_ids = self.arena.teams_ids.copy()
         player_id_str = self.player.id.__str__()
         player_team = [f.bully for f in self.player_teamfighters]
@@ -148,20 +160,23 @@ class ArenaFight:
                 cloned_team_ids:list[int] = []
                 for bully in player_team:
                     cloned_bully = bully.clone(self.bot_user_id)
-                    self.bot_player.bullies.append(cloned_bully)
+                    self.session.add(cloned_bully)
                     await self.session.flush() 
+                    self.bot_player.bullies.append(cloned_bully)
                     cloned_team_ids.append(cloned_bully.id)
-                
                 insert_index = i
                 arena_teams_ids.pop(player_id_str, None) #type: ignore (it's because json keys are always strings)
                 new_arena_teams_ids = list(arena_teams_ids.items())
                 new_arena_teams_ids.insert(insert_index, (player_id_str, cloned_team_ids))
+                new_arena_teams_ids = new_arena_teams_ids[:MAX_ARENA_TEAMS]
                 self.arena.teams_ids = dict(new_arena_teams_ids)
+                print("5")
                 flag_modified(self.arena, "teams_ids")
-                return
+                return insert_index + 1
             elif player_id_str == team_id:
                 #Dans ce cas, ça veut dire que le joueur n'a pas dépassé sa précedente équipe. Donc on ne fait rien
-                return
+                return -1
+        return -1
 
     def is_team_equal_ids(self, player_id_1 : int, player_id_2:int, bullies_id_1:List[int], bullies_id_2:List[int]) -> bool:
         if player_id_1 != player_id_2:

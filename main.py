@@ -751,7 +751,7 @@ async def add_rt(ctx: Context):
         await session.commit()
         await ctx.send(f"Added a random team of 2 bullies to the arena for server {ctx.guild.name}.")
 
-@bot.command()
+@bot.command(aliases=['arene'])
 async def arena(ctx: Context):
     if ctx.guild is None:
         return
@@ -776,40 +776,6 @@ async def arena(ctx: Context):
         await arena_fight.setup()
 
         await arena_fight.enter_hall(ctx)
-
-@bot.command()
-async def print_arena(ctx: Context):
-    if ctx.guild is None:
-        return
-
-    server_id = ctx.guild.id
-    async with database.new_session() as session:
-        arena = await session.get(Arena, server_id)
-        if arena is None:
-            await ctx.send("No arena found for this server. Please create an arena first.")
-            return
-
-        # Check if there are any teams
-        if not arena.teams_ids:
-            await ctx.send("No teams in the arena yet.")
-            return
-
-        # Display all bullies in the arena
-        arena_info = f"Arena: {arena.name}\n"
-        for player_id, bully_ids in arena.teams_ids.items():
-            player = await session.get(Player, player_id)
-            if player:
-                user:discord.User = await bot.fetch_user(player_id)
-                arena_info += f"{user}'s Team:\n"
-                # Retrieve the bullies for this player
-                bullies = await arena.get_team(player_id, session)
-                for b in bullies:
-                    arena_info += f"{b.get_print(compact_print=True)}\n"
-        if arena_info == f"**Arena: {arena.name}**\n":
-            await ctx.send("No bullies in the arena.")
-        else:
-            arena_info = bully.mise_en_forme_str(arena_info)
-            await ctx.send(arena_info)
 
 @bot.command()
 @decorators.is_admin()

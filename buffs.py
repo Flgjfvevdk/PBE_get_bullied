@@ -531,11 +531,12 @@ class Adaptation(BuffFight):
 
 #Unique Buff (for Unique character)
 class Cat(BuffFight):
-    description:str = "9 vies!"
+    description:str = "9 vies !"
     description_en:str = "Cats have 9 lives!"
     category:CategoryBuff = CategoryBuff.UNIQUE
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
+        self.description:str = "9 vies !"
         self.vies = 9
     def on_death(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if fighter.pv <= 0 and self.vies > 0:

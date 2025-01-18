@@ -96,6 +96,12 @@ class FightingBully():
             text += " ; "
         return text
 
+    def reset(self):
+        self.pv = self.bully.max_pv
+        self.reset_stats()
+        for b in self.buffs:
+            b.__init__(fighter=self)
+
 class RecapRound():
     def __init__(self, attacker:FightingBully, defender:FightingBully, is_success_agility:bool, is_success_block:bool, is_success_lethal:bool, is_success_vicious:bool
                  , damage_receive:int, malus_vicious:float = 0, damage_bonus_lethal:int = 0, vicious_target_str:str =""):

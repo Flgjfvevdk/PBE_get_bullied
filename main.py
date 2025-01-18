@@ -747,7 +747,7 @@ async def add_rt(ctx: Context):
             bot_player.bullies.append(new_bully)
             await session.flush()  # Ensure the new bully gets an ID
             arena.add_bully_to_team(bot_player_id, new_bully.id)
-        arena.teams = arena.teams
+        arena.teams_ids = arena.teams_ids
         await session.commit()
         await ctx.send(f"Added a random team of 2 bullies to the arena for server {ctx.guild.name}.")
 
@@ -763,7 +763,7 @@ async def arena(ctx: Context):
             await ctx.send("No arena found for this server. Please create an arena first.")
             return
 
-        if not arena.teams:
+        if not arena.teams_ids:
             await ctx.send("No teams in the arena yet.")
             return
 
@@ -790,13 +790,13 @@ async def print_arena(ctx: Context):
             return
 
         # Check if there are any teams
-        if not arena.teams:
+        if not arena.teams_ids:
             await ctx.send("No teams in the arena yet.")
             return
 
         # Display all bullies in the arena
         arena_info = f"Arena: {arena.name}\n"
-        for player_id, bully_ids in arena.teams.items():
+        for player_id, bully_ids in arena.teams_ids.items():
             player = await session.get(Player, player_id)
             if player:
                 user:discord.User = await bot.fetch_user(player_id)

@@ -150,6 +150,9 @@ class Stats(MutableComposite):
         
         return f"|{txt_s}|{txt_a}|{txt_l}|{txt_v}|"
     
+    def clone(self) -> "Stats":
+        return Stats(self.strength, self.agility, self.lethality, self.viciousness)
+
 @dataclass
 class Seed(MutableComposite):
     strength: float
@@ -194,6 +197,9 @@ class Seed(MutableComposite):
 
     def sum_val_seed(self) -> float:
         return self.strength + self.agility + self.lethality + self.viciousness
+
+    def clone(self) -> "Seed":
+        return Seed(self.strength, self.agility, self.lethality, self.viciousness)
 
 class LevelUpException(Exception):
     def __init__(self, lvl, text=""):
@@ -397,6 +403,23 @@ class Bully(Base):
         file_path = random.choice(image_files)
         return file_path
 
+    def clone(self, new_owner_id: int) -> 'Bully':
+        """
+        Create a clone of the current Bully instance with a new owner ID.
+        """
+        cloned_bully = Bully(
+            name=self.name,
+            rarity=self.rarity,
+            lvl=self.lvl,
+            exp=self.exp,
+            stats=self.stats.clone(),  # Assuming Stats class has a clone method
+            max_pv=self.max_pv,
+            image_file_path=self.image_file_path,
+            must_load_image=False,
+            buff_fight_tag=self.buff_fight_tag
+        )
+        cloned_bully.player_id = new_owner_id
+        return cloned_bully
 
     @staticmethod
     def clash_stat(st_actif: float, st_passif: float, neutre: Optional[float] = None):
@@ -413,7 +436,7 @@ class Bully(Base):
             return True
         else :
             return False
-        
+    
 # /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 # ________________________________________________________________________________________________________________________________________________
 

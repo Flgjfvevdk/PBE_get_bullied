@@ -518,7 +518,7 @@ async def hire(ctx: Context):
             await interact_game.add_random_bully_to_player(ctx, player, interact_game.generate_name())
             await session.commit()
 
-@bot.command(aliases=['h_all'])
+@bot.command(aliases=['h_all', 'hall', 'hh'])
 async def hire_all(ctx: Context):
     user = ctx.author
     lock = PlayerLock(user.id)

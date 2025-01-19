@@ -254,7 +254,7 @@ class Bully(Base):
     def generate_bully_stat(self) -> None:
         self.stats = Stats(1,1,1,1)
         if self.rarity == Rarity.UNIQUE :
-            for k in range(4) :
+            for k in range(15) :
                 self.stats.strength += self.seed.strength
                 self.stats.agility += self.seed.agility
                 self.stats.lethality += self.seed.lethality

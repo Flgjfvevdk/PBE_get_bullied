@@ -726,27 +726,23 @@ class DevilMinion(BuffFight):
             opponent.stats.viciousness = max(1, opponent.stats.viciousness - drain_val)
 
 class DevilPocketWatch(BuffFight):
-    description:str = "Inflige régulièrement des dégâts à l'adversaire."
+    description:str = "Quand l'adversaire attaque, inflige de petits dégâts en retour."
     category:CategoryBuff = CategoryBuff.UNIQUE
-    max_round = 3
-    base_damage = 1
-    buffed_damage = 2
+    base_damage = 0.4
+    buffed_damage = 0.8
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
         self.name = "Devil's Pocket Watch"
-        self.round = self.max_round
-        self.description:str = f"Inflige entre {self.base_damage} et {self.buffed_damage} dégâts dans {self.round} rounds."
+        self.description:str = f"Quand l'adversaire attaque, lui inflige entre {self.base_damage} et {self.buffed_damage} dégât."
     def apply_damage(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
-        if self.round <= 0 :
+        if fighter != recap_round.attacker :
             dmg = self.compute_damage(fighter.stats.viciousness, opponent.stats.viciousness)
-            opponent.pv -= dmg
-            self.round = self.max_round
+            opponent.pv -= dmg #type: ignore
             return 0, dmg
         else : 
-            self.round -= 1
-            self.description:str = f"Inflige {self.compute_damage(fighter.stats.viciousness, opponent.stats.viciousness)} dégâts dans {self.round} rounds."
+            self.description:str = f"Quand l'adversaire attaque, lui inflige {self.compute_damage(fighter.stats.viciousness, opponent.stats.viciousness)} dégât."
         return 0, 0
-    def compute_damage(self, viciousness:float, opponent_viciousness:float) -> int:
+    def compute_damage(self, viciousness:float, opponent_viciousness:float) -> float:
         if viciousness > opponent_viciousness :
             return self.buffed_damage
         else : 

@@ -738,6 +738,7 @@ class DevilPocketWatch(BuffFight):
         if fighter != recap_round.attacker :
             dmg = self.compute_damage(fighter.stats.viciousness, opponent.stats.viciousness)
             opponent.pv -= dmg #type: ignore
+            opponent.pv = round(opponent.pv, 1)
             return 0, dmg
         else : 
             self.description:str = f"Quand l'adversaire attaque, lui inflige {self.compute_damage(fighter.stats.viciousness, opponent.stats.viciousness)} dégât."

@@ -19,7 +19,7 @@ import json
 from discord.ext.commands import Bot, Context
 import utils.database as database
 from player_info import Player
-from utils.locks import ArenaLock
+from utils.locks import ArenaLock, PlayerLock
 
 CHOICE_TIMEOUT = 40
 MAX_ARENA_TEAMS = 3
@@ -126,13 +126,19 @@ class ArenaFight:
             await message.edit(content = txt_arena, view=None)
             return
         
-        if self.player.money < PRICE_ENTER:
-            await self.ctx.send(f"{self.user.name}, you do not have enough {money.MONEY_EMOJI} to enter the arena (Price = {PRICE_ENTER})")
-            await message.edit(content = txt_arena, view=None)
+        lock = PlayerLock(self.user.id)
+        if not lock.check():
+            await self.ctx.send("You are already in an action.")
             return
         
-        await self.setup()
-        await self.fight()
+        with lock :
+            if self.player.money < PRICE_ENTER:
+                await self.ctx.send(f"{self.user.name}, you do not have enough {money.MONEY_EMOJI} to enter the arena (Price = {PRICE_ENTER})")
+                await message.edit(content = txt_arena, view=None)
+                return
+            
+            await self.setup()
+            await self.fight()
 
     async def fight(self):
         while len(self.teams) > 0:

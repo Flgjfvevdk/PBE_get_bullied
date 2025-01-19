@@ -421,26 +421,21 @@ async def arena(ctx: Context):
         return
 
     user = ctx.author
-    lock = PlayerLock(user.id)
-    if not lock.check():
-        await ctx.send("You are already in an action.")
-        return
     
-    with lock :
-        server_id = ctx.guild.id
-        async with database.new_session() as session:
-            arena = await session.get(Arena, server_id)
-            if arena is None:
-                await ctx.send("No arena found for this server. Please create an arena first.")
-                return
+    server_id = ctx.guild.id
+    async with database.new_session() as session:
+        arena = await session.get(Arena, server_id)
+        if arena is None:
+            await ctx.send("No arena found for this server. Please create an arena first.")
+            return
 
-            player = await session.get(Player, user.id)
-            if player is None:
-                await ctx.reply(TEXT_JOIN_THE_GAME)
-                return
+        player = await session.get(Player, user.id)
+        if player is None:
+            await ctx.reply(TEXT_JOIN_THE_GAME)
+            return
 
-            arena_fight = arena_system.ArenaFight(arena, ctx=ctx, session=session, bot=bot, user=user, player=player)
-            await arena_fight.enter_hall()
+        arena_fight = arena_system.ArenaFight(arena, ctx=ctx, session=session, bot=bot, user=user, player=player)
+        await arena_fight.enter_hall()
 
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////

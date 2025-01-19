@@ -333,11 +333,12 @@ class Fight():
         text_1 = buff_to_str(self.fighter_1.buffs)
         text_2 = buff_to_str(self.fighter_2.buffs)
 
+        pv1 = round(self.fighter_1.pv,1); pv2 = round(self.fighter_2.pv,1)
         text_mid = CText(
-            f"HP : {barre_pv_1} ({self.fighter_1.pv:02}/{self.max_pv_1:02}) \t{self.fighter_1.stats.to_str_color()} \n"
+            f"HP : {barre_pv_1} ({pv1:02}/{self.max_pv_1:02}) \t{self.fighter_1.stats.to_str_color()} \n"
             f"{''.join(self.emojis_recap[0][-RECAP_MAX_EMOJI:])}\n"
             f"{''.join(self.emojis_recap[1][-RECAP_MAX_EMOJI:])}\n"
-            f"HP : {barre_pv_2} ({self.fighter_2.pv:02}/{self.max_pv_2:02}) \t{self.fighter_2.stats.to_str_color()}"
+            f"HP : {barre_pv_2} ({pv2:02}/{self.max_pv_2:02}) \t{self.fighter_2.stats.to_str_color()}"
         ).str()
 
         return text_1, text_2, text_mid
@@ -427,6 +428,8 @@ class TeamFight():
     async def start_teamfight(self):
         fighter_1:FightingBully | None = None
         fighter_2:FightingBully | None = None
+        if (self.user_2 is None) : #On fait choisir le joueur 2 en premier si c'est pas un vrai joueur
+            fighter_2 = await self.select_next_fighter(user=self.user_2, player=self.player_2, team=self.team_2)
 
         while len(self.team_1) > 0 and len(self.team_2) > 0 :
             if fighter_1 is None :
@@ -523,6 +526,7 @@ def apply_viciousness(stat_challenger:Stats, stat_defender:Stats, is_attack_succ
 
 def value_to_bar_str(v:int, max_value=10) -> str:
     v = max(0,v) #Pour éviter des valeurs négatives
+    v = math.floor(v)
     t = ""
     for k in range(v):
         t += "▮"

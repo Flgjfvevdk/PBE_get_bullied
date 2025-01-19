@@ -96,6 +96,9 @@ class FightingBully():
             text += " ; "
         return text
 
+    def add_buff(self, buff_taf:str):
+        self.buffs.append(create_buff_instance(buff_taf, fighter=self))
+
     def reset(self):
         self.pv = self.bully.max_pv
         self.reset_stats()
@@ -154,7 +157,8 @@ def get_player_team(player:player_info.Player, is_team_buff_active = True):
             team_buff_tag = "SublimeTeam"
         if team_buff_tag is not None:
             for f in fighters:
-                f.buffs.append(create_buff_instance(team_buff_tag, fighter=f))
+                # f.buffs.append(create_buff_instance(team_buff_tag, fighter=f))
+                f.add_buff(team_buff_tag)
     return fighters
 
 def create_buff_instance(buff_name: str, fighter:FightingBully) -> BuffFight: 

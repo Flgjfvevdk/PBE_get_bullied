@@ -714,42 +714,12 @@ async def del_c(ctx: Context):
             await session.commit()
 
 
-@bot.command(aliases=['ua', 'update_arena'])
+@bot.command(aliases=['ua', 'update_arena', 'create_arena', 'create_arenas'])
 @decorators.is_admin()
 async def update_arenas(ctx: Context):
     await arena_system.update_arenas(bot)
     await ctx.send("Arenas updated successfully.")
         
-
-@bot.command()
-async def add_rt(ctx: Context):
-    if (ctx.guild is None):
-        return 
-    server_id = ctx.guild.id
-
-    if bot.user is None: return
-    bot_player_id = bot.user.id
-
-    async with database.new_session() as session:
-        arena = await session.get(Arena, server_id)
-        if arena is None:
-            await ctx.send("No arena found for this server. Please create an arena first.")
-            return
-        # player = await session.get(Player, user.id)
-        bot_player = await session.get(Player, bot_player_id)
-        if bot_player is None:
-            await ctx.send("Error: Could not create the bot player.")
-            return
-
-        arena.add_empty_team(bot_player_id)
-        for _ in range(2):
-            new_bully = bully.Bully(name=interact_game.generate_name())
-            bot_player.bullies.append(new_bully)
-            await session.flush()  # Ensure the new bully gets an ID
-            arena.add_bully_to_team(bot_player_id, new_bully.id)
-        arena.teams_ids = arena.teams_ids
-        await session.commit()
-        await ctx.send(f"Added a random team of 2 bullies to the arena for server {ctx.guild.name}.")
 
 @bot.command(aliases=['arene'])
 async def arena(ctx: Context):
@@ -773,8 +743,7 @@ async def arena(ctx: Context):
             return
 
         arena_fight = arena_system.ArenaFight(arena, session=session, bot=bot, user=ctx.author, player=player)
-        await arena_fight.setup()
-
+    
         await arena_fight.enter_hall(ctx)
 
 @bot.command()

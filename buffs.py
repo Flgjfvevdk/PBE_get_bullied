@@ -527,7 +527,12 @@ class Adaptation(BuffFight):
             fighter.base_stats += added_stats
             fighter.stats += added_stats
 
-
+class Champion(BuffFight):
+    description:str = "Gagne 2 pv à chaque nouvelle rencontre avec un adversaire."
+    description_en:str = "Gain 2 hp at the beginning of each fight."
+    category:CategoryBuff = CategoryBuff.SPECIAL
+    def before_fight(self, fighter: FightingBully, opponent: FightingBully):
+        fighter.pv += 2
 
 #Unique Buff (for Unique character)
 class Cat(BuffFight):

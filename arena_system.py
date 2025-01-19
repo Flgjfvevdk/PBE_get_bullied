@@ -20,7 +20,7 @@ import utils.database as database
 from player_info import Player
 from utils.locks import ArenaLock
 
-CHOICE_TIMEOUT = 10
+CHOICE_TIMEOUT = 40
 MAX_ARENA_TEAMS = 3
 
 class Arena(Base):
@@ -56,13 +56,10 @@ class Arena(Base):
             player = await session.get(Player, player_id)
             if player:
                 arena_team_str = ""
-                user:discord.User = await bot.fetch_user(player_id)
-                arena_team_str += f"{user}'s Team:\n"
+                user:discord.abc.User = await bot.fetch_user(player_id)
                 bullies = await self.get_team(player_id, session)
-                for b in bullies:
-                    arena_team_str += f"{b.get_print(compact_print=True)}\n\n"
-                arena_team_str = bully.mise_en_forme_str(arena_team_str)
-                arena_info += f"\nRang : {rank}\n{arena_team_str}"
+                arena_team_str = str_team_short(user, bullies)
+                arena_info += f"\nRang : {rank}{'er' if rank==1 else 'ème'}\n{arena_team_str}"
                 rank +=1
         return (arena_info)
 
@@ -96,11 +93,13 @@ class ArenaFight:
             self.bot_user_id = self.bot.user.id
         self.user = user
         self.player = player
-        self.player_teamfighters: List[FightingBully] = get_player_team(player)
+        
         self.teams: Dict[int, List[bully.Bully]] = {}
         self.beaten_teams: Dict[int, List[bully.Bully]] = {}
 
     async def setup(self):
+        await self.session.refresh(self.player)
+        self.player_teamfighters: List[FightingBully] = get_player_team(self.player)
         self.teams = await self.arena.get_all_teams(self.session)
 
         bot_player = await self.session.get(Player, self.bot_user_id)
@@ -121,12 +120,16 @@ class ArenaFight:
             return
         
         await ctx.send(f"{self.user.mention} has entered the arena!")
+        await self.setup()
         await self.fight(ctx)
 
     async def fight(self, ctx:Context):
         while len(self.teams) > 0:
             enemy_player_team = self.teams.popitem()
             enemy_teamfighters:list[FightingBully] = [FightingBully.create_fighting_bully(b) for b in enemy_player_team[1]]
+            self.add_champion_buff(enemy_teamfighters)
+            await ctx.send(f"Next teamfight against : \n{str_teamfighters_complete(self.user, enemy_teamfighters)}")
+
             teamfight = TeamFight(ctx=ctx, user_1=self.user, user_2=None, player_1=self.player, player_2=None, can_swap=True)
             teamfight.setup_teams(team_1=self.player_teamfighters, team_2=enemy_teamfighters)
             player_won = await teamfight.start_teamfight()
@@ -156,7 +159,7 @@ class ArenaFight:
         player_team = [f.bully for f in self.player_teamfighters]
 
         for i, (team_id, team_bullies_ids) in enumerate(arena_teams_ids.items()):
-            if team_id in self.beaten_teams and self.is_team_equal_ids(team_id, team_id, team_bullies_ids, [b.id for b in self.beaten_teams[team_id]]):
+            if team_id in self.beaten_teams and is_team_equal_ids(team_id, team_id, team_bullies_ids, [b.id for b in self.beaten_teams[team_id]]):
                 cloned_team_ids:list[int] = []
                 for bully in player_team:
                     cloned_bully = bully.clone(self.bot_user_id)
@@ -170,7 +173,7 @@ class ArenaFight:
                 new_arena_teams_ids.insert(insert_index, (player_id_str, cloned_team_ids))
                 new_arena_teams_ids = new_arena_teams_ids[:MAX_ARENA_TEAMS]
                 self.arena.teams_ids = dict(new_arena_teams_ids)
-                print("5")
+                
                 flag_modified(self.arena, "teams_ids")
                 return insert_index + 1
             elif player_id_str == team_id:
@@ -178,34 +181,47 @@ class ArenaFight:
                 return -1
         return -1
 
-    def is_team_equal_ids(self, player_id_1 : int, player_id_2:int, bullies_id_1:List[int], bullies_id_2:List[int]) -> bool:
-        if player_id_1 != player_id_2:
-            return False
-        if len(bullies_id_1) != len(bullies_id_2):
-            return False
-        for id1, id2 in zip(bullies_id_1, bullies_id_2):
-            if id1 != id2:
-                return False
-        return True
+    def add_champion_buff(self, fighters: List[FightingBully]):
+        for fighter in fighters:
+            fighter.add_buff("Champion")
 
-    def is_team_equal(self, player_id_1 : int, player_id_2:int, bullies_1:List[bully.Bully], bullies_2:List[bully.Bully]) -> bool:
-        if player_id_1 != player_id_2:
+def is_team_equal_ids(player_id_1 : int, player_id_2:int, bullies_id_1:List[int], bullies_id_2:List[int]) -> bool:
+    if player_id_1 != player_id_2:
+        return False
+    if len(bullies_id_1) != len(bullies_id_2):
+        return False
+    for id1, id2 in zip(bullies_id_1, bullies_id_2):
+        if id1 != id2:
             return False
-        if len(bullies_1) != len(bullies_2):
-            return False
-        for b1, b2 in zip(bullies_1, bullies_2):
-            if b1.id != b2.id:
-                return False
-        return True
+    return True
 
-    def print_teams(self, teams:Dict[int, List[bully.Bully]]) -> str:
-        txt = ""
-        for pid, fs in teams.items():
-            txt += f"Player {pid}:\n"
-            for f in fs :
-                txt += f"{f.get_print(compact_print=True)}\n"
-            txt += "\n"
-        return txt
+def is_team_equal(player_id_1 : int, player_id_2:int, bullies_1:List[bully.Bully], bullies_2:List[bully.Bully]) -> bool:
+    if player_id_1 != player_id_2:
+        return False
+    if len(bullies_1) != len(bullies_2):
+        return False
+    for b1, b2 in zip(bullies_1, bullies_2):
+        if b1.id != b2.id:
+            return False
+    return True
+
+def str_team_short(user:discord.User,  bullies: List[bully.Bully]) -> str:
+    team_str = ""
+    team_str += f"{user.display_name}'s Team:\n"
+    infos_str = "Infos bullies : \n| "
+    for b in bullies:
+        infos_str += f"{b.lvl} - {b.rarity.name} | "
+    team_str += infos_str
+    
+    return bully.mise_en_forme_str(team_str)
+
+def str_teamfighters_complete(user:discord.abc.User,  teamfighters: List[FightingBully]) -> str:
+    team_str = ""
+    team_str += f"{user.display_name}'s Team:\n"
+    for f in teamfighters:
+        team_str += f"{f.get_print()}\n\n"
+    return bully.mise_en_forme_str(team_str)
+
 ## ____________________________________________________________________________________________ ##
 async def init_arena(bot_player: Player, arena:Arena, session: AsyncSession):
     default_bully = bully.Bully(name="Atalante, héroïne blessée", rarity= bully.Rarity.SUBLIME, max_pv=4, seed= bully.Seed(0.35, 0.4, 0.2, 0.05))

@@ -304,7 +304,7 @@ async def team_challenge(ctx: Context, opponent:discord.Member):
 
     if user == opponent:
         await ctx.send("You can't team challenge yourself.")
-        # return
+        return
     
     lock1 = PlayerLock(user.id)
     if not lock1.check():
@@ -755,7 +755,7 @@ async def bully_maj(ctx:Context):
             print(f"{b.name}- diff:{difference_points}")
             nb_points:int = round(b.lvl * (b.lvl + 1) / 2)
             val = difference_points/nb_points
-            b.increase_stat_with_seed(nb_points=nb_points, valeur=val)
+            b.increase_stat_with_seed(nb_level_points=nb_points, valeur=val)
         await session.commit() 
 
 if __name__ == "__main__":

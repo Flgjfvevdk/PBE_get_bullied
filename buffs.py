@@ -311,19 +311,7 @@ class Venomous(BuffFight):
                 opponent.buffs.append(Poisoned(fighter= opponent, difficulty=fighter.stats.lethality))
         return
 
-# class Scary(BuffFight):
-#     description:str = "Ses coups vicieux, même raté, peuvent hanter l'ennemi (Haunted Debuff)."
-#     description_en:str = "Vicious debuff can haunt the enemy."
-#     category:CategoryBuff = CategoryBuff.LVL_5
-#     def __init__(self, fighter:FightingBully):
-#         super().__init__(fighter)
-#         self.proba = 0.3
-#     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
-#         if fighter == recap_round.attacker and recap_round.is_success_vicious and random.random() < self.proba:
-#             not_haunted = len([b for b in opponent.buffs if isinstance(b, Haunted)]) == 0
-#             if not_haunted:
-#                 opponent.buffs.append(Haunted(fighter=opponent))
-#         return
+
 
 class CrystalSkin(BuffFight):
     description:str = "Annule les dégâts supplémentaires des coups critiques."
@@ -356,7 +344,7 @@ class ProtectiveShadow(BuffFight):
         if recap_round.get_damage_receive(fighter) > 0:
             dmg = recap_round.get_damage_receive(fighter)
             fighter.pv += dmg
-            fighter.stats.viciousness -= fighter.bully.lvl
+            fighter.stats.viciousness -= fighter.bully.lvl**2 * 0.03
             if fighter.stats.viciousness <= 1 :
                 fighter.stats.viciousness = 1
                 fighter.buffs.remove(self)
@@ -437,21 +425,19 @@ class Poisoned(BuffFight):
             return 1, 0
         return 0, 0
     
-# class Haunted(BuffFight):
-#     description:str = "Les buffs sont désactivés jusqu'à la prochaine attaque réussie contre un ennemi."
-#     description_en:str = "Deactivate buffs until successfully hitting an enemy."
-#     category:CategoryBuff = CategoryBuff.DEBUFF
-#     def __init__(self, fighter:FightingBully):
-#         super().__init__(fighter)
-#         self.saved_buffs:list[BuffFight] = []
-#         for b in fighter.buffs:
-#             if not isinstance(b, Haunted):
-#                 self.saved_buffs.append(b)
-#         fighter.buffs = [self]
-#     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
-#         if fighter == recap_round.attacker and not recap_round.is_success_block:
-#             fighter.buffs = self.saved_buffs.copy()
-
+class InLove(BuffFight):
+    description:str = "Meurt s'il atteint 100%. Les attaques réussies réduisent la jauge"
+    description_en:str = "Die when reach 100%. Successful attacks reduce the gauge."
+    category:CategoryBuff = CategoryBuff.DEBUFF
+    love_decrease = 10
+    def __init__(self, fighter:FightingBully):
+        super().__init__(fighter)
+        self.jauge:int = 0
+    def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
+        if recap_round.attacker == fighter and not recap_round.is_success_block:
+            self.jauge = max(0, self.jauge - self.love_decrease)
+        if self.jauge >= 100:
+            fighter.pv = 0
 class Dizzy(BuffFight):
     description:str = "Agility divisé par 2 pendant 1 round."
     description_en:str = ""
@@ -616,6 +602,68 @@ class Parrain(BuffFight):
             opponent.buffs.append(Dizzy(fighter = opponent))
         return
 
+#Pour les boss de fin de level : 
+#Pour lvl 30 : Dr Malice
+class Mecha(BuffFight):
+    description:str = "Constuit un mecha géant."
+    category:CategoryBuff = CategoryBuff.UNIQUE
+    increase_jauge = 5
+    pv_max_mecha = 20
+    def __init__(self, fighter:FightingBully):
+        super().__init__(fighter)
+        self.is_mecha_active = False
+        self.jauge = 0
+        self.update_description()
+        self.saved_agility = fighter.stats.agility
+        fighter.stats.agility = 1
+
+    def apply_damage(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
+        if not self.is_mecha_active:
+            self.jauge += self.increase_jauge
+            return 0,0
+        else : 
+            bonus_damage = self.jauge /10
+            if fighter == recap_round.attacker and not recap_round.is_success_block:
+            opponent.pv -= bonus_damage #type: ignore
+            opponent.pv = round(opponent.pv, 1)
+            return 0, bonus_damage #type: ignore
+    def on_death(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> None:
+        if not self.is_mecha_active:
+            if self.jauge >= 100 or fighter.pv <= 0:
+                self.is_mecha_active = True
+                fighter.stats.agility = self.saved_agility
+                fighter.pv = self.pv_max_mecha
+    
+    def update_description(self):
+        if not self.is_mecha_active:
+            self.description = f"Construction du mecha en cours ({self.jauge}%)."
+        else : 
+            self.description = f"Mecha-[{self.jauge}%] activé ! Dégâts bonus : {self.jauge/10}."
+
+#Pour lvl 40 : Cupidon
+class GodOfLove(BuffFight):
+    description:str = "Rend passivement l'adversaire 'In Love'. Les attaques augmentent la jauge sans infliger de dégâts."
+    category:CategoryBuff = CategoryBuff.UNIQUE
+    love_attack = 15
+    love_passive = 5
+    def before_fight(self, fighter: FightingBully, opponent: FightingBully):
+        if len([b for b in opponent.buffs if isinstance(b, InLove)]) == 0:
+            opponent.buffs.append(InLove(opponent))
+    def apply_damage(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
+        inlove_debuffs= [b for b in opponent.buffs if isinstance(b, InLove)]
+        inlove_debuff = inlove_debuffs[0] if len(inlove_debuffs) > 0 else None
+        if inlove_debuff:
+            if fighter == recap_round.attacker and not recap_round.is_success_block:
+                inlove_debuff.jauge += self.love_attack
+                heal = recap_round.get_damage_receive(opponent)
+                heal = max(0, min(heal, opponent.bully.max_pv - opponent.pv))
+                opponent.pv += heal
+                return 0, -heal
+            else : 
+                inlove_debuff.jauge += self.love_passive
+        return 0, 0
+    
+
 #Pour le phoenix
 class FireAura(BuffFight):
     description:str = "Inflige 1 dégât à l'adversaire."
@@ -638,11 +686,11 @@ class FirePunch(BuffFight) :
     category:CategoryBuff = CategoryBuff.UNIQUE
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if fighter == recap_round.attacker and recap_round.is_success_lethal :
-            burn_defuffs = [b for b in opponent.buffs if isinstance(b, Burning)]
-            if len(burn_defuffs) == 0:
+            burn_debuffs = [b for b in opponent.buffs if isinstance(b, Burning)]
+            if len(burn_debuffs) == 0:
                 opponent.buffs.append(Burning(fighter= opponent, compteur=2))
             else :
-                burn_defuffs[0].add_compteur(2)
+                burn_debuffs[0].add_compteur(2)
 
             if recap_round.damage_bonus_lethal > 0:
                 dmg_bonus = recap_round.damage_bonus_lethal
@@ -726,7 +774,7 @@ class DevilMinion(BuffFight):
             opponent.stats.viciousness = max(1, opponent.stats.viciousness - drain_val)
 
 class DevilPocketWatch(BuffFight):
-    description:str = "Quand l'adversaire attaque, inflige de petits dégâts en retour."
+    description:str = "Quand l'adversaire attaque, lui inflige des petits dégâts."
     category:CategoryBuff = CategoryBuff.UNIQUE
     base_damage = 0.4
     buffed_damage = 0.8

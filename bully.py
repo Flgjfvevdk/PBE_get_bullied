@@ -1,3 +1,4 @@
+import math
 import os
 import random
 import shutil
@@ -81,9 +82,8 @@ class Stats(MutableComposite):
             if random_num <= cum_prob[i]:
                 break
         else:
-            print("ERREUR ON NE DEVRAIT PAS ARRIVER ICI ")
-            field_name = "strength"
-        
+            print("ERREUR ON NE DEVRAIT PAS ARRIVER ICI (Increase)")
+            field_name = "viciousness"
         # Increase the value of the attribute
         setattr(self, field_name, getattr(self,field_name) + valeur)
         return
@@ -98,14 +98,12 @@ class Stats(MutableComposite):
             cum_prob = seed.cumulative_probs()
             stats = self.__dataclass_fields__
             
-            # Choisir la statistique à diminuer
             for i, field_name in enumerate(stats):
                 if random_num <= cum_prob[i]:
                     break
             else:
-                print("ERREUR ON NE DEVRAIT PAS ARRIVER ICI")
-                field_name = "strength"
-
+                print("ERREUR ON NE DEVRAIT PAS ARRIVER ICI (Decrease)")
+                field_name = "viciousness"
             current_value = getattr(self, field_name)
             
             # Vérifier si la stat peut être diminuée sans passer en dessous de 1
@@ -264,31 +262,40 @@ class Bully(Base):
         nb_points = self.rarity.base_points
         self.increase_stat_with_seed(nb_points, extrem_seed=True)
 
-    def increase_stat_with_seed(self, nb_points=1, valeur:float=1.0, extrem_seed = False):
+    def increase_stat_with_seed(self, nb_level_points=1, valeur:float=1.0, extrem_seed = False):
         used_seed = self.seed
-        
         if(extrem_seed):
-            #Pour l'initialisation, on extrémise un peu la seed pour que les stats reflètent plus la seed
             used_seed = self.seed.extremization()
 
-        for _ in range(nb_points):
+        for _ in range(nb_level_points):
             self.stats.increase_with_seed(used_seed, valeur=valeur)
         return
     
-    def decrease_stat_with_seed(self, nb_points=1, valeur:float=1.0):
-        for _ in range(nb_points):
-            self.stats.decrease_with_seed(self.seed, valeur=valeur)
-        return
-    
-    def increase_stat_unique_rarity(self, nb_points):
+    def increase_stat_unique_rarity(self, nb_level_points):
         if self.rarity != Rarity.UNIQUE:
             raise Exception("This is not a UNIQUE bully")
 
-        for _ in range(nb_points):
+        for _ in range(nb_level_points):
             self.stats.strength += self.seed.strength
             self.stats.agility += self.seed.agility
             self.stats.lethality += self.seed.lethality
             self.stats.viciousness += self.seed.viciousness
+        return
+    
+    def decrease_stat_with_seed(self, nb_level_points=1, valeur:float=1.0):
+        for _ in range(nb_level_points):
+            self.stats.decrease_with_seed(self.seed, valeur=valeur)
+        return
+
+    def decrease_stat_unique_rarity(self, nb_points):
+        if self.rarity != Rarity.UNIQUE:
+            raise Exception("This is not a UNIQUE bully")
+
+        for _ in range(nb_points):
+            self.stats.strength -= self.seed.strength
+            self.stats.agility -= self.seed.agility
+            self.stats.lethality -= self.seed.lethality
+            self.stats.viciousness -= self.seed.viciousness
         return
 
     def give_exp(self, exp_recu) -> None:
@@ -329,7 +336,7 @@ class Bully(Base):
         else:
             new_points = self.lvl
             valeur = self.rarity.coef_level_points
-            self.increase_stat_with_seed(nb_points=new_points, valeur=valeur)
+            self.increase_stat_with_seed(nb_level_points=new_points, valeur=valeur)
 
     def exp_give_when_die(self):
         xp = self.lvl
@@ -353,7 +360,7 @@ class Bully(Base):
         difference_points = nb_points_tot_rarity(self.lvl, new_rarity) - self.stats.sum_stats()
         nb_points:int = round(self.lvl * (self.lvl + 1) / 2)
         val = difference_points/nb_points
-        self.increase_stat_with_seed(nb_points=nb_points, valeur=val)
+        self.increase_stat_with_seed(nb_level_points=nb_points, valeur=val)
 
         self.rarity = new_rarity
 
@@ -366,12 +373,28 @@ class Bully(Base):
         self.image_file_path = self.new_possible_image_random()
 
     def decrease_lvl(self, lvl_loss, lose_xp = True):
-        self.exp = 0
+        if lose_xp : self.exp = 0
         lvl_loss = min(self.lvl - 1, lvl_loss)
         for k in range(lvl_loss):
-            self.decrease_stat_with_seed(nb_points=self.lvl, valeur=self.rarity.coef_level_points)
+            if self.rarity == Rarity.UNIQUE:
+                self.decrease_stat_unique_rarity(nb_points=self.lvl)
+            else :
+                self.decrease_stat_with_seed(nb_level_points=self.lvl, valeur=self.rarity.coef_level_points)
             self.lvl -= 1
         
+    def loose_level_death(self)->int:
+        lvl_loss = max(1, math.floor(self.lvl/5))
+        lvl_loss = min(lvl_loss, self.lvl - 1)
+        self.decrease_lvl(lvl_loss)
+        return lvl_loss
+
+    async def die_in_fight(self) -> str:
+        if self.rarity == Rarity.NOBODY :
+            await self.kill()
+            return f"{self.name} died in terrible agony."
+        else : 
+            lvl_lost = self.loose_level_death()
+            return f"{self.name} lost {lvl_lost} level"
 
     async def kill(self):
         print("je me tue : ", self.name)

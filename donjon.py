@@ -28,7 +28,7 @@ from sqlalchemy import select
 
 
 DUNGEON_CHOICE_TIMEOUT = 60
-THREAD_DELETE_AFTER = 60
+THREAD_DELETE_AFTER = 30
 COEF_XP_WIN = 1
 
 ENEMIES_FIGHTER_PV = 5
@@ -70,7 +70,7 @@ class DungeonFightingBully():
         gold_earned = int(self.gold_coef * gold_earned)
         return (exp_earned, gold_earned)
 
-dungeon_fighter_bully_list = [DungeonFightingBully(name="Thyr O'Flan", pv_max=5, seed=bully.Seed(0.2, 0.45, 0.2, 0.25)),
+dungeon_fighter_bully_list = [DungeonFightingBully(name="Thyr O'Flan", pv_max=5, seed=bully.Seed(0.2, 0.45, 0.1, 0.25)),
                               DungeonFightingBully(name="Grobrah Le Musclé", pv_max=7, seed=bully.Seed(0.65, 0.1, 0.2, 0.05)),
                               DungeonFightingBully(name="Fou Fur", pv_max=6, seed=bully.Seed(0.2, 0.2, 0.5, 0.1)),
                               DungeonFightingBully(name="wè wè", pv_max=6, seed=bully.Seed(0.4, 0.3, 0.1, 0.2)),
@@ -79,10 +79,10 @@ dungeon_fighter_bully_list = [DungeonFightingBully(name="Thyr O'Flan", pv_max=5,
                               DungeonFightingBully(name="Plu Didier", pv_max=6, seed=bully.Seed(0.2, 0.4, 0.1, 0.3)),
                               DungeonFightingBully(name="Woah", pv_max=6, seed=bully.Seed(0.3, 0.3, 0.2, 0.2)),
                               DungeonFightingBully(name="Gros Problème", pv_max=8, seed=bully.Seed(0.35, 0.55, 0.01, 0.09), buffs_tags=["Rage"]),
-                              DungeonFightingBully(name="Le Fourbe", pv_max=5, seed=bully.Seed(0.15, 0.1, 0.05, 0.65)),
-                              DungeonFightingBully(name="Nulos", pv_max=5, seed=bully.Seed(0.1, 0.05, 0.40, 0.45))]
+                              DungeonFightingBully(name="Le Fourbe", pv_max=5, seed=bully.Seed(0.1, 0.2, 0.05, 0.65)),
+                              DungeonFightingBully(name="Nulos", pv_max=5, seed=bully.Seed(0.1, 0.05, 0.4, 0.45))]
 
-dungeon_fighters_lvl_50 = [DungeonFightingBully(name="Gardien", pv_max=13, seed=bully.Seed(1.3, 0.3, 0.4, 0.0), buffs_tags=["Brutal", "IronSkin"], rarity=Rarity.UNIQUE, can_swap=True),
+dungeon_fighters_lvl_50 = [DungeonFightingBully(name="Zofia, Gardienne de la porte", pv_max=13, seed=bully.Seed(1.3, 0.3, 0.4, 0.0), buffs_tags=["Brutal", "IronSkin"], rarity=Rarity.UNIQUE, can_swap=True),
                              DungeonFightingBully(name="Chimère", pv_max=10, seed=bully.Seed(0.5, 0.4, 0.7, 0.4), buffs_tags=["SharpTeeth"], rarity=Rarity.UNIQUE, can_swap=True),
                              DungeonFightingBully(name="David, ancien héros", pv_max=7, seed=bully.Seed(0.8, 1.0, 0.05, 0.3), buffs_tags=["CrystalSkin"], rarity=Rarity.UNIQUE, can_swap=True),
                              DungeonFightingBully(name="Ombre", pv_max=1, seed=bully.Seed(0.1, 1.2, 0.0, 1.2), buffs_tags=["ShadowMaster"], rarity=Rarity.UNIQUE, can_swap=True),
@@ -285,14 +285,16 @@ class Dungeon():
 
         else : 
             #Le joueur à perdu. 
-            if bully_joueur.rarity == Rarity.NOBODY :
-                await self.thread.send(f"{bully_joueur.name} died in terrible agony.")
-                await bully_joueur.kill()
-            else : 
-                lvl_loss = max(1, math.floor(bully_joueur.lvl/5))
-                lvl_loss = min(lvl_loss, bully_joueur.lvl - 1)
-                bully_joueur.decrease_lvl(lvl_loss)
-                await self.thread.send(f"{bully_joueur.name} lost {lvl_loss} level")
+            txt:str = await bully_joueur.die_in_fight()
+            await self.thread.send(txt)
+            # if bully_joueur.rarity == Rarity.NOBODY :
+            #     await self.thread.send(f"{bully_joueur.name} died in terrible agony.")
+            #     await bully_joueur.kill()
+            # else : 
+            #     lvl_loss = max(1, math.floor(bully_joueur.lvl/5))
+            #     lvl_loss = min(lvl_loss, bully_joueur.lvl - 1)
+            #     bully_joueur.decrease_lvl(lvl_loss)
+            #     await self.thread.send(f"{bully_joueur.name} lost {lvl_loss} level")
             self.fighters_joueur.pop(num_bully_j)
             self.xp_earned_bullies.pop(num_bully_j)
 

@@ -277,14 +277,16 @@ class Fight():
                     money.give_money(player_gagnant, montant=gold_earned)
                     pretext += f"{user_gagnant.name} earned {gold_earned}{money.MONEY_EMOJI}\n"
             
-            if bully_perdant.rarity is Rarity.NOBODY:
-                await self.channel_cible.send(f"{pretext}{bully_perdant.name} died in terrible agony")
-                await bully_perdant.kill()
-            else : 
-                lvl_loss = max(1, math.floor(bully_perdant.lvl/5))
-                lvl_loss = min(lvl_loss, bully_perdant.lvl - 1)
-                bully_perdant.decrease_lvl(lvl_loss)
-                await self.channel_cible.send(f"{pretext}{bully_perdant.name} lost {lvl_loss} levels")
+            txt:str = await bully_perdant.die_in_fight()
+            await self.channel_cible.send(pretext + txt)
+            # if bully_perdant.rarity is Rarity.NOBODY:
+            #     await self.channel_cible.send(f"{pretext}{bully_perdant.name} died in terrible agony")
+            #     await bully_perdant.kill()
+            # else : 
+            #     lvl_loss = max(1, math.floor(bully_perdant.lvl/5))
+            #     lvl_loss = min(lvl_loss, bully_perdant.lvl - 1)
+            #     bully_perdant.decrease_lvl(lvl_loss)
+            #     await self.channel_cible.send(f"{pretext}{bully_perdant.name} lost {lvl_loss} levels")
         return
         
     

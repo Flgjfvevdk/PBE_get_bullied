@@ -105,17 +105,18 @@ async def payday(ctx: Context):
             await ctx.reply(TEXT_JOIN_THE_GAME)
             return
         
-        # Vérifier si l'utilisateur a déjà fait la commande récemment
         cooldown_restant = await money.cooldown_restant_pay(player)
         if cooldown_restant > 0:
             await ctx.send(f"Vous devez attendre encore {money.format_temps(round(cooldown_restant))} avant de pouvoir utiliser cette commande à nouveau.")
             return
 
-        # Donner de l'argent à l'utilisateur
-        money.give_money(player, montant=money.PAYDAY_VALUE)
+        server_id = ctx.guild.id #type: ignore
+        bonus_champion = await arena_system.get_bonus_payday(session, server_id, player.id.__str__())
+        bonus_arena_str = f"+{bonus_champion} {money.MONEY_EMOJI} (arena champion bonus)" if bonus_champion > 0 else ""
+        money.give_money(player, montant=money.PAYDAY_VALUE + bonus_champion)
         await ctx.send(
-            f"Vous avez reçu des {money.MONEY_ICON} ! (+{money.PAYDAY_VALUE}{money.MONEY_ICON})\n"
-            f"Vous avez {money.get_money_user(player)} {money.MONEY_ICON}"
+            f"Vous avez reçu des {money.MONEY_EMOJI} ! +{money.PAYDAY_VALUE}{money.MONEY_EMOJI} {bonus_arena_str}\n"
+            f"Vous avez {money.get_money_user(player)} {money.MONEY_EMOJI}"
         )
 
         # Enregistrer l'heure actuelle comme dernière utilisation de la commande
@@ -130,7 +131,7 @@ async def bank(ctx: Context):
             await ctx.reply(TEXT_JOIN_THE_GAME)
             return
         
-        await ctx.send(f"You have {money.get_money_user(player)} {money.MONEY_ICON}")
+        await ctx.send(f"You have {money.get_money_user(player)} {money.MONEY_EMOJI}")
 
 @bot.command(aliases=['jeton', 'jetons', 'token', 'tokens', 'key', 'keys'])
 async def print_key(ctx: Context):
@@ -303,7 +304,7 @@ async def team_challenge(ctx: Context, opponent:discord.Member):
 
     if user == opponent:
         await ctx.send("You can't team challenge yourself.")
-        return
+        # return
     
     lock1 = PlayerLock(user.id)
     if not lock1.check():
@@ -412,7 +413,36 @@ async def explore_ruin(ctx: Context, level:int):
 async def explore_ruin_error(ctx: Context, error: commands.CommandError):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.send(f"Error: Missing required argument `{error.param.name}`. Please provide a ruin level. Example : ruin 10")
- 
+
+
+@bot.command(aliases=['arene'])
+async def arena(ctx: Context):
+    if ctx.guild is None:
+        return
+
+    user = ctx.author
+    lock = PlayerLock(user.id)
+    if not lock.check():
+        await ctx.send("You are already in an action.")
+        return
+    
+    with lock :
+        server_id = ctx.guild.id
+        async with database.new_session() as session:
+            arena = await session.get(Arena, server_id)
+            if arena is None:
+                await ctx.send("No arena found for this server. Please create an arena first.")
+                return
+
+            player = await session.get(Player, user.id)
+            if player is None:
+                await ctx.reply(TEXT_JOIN_THE_GAME)
+                return
+
+            arena_fight = arena_system.ArenaFight(arena, ctx=ctx, session=session, bot=bot, user=user, player=player)
+            await arena_fight.enter_hall()
+
+
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 # Par rapport au club ____________________________
@@ -519,7 +549,8 @@ async def kill_all(ctx: Context):
             if player is None:
                 await ctx.reply(TEXT_JOIN_THE_GAME)
                 return
-            for b in player.bullies:
+            all_bullies = player.bullies
+            for b in all_bullies:
                 if isinstance(b, bully.Bully):
                     await b.kill()
             await session.commit()
@@ -555,9 +586,7 @@ async def show_consumables(ctx: Context):
         await ctx.channel.send(embed=embed)
         
 
-
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
 #Command d'admin _____________________________________________________________________________________________________
 @bot.command()
@@ -628,11 +657,10 @@ async def py_admin(ctx: Context):
             await ctx.reply(TEXT_JOIN_THE_GAME)
             return
         
-        # Donner de l'argent à l'utilisateur
         money.give_money(player, montant=10000)
         await ctx.send(
-            f"Vous avez reçu des {money.MONEY_ICON} ! (+{money.PAYDAY_VALUE}{money.MONEY_ICON})\n"
-            f"Vous avez {money.get_money_user(player)} {money.MONEY_ICON}"
+            f"Vous avez reçu des {money.MONEY_EMOJI} ! (+{money.PAYDAY_VALUE}{money.MONEY_EMOJI})\n"
+            f"Vous avez {money.get_money_user(player)} {money.MONEY_EMOJI}"
         )
         await session.commit()
     
@@ -720,31 +748,6 @@ async def update_arenas(ctx: Context):
     await arena_system.update_arenas(bot)
     await ctx.send("Arenas updated successfully.")
         
-
-@bot.command(aliases=['arene'])
-async def arena(ctx: Context):
-    if ctx.guild is None:
-        return
-
-    server_id = ctx.guild.id
-    async with database.new_session() as session:
-        arena = await session.get(Arena, server_id)
-        if arena is None:
-            await ctx.send("No arena found for this server. Please create an arena first.")
-            return
-
-        if not arena.teams_ids:
-            await ctx.send("No teams in the arena yet.")
-            return
-
-        player = await session.get(Player, ctx.author.id)
-        if player is None:
-            await ctx.reply(TEXT_JOIN_THE_GAME)
-            return
-
-        arena_fight = arena_system.ArenaFight(arena, session=session, bot=bot, user=ctx.author, player=player)
-    
-        await arena_fight.enter_hall(ctx)
 
 @bot.command()
 @decorators.is_admin()

@@ -157,7 +157,6 @@ def get_player_team(player:player_info.Player, is_team_buff_active = True):
             team_buff_tag = "SublimeTeam"
         if team_buff_tag is not None:
             for f in fighters:
-                # f.buffs.append(create_buff_instance(team_buff_tag, fighter=f))
                 f.add_buff(team_buff_tag)
     return fighters
 

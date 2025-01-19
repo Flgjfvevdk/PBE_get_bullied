@@ -376,7 +376,6 @@ async def player_choose_fighting_bully(ctx:Context, fighting_bullies:list[Fighti
 
     bullies_available = [f.bully for f in fighting_bullies]
 
-    #On affiche le message
     message_bullies = await channel_cible.send(content=text, view=ViewBullyChoice(user=user, event=event, list_choix=bullies_available, variable_pointer = var))
     
     #On attend une réponse (et on retourne une erreur si nécessaire avec le timeout)
@@ -394,7 +393,6 @@ async def player_choose_fighting_bully(ctx:Context, fighting_bullies:list[Fighti
     else : 
         raise CancelChoiceException("No selected bully")
 
-    #On envoie les infos sur le bully choisit
     await channel_cible.send(f"{user} sends {bully_selected.name} to fight") 
     return fighting_bully, bully_number
 
@@ -431,7 +429,7 @@ async def suicide_bully(ctx: Context, user: discord.abc.User, player: Player, bo
         await bully_selected.kill()
         money.give_money(player, montant=int(bully_selected.gold_give_when_die()))
         await ctx.send(
-            f"Vous avez reçu des {money.MONEY_ICON} ! (+{int(bully_selected.gold_give_when_die())}{money.MONEY_ICON})"
+            f"Vous avez reçu des {money.MONEY_EMOJI} ! (+{int(bully_selected.gold_give_when_die())}{money.MONEY_EMOJI})"
         )
     except Exception as e:
         await message_choose_suicide.edit(content=f"{user} didn't kill any bullies")

@@ -4,10 +4,10 @@ from datetime import datetime, timezone, timedelta
 from player_info import Player
 
 # Var payday
-PAYDAY_COOLDOWN = 8 * 60 * 60
+PAYDAY_COOLDOWN = 8 #* 60 * 60
 PAYDAY_VALUE = 250
 
-MONEY_ICON = "🩹"
+MONEY_EMOJI = "🩹"
 MONEY_JOIN_VALUE = 500
 MONEY_REFERRAL = 600
 

@@ -5,6 +5,7 @@ import discord
 from fight_manager import TeamFight
 from fighting_bully import FightingBully, get_player_team
 import interact_game
+import money
 from utils.database import Base
 from typing import List, Dict
 from sqlalchemy.orm import Mapped, relationship, mapped_column
@@ -22,6 +23,9 @@ from utils.locks import ArenaLock
 
 CHOICE_TIMEOUT = 40
 MAX_ARENA_TEAMS = 3
+PRICE_ENTER = 100
+REWARD_WIN_RANK = [300, 200, 120] #Il gagne une proportion de cette somme en fonction de son rang
+BONUS_PAYDAY_CHAMPION = [400, 250, 100]
 
 class Arena(Base):
     __tablename__ = "arena"
@@ -83,8 +87,9 @@ class Arena(Base):
 
 
 class ArenaFight:
-    def __init__(self, arena: Arena, session: AsyncSession, bot: Bot, user:discord.abc.User, player: Player):
+    def __init__(self, arena: Arena, ctx:Context, session: AsyncSession, bot: Bot, user:discord.abc.User, player: Player):
         self.arena = arena
+        self.ctx = ctx
         self.session = session
         self.bot = bot
         if (self.bot.user is None):
@@ -107,52 +112,67 @@ class ArenaFight:
             raise Exception("The bot player is None")
         self.bot_player:Player = bot_player
 
-    async def enter_hall(self, ctx:Context):
+        message_thread = await self.ctx.send(content=f"{self.user.mention} has entered the arena!")
+        self.thread:discord.Thread = await self.ctx.channel.create_thread(name=f"{self.user.name} est dans l'arene", message=message_thread) #type: ignore
+
+    async def enter_hall(self):
         txt_arena = await self.arena.get_print(self.session, self.bot)
         event = asyncio.Event()
-        txt_demande = f"\n{self.user.mention}, voulez-vous entrer dans l'arène ?"
-        message = await ctx.channel.send(content=txt_arena+txt_demande, view=interact_game.ViewClickBool(user=self.user, event=event, label="Enter The Arena", emoji="⚔️"))
+        txt_demande = f"\n{self.user.mention}, voulez-vous entrer dans l'arène ? (Prix = {PRICE_ENTER} {money.MONEY_EMOJI})\n"
+        message = await self.ctx.channel.send(content=txt_arena+txt_demande, view=interact_game.ViewClickBool(user=self.user, event=event, label=f"Enter The Arena (and pay {PRICE_ENTER})", emoji="⚔️"))
         try:
             await asyncio.wait_for(event.wait(), timeout=CHOICE_TIMEOUT)
         except asyncio.exceptions.TimeoutError as e:
             await message.edit(content = txt_arena, view=None)
-            # await message.delete()
             return
         
-        await ctx.send(f"{self.user.mention} has entered the arena!")
+        if self.player.money < PRICE_ENTER:
+            await self.ctx.send(f"{self.user.name}, you do not have enough {money.MONEY_EMOJI} to enter the arena (Price = {PRICE_ENTER})")
+            await message.edit(content = txt_arena, view=None)
+            return
+        
         await self.setup()
-        await self.fight(ctx)
+        await self.fight()
 
-    async def fight(self, ctx:Context):
+    async def fight(self):
         while len(self.teams) > 0:
             enemy_player_team = self.teams.popitem()
             enemy_teamfighters:list[FightingBully] = [FightingBully.create_fighting_bully(b) for b in enemy_player_team[1]]
             self.add_champion_buff(enemy_teamfighters)
-            await ctx.send(f"Next teamfight against : \n{str_teamfighters_complete(self.user, enemy_teamfighters)}")
+            await self.thread.send(f"Next teamfight against : \n{str_teamfighters_complete(self.user, enemy_teamfighters)}")
 
-            teamfight = TeamFight(ctx=ctx, user_1=self.user, user_2=None, player_1=self.player, player_2=None, can_swap=True)
+            teamfight = TeamFight(ctx=self.ctx, user_1=self.user, user_2=None, player_1=self.player, player_2=None, can_swap=True, channel_cible=self.thread)
             teamfight.setup_teams(team_1=self.player_teamfighters, team_2=enemy_teamfighters)
-            player_won = await teamfight.start_teamfight()
+            try :
+                player_won = await teamfight.start_teamfight()
+            except interact_game.CancelChoiceException as e:
+                await self.end_arena()
+                return
             if player_won:
                 self.beaten_teams[enemy_player_team[0]] = enemy_player_team[1]
                 for b in self.player_teamfighters:
                     b.reset()
             else:
-                await self.end_arena(ctx)
+                await self.end_arena()
                 return
-        await self.end_arena(ctx)
+        await self.end_arena()
 
-    async def end_arena(self, ctx:Context):
+    async def end_arena(self):
         async with ArenaLock(self.arena.id):
             await self.session.refresh(self.arena)
             
             rank = await self.update_arena_teams()
             if rank > 0:
-                await ctx.send(f"{self.user.mention} has reached rank {rank} in the arena!")
+                reward = REWARD_WIN_RANK[rank - 1] if rank <= len(REWARD_WIN_RANK) else 0
+                money.give_money(self.player, reward)
+                await self.ctx.send(f"{self.user.mention}, you have reached rank {rank} in the arena! (reward : {reward} {money.MONEY_EMOJI})")
             else:
-                await ctx.send(f"{self.user.mention} did not improve their rank in the arena.")
+                await self.ctx.send(f"{self.user.mention}, you did not improve your rank in the arena.")
+            await self.thread.delete()
+            money.give_money(self.player, -PRICE_ENTER)
             await self.session.commit()
     
+
     async def update_arena_teams(self) -> int:
         arena_teams_ids = self.arena.teams_ids.copy()
         player_id_str = self.player.id.__str__()
@@ -261,6 +281,21 @@ async def update_arenas(bot : Bot):
 
         await session.commit()
 
-
+async def get_bonus_payday(session: AsyncSession, server_id:int,  player_id_str: str) -> int:
+    arena = await session.get(Arena, server_id)
+    print("bf")
+    if arena is None:
+        return 0
+    print("fefefef")
+    if arena.teams_ids.get(player_id_str, None) is not None:
+        print("dddd")
+        keys = list(arena.teams_ids.keys())
+        index = keys.index(player_id_str)
+        if index < len(BONUS_PAYDAY_CHAMPION):
+            print("a")
+            return BONUS_PAYDAY_CHAMPION[index]
+        print("f")
+    print("aaa")
+    return 0
 
 

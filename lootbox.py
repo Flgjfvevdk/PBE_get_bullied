@@ -45,7 +45,7 @@ async def shop_lootbox(ctx: Context, user: discord.abc.User):
     level_choix = [1, 5, 10, 20, 30, 40, 50]
     list_choix_name:list[str] = []
     for l in (level_choix):
-        list_choix_name.append(f"Level {l} ({get_cout(l)}{money.MONEY_ICON})")
+        list_choix_name.append(f"Level {l} ({get_cout(l)}{money.MONEY_EMOJI})")
     view = interact_game.ViewChoice(user=user, event=event, list_choix=level_choix, list_choix_name= list_choix_name, variable_pointer = var)
     shop_lb_msg = await ctx.channel.send(content=text, view=view)
 
@@ -80,7 +80,7 @@ async def open_lootbox(ctx: Context, user: discord.abc.User, level:int):
 
             cout = get_cout(level=level)
             if(money.get_money_user(player) < cout):
-                await ctx.send(f"{user.name}, you don't have enough {money.MONEY_ICON} for this box [cost: {cout}{money.MONEY_ICON}]")
+                await ctx.send(f"{user.name}, you don't have enough {money.MONEY_EMOJI} for this box [cost: {cout}{money.MONEY_EMOJI}]")
                 return
 
             if(interact_game.nb_bully_in_team(player) >= interact_game.BULLY_NUMBER_MAX):

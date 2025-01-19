@@ -275,7 +275,7 @@ class Fight():
                 user_gagnant, player_gagnant = (self.user_1, self.player_1) if bully_gagnant == self.fighter_1.bully else (self.user_2, self.player_2)
                 if user_gagnant is not None and player_gagnant is not None:
                     money.give_money(player_gagnant, montant=gold_earned)
-                    pretext += f"{user_gagnant.name} earned {gold_earned}{money.MONEY_ICON}\n"
+                    pretext += f"{user_gagnant.name} earned {gold_earned}{money.MONEY_EMOJI}\n"
             
             if bully_perdant.rarity is Rarity.NOBODY:
                 await self.channel_cible.send(f"{pretext}{bully_perdant.name} died in terrible agony")
@@ -428,8 +428,6 @@ class TeamFight():
     async def start_teamfight(self):
         fighter_1:FightingBully | None = None
         fighter_2:FightingBully | None = None
-        if (self.user_2 is None) : #On fait choisir le joueur 2 en premier si c'est pas un vrai joueur
-            fighter_2 = await self.select_next_fighter(user=self.user_2, player=self.player_2, team=self.team_2)
 
         while len(self.team_1) > 0 and len(self.team_2) > 0 :
             if fighter_1 is None :
@@ -438,7 +436,7 @@ class TeamFight():
                 fighter_2 = await self.select_next_fighter(user=self.user_2, player=self.player_2, team=self.team_2)
             
             fight = Fight(self.ctx, user_1=self.user_1, user_2=self.user_2, player_1=self.player_1, player_2=self.player_2
-                          , fighter_1=fighter_1, fighter_2=fighter_2, for_fun=self.for_fun, nb_swaps_1=self.nb_swaps_1, nb_swaps_2=self.nb_swaps_2)
+                          , fighter_1=fighter_1, fighter_2=fighter_2, for_fun=self.for_fun, nb_swaps_1=self.nb_swaps_1, nb_swaps_2=self.nb_swaps_2, channel_cible=self.channel_cible)
             try : 
                 await fight.start_fight()
             except InterruptionCombat as interrupt:
@@ -461,7 +459,7 @@ class TeamFight():
                 self.increase_swap()
 
         if len(self.team_1) > 0 :
-            await self.ctx.send(f"{self.user_1.name if self.user_1 is not None else 'Team 1'} won the teamfight!")
+            await self.channel_cible.send(f"{self.user_1.name if self.user_1 is not None else 'Team 1'} won the teamfight!")
             return True
         if len(self.team_2) > 0 :
             await self.ctx.send(f"{self.user_2.name if self.user_2 is not None else 'Team 2'} won the teamfight!")
@@ -471,10 +469,13 @@ class TeamFight():
         if user is None or player is None :
             return team[0]
         try:
-            f_bully, _ = await interact_game.player_choose_fighting_bully(ctx=self.ctx, fighting_bullies=team, user=user, timeout=CHOICE_TIMEOUT)
-        except Exception as e:
-            await self.ctx.send(f"{user.name} give up the fight")
-            raise Exception("Abandon du combat")
+            f_bully, _ = await interact_game.player_choose_fighting_bully(ctx=self.ctx, fighting_bullies=team, user=user, timeout=CHOICE_TIMEOUT, channel_cible=self.channel_cible)
+        except asyncio.exceptions.TimeoutError as e:
+            await self.channel_cible.send(f"Too late, random bully selected for {user.name}")
+            return team[0]
+        except interact_game.CancelChoiceException as e:
+            await self.channel_cible.send(f"{user.name} give up the fight")
+            raise e
         return f_bully
 
     def increase_swap(self):

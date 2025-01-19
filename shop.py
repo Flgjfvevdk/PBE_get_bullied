@@ -139,7 +139,7 @@ async def handle_shop_click(ctx:Context, variable_pointer:Dict[str, Bully | disc
                 await ctx.send("Please join the game first !")
                 return
             if(money.get_money_user(player) < cout_bully(choix_bully)):
-                await ctx.send(f"You don't have enough {money.MONEY_ICON} {user} for {choix_bully.name} [cost: {cout_bully(choix_bully)}{money.MONEY_ICON}]")
+                await ctx.send(f"You don't have enough {money.MONEY_EMOJI} {user} for {choix_bully.name} [cost: {cout_bully(choix_bully)}{money.MONEY_EMOJI}]")
                 return
 
             if(interact_game.nb_bully_in_team(player) >= interact_game.BULLY_NUMBER_MAX):

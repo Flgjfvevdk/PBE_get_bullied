@@ -178,7 +178,7 @@ class EnemyRoom():
                 pretext += f"{fighter.bully.name} earned {exp_earned} xp\n"
             if (gold_earned > 0):
                 money.give_money(ruin.player, montant=gold_earned)
-                pretext += f"{ruin.user.name} earned {gold_earned}{money.MONEY_ICON}\n"
+                pretext += f"{ruin.user.name} earned {gold_earned}{money.MONEY_EMOJI}\n"
 
             #On envoie le message de succès et on progress dans le dungeon
             await ruin.thread.send(f"{pretext}{self.enemy.bully.name} is dead! You progress in the ruin.")
@@ -246,7 +246,7 @@ class TreasureRoom():
         return TreasureRoom(gold=gold)
 
     async def interact(self, ruin: "Ruin"):
-        await ruin.thread.send(f"You find a **treasure**. It contains **{self.gold}** {money.MONEY_ICON}!")
+        await ruin.thread.send(f"You find a **treasure**. It contains **{self.gold}** {money.MONEY_EMOJI}!")
         money.give_money(ruin.player, montant=self.gold)
 
 @dataclass

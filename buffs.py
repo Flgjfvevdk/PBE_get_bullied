@@ -603,6 +603,18 @@ class Parrain(BuffFight):
         return
 
 #Pour les boss de fin de level : 
+#Pour lvl 10 : Pollution
+class Pollution(BuffFight):
+    description:str = "Si l'adversaire à plus de Viciousness la réduit, sinon inflige 1 dégât."
+    category:CategoryBuff = CategoryBuff.UNIQUE
+    def apply_damage(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
+        if opponent.stats.viciousness > fighter.stats.viciousness:
+            opponent.stats.viciousness *= 0.9
+        else :
+            opponent.pv -= 1
+            return 0, 1
+        return 0, 0
+
 #Pour lvl 30 : Dr Malice
 class Mecha(BuffFight):
     description:str = "Constuit un mecha géant."
@@ -776,8 +788,8 @@ class DevilMinion(BuffFight):
 class DevilPocketWatch(BuffFight):
     description:str = "Quand l'adversaire attaque, lui inflige des petits dégâts."
     category:CategoryBuff = CategoryBuff.UNIQUE
-    base_damage = 0.4
-    buffed_damage = 0.8
+    base_damage = 0.2
+    buffed_damage = 0.6
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
         self.name = "Devil's Pocket Watch"

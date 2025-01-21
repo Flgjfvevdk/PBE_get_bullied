@@ -88,7 +88,7 @@ class SlimyBody(BuffFight):
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if fighter == recap_round.defender and not recap_round.is_success_block:
             if (opponent.stats.agility > 1):
-                opponent.stats.agility -= fighter.bully.lvl
+                opponent.stats.agility -= fighter.bully.lvl**2 *0.05
                 if opponent.stats.agility <= 1 :
                     opponent.stats.agility = 1
         return
@@ -147,7 +147,6 @@ class ShadowEater(BuffFight):
             fighter.stats.viciousness += fighter.bully.lvl * 0.25
         return 
     
-
 #21-30  
 class RoyalSlimyBody(BuffFight):
     description:str = "À chaque attaque bloqué, réduit l'Agility de l'attaquant."
@@ -213,7 +212,7 @@ class Lycanthropy(BuffFight):
     category:CategoryBuff = CategoryBuff.LVL_4
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
-        fighter.stats.lethality += fighter.bully.lvl * 2
+        fighter.stats.lethality += fighter.bully.lvl**2 * 0.05
     def before_fight(self, fighter: FightingBully, opponent: FightingBully):
         self.swap_stat_if_needed(fighter, opponent)
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
@@ -236,7 +235,7 @@ class Vampire(BuffFight):
     category:CategoryBuff = CategoryBuff.LVL_4
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
-        fighter.stats.viciousness += fighter.bully.lvl * 1.5
+        fighter.stats.viciousness += fighter.bully.lvl**2 * 0.05
     def apply_heal(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
         if fighter == recap_round.attacker and not recap_round.is_success_block and recap_round.is_success_vicious:
             heal = 1 if fighter.pv + 1 <= fighter.bully.max_pv else 0
@@ -299,7 +298,7 @@ class WarmUp(BuffFight):
 
 #41-50
 class Venomous(BuffFight):
-    description:str = "Ses coups critiques empoisonne son adversaire."
+    description:str = "Ses coups critiques empoisonnent son adversaire."
     description_en:str = "Poison enemy on critical strikes."
     category:CategoryBuff = CategoryBuff.LVL_5
     def __init__(self, fighter:FightingBully):
@@ -636,9 +635,10 @@ class Mecha(BuffFight):
         else : 
             bonus_damage = self.jauge /10
             if fighter == recap_round.attacker and not recap_round.is_success_block:
-            opponent.pv -= bonus_damage #type: ignore
-            opponent.pv = round(opponent.pv, 1)
-            return 0, bonus_damage #type: ignore
+                opponent.pv -= bonus_damage #type: ignore
+                opponent.pv = round(opponent.pv, 1)
+                return 0, bonus_damage #type: ignore
+        return 0, 0
     def on_death(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> None:
         if not self.is_mecha_active:
             if self.jauge >= 100 or fighter.pv <= 0:

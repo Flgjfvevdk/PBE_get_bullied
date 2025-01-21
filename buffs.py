@@ -310,7 +310,15 @@ class Venomous(BuffFight):
                 opponent.buffs.append(Poisoned(fighter= opponent, difficulty=fighter.stats.lethality))
         return
 
-
+class PainSufferer(BuffFight):
+    description:str = "À chaque coup critique subit, donne le debuff SpitYourMeal à l'attaquant."
+    description_en:str = "When hit by a critical strike, give the debuff SpitYourMeal to the attacker."
+    category:CategoryBuff = CategoryBuff.LVL_5
+    def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> None:
+        if fighter == recap_round.defender and recap_round.is_success_lethal:
+            not_spit = len([b for b in opponent.buffs if isinstance(b, SpitYourMeal)]) == 0
+            if not_spit:
+                recap_round.attacker.buffs.append(SpitYourMeal(fighter= opponent))
 
 class CrystalSkin(BuffFight):
     description:str = "Annule les dégâts supplémentaires des coups critiques."
@@ -423,7 +431,6 @@ class Poisoned(BuffFight):
             fighter.pv -= 1
             return 1, 0
         return 0, 0
-    
 class InLove(BuffFight):
     description:str = "Meurt s'il atteint 100%. Les attaques réussies réduisent la jauge"
     description_en:str = "Die when reach 100%. Successful attacks reduce the gauge."
@@ -449,7 +456,15 @@ class Dizzy(BuffFight):
         fighter.stats.agility += self.malus
         fighter.buffs.remove(self)
         return 
- 
+class SpitYourMeal(BuffFight):
+    description:str = "Soigne 1 pv à l'adversaire à chaque coup critique subit."
+    description_en:str = "Heal the enemy when hit by a critical strike."
+    category:CategoryBuff = CategoryBuff.DEBUFF
+    def apply_heal(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
+        if fighter == recap_round.defender and recap_round.is_success_lethal:
+            opponent.pv += 1
+            return 0, 1
+        return 0, 0
 class Burning(BuffFight):
     description:str = "Reçoit X dégât à chaque round. Diminue le compteur à chaque tour."
     category:CategoryBuff = CategoryBuff.DEBUFF
@@ -483,6 +498,20 @@ class Friendship(BuffFight):
     description_en:str = "All your friends love you."
     category:CategoryBuff = CategoryBuff.SPECIAL
 
+class Gambler(BuffFight):
+    description:str = "À chaque kill, obtient un buff positif aléatoire."
+    description_en:str = "Get a random positive buff after each kill."
+    category:CategoryBuff = CategoryBuff.SPECIAL
+    def __init__(self, fighter: FightingBully):
+        super().__init__(fighter)
+        self.already_kill:list[FightingBully] = []
+        self.possible_buffs = [name_to_buffs_class[name] for name in name_to_buffs_class.keys() if name_to_buffs_class[name].category in [CategoryBuff.LVL_1, CategoryBuff.LVL_2, CategoryBuff.LVL_3, CategoryBuff.LVL_4, CategoryBuff.LVL_5]]
+    
+    def on_death(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
+        if opponent.pv <= 0 and opponent not in self.already_kill:
+            fighter.buffs.append(random.choice(self.possible_buffs)(fighter=fighter))
+            self.already_kill.append(opponent)
+
 class Dragon(BuffFight):
     description:str = "Obtient tous les buffs Dragons"
     description_en:str = ""
@@ -494,7 +523,7 @@ class Dragon(BuffFight):
 class ShadowMaster(BuffFight):
     description:str = "Obtient tous les buffs Shadows"
     description_en:str = ""
-    category:CategoryBuff = CategoryBuff.SPECIAL
+    category:CategoryBuff = CategoryBuff.UNIQUE
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
         fighter.buffs = [ShadowEater(fighter=fighter), ProtectiveShadow(fighter=fighter)]
@@ -502,8 +531,6 @@ class ShadowMaster(BuffFight):
 class Adaptation(BuffFight):
     description:str = "Level up jusqu'à atteindre le level de son adversaire."
     category:CategoryBuff = CategoryBuff.SPECIAL
-    # def __init__(self, fighter:FightingBully):
-    #     super().__init__(fighter)
     def before_fight(self, fighter: FightingBully, opponent: FightingBully):
         for l in range(fighter.bully.lvl, opponent.bully.lvl):
             old_base_stat = fighter.base_stats
@@ -674,7 +701,7 @@ class GodOfLove(BuffFight):
             else : 
                 inlove_debuff.jauge += self.love_passive
         return 0, 0
-    
+  
 
 #Pour le phoenix
 class FireAura(BuffFight):
@@ -843,7 +870,6 @@ class TooPerfect(BuffFight):
                     new_value = current_value + recap_round.malus_vicious
                     setattr(opponent.stats, recap_round.vicious_target_str, new_value)
         return
-    
 class PerfectSkin(BuffFight):
     description:str = "Annule buffs négatifs à chaque round."
     category:CategoryBuff = CategoryBuff.UNIQUE

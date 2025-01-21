@@ -701,8 +701,11 @@ async def add_c(ctx: Context):
 
 @bot.command()
 @decorators.is_admin()
-async def add_elixir(ctx: Context, buff_name : str):
-    user = ctx.author
+async def add_elixir(ctx: Context, buff_name : str, cible_user:Optional[discord.User] = None):
+    if cible_user is None : 
+        user = ctx.author
+    else : 
+        user = cible_user
     lock = PlayerLock(user.id)
     if not lock.check():
         await ctx.send("You are already in an action.")
@@ -710,12 +713,13 @@ async def add_elixir(ctx: Context, buff_name : str):
     
     with lock:
         async with database.new_session() as session:
-            player = await session.get(Player, ctx.author.id)
+            player = await session.get(Player, user.id)
             if player is None:
                 await ctx.reply(TEXT_JOIN_THE_GAME)
                 return
             e = consumable.ConsumableElixirBuff("Elixir of " + buff_name, buff_name)
             player.consumables.append(e)
+            await ctx.send(f"{user} has received an elixir of {buff_name}")
             await session.commit()
 
 @bot.command()

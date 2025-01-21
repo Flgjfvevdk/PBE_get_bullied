@@ -341,7 +341,7 @@ async def challenge_error(ctx: Context, error: commands.CommandError):
 #@decorators.author_is_free
 async def explore_dungeon(ctx: Context, level:int|str):
     if isinstance(level, str):
-        if level == "Legendary" or level == "legendary" :
+        if level in ["Phoenix", "phoenix", "phenix", "Phenix"] :
             level = 111
         elif level == "bg" or level == "BG" :
             level= 432

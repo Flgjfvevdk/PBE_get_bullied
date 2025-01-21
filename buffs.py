@@ -76,7 +76,9 @@ class SlimyPunch(BuffFight):
         super().__init__(fighter)
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if fighter == recap_round.attacker and not recap_round.is_success_block:
-            opponent.stats.agility *= 0.92
+            if (opponent.stats.agility > 1):
+                opponent.stats.agility *= 0.92
+                opponent.stats.agility = max(1, opponent.stats.agility)
         return 
     
 class SlimyBody(BuffFight):
@@ -89,8 +91,7 @@ class SlimyBody(BuffFight):
         if fighter == recap_round.defender and not recap_round.is_success_block:
             if (opponent.stats.agility > 1):
                 opponent.stats.agility -= fighter.bully.lvl**2 *0.05
-                if opponent.stats.agility <= 1 :
-                    opponent.stats.agility = 1
+                opponent.stats.agility = max(1, opponent.stats.agility)
         return
 
 class ThornSkin(BuffFight):
@@ -113,7 +114,7 @@ class Frustration(BuffFight):
         super().__init__(fighter)
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
         if fighter == recap_round.attacker and recap_round.is_success_block:
-            fighter.stats.lethality += fighter.bully.lvl * 0.15
+            fighter.stats.lethality += fighter.bully.lvl**2 * 0.005
         return
 
 class DragonSkin(BuffFight):
@@ -144,7 +145,7 @@ class ShadowEater(BuffFight):
         super().__init__(fighter)
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
         if recap_round.attacker == fighter and not recap_round.is_success_block:
-            fighter.stats.viciousness += fighter.bully.lvl * 0.25
+            fighter.stats.viciousness += fighter.bully.lvl**2 * 0.01
         return 
     
 #21-30  
@@ -202,7 +203,7 @@ class DragonResilience(BuffFight):
         super().__init__(fighter)
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if fighter == recap_round.defender and recap_round.is_success_vicious:
-            fighter.stats.strength += recap_round.malus_vicious*0.6
+            fighter.stats.strength += recap_round.malus_vicious*0.65
         return
 
 #31-40
@@ -263,13 +264,13 @@ class Overdrive(BuffFight):
     category:CategoryBuff = CategoryBuff.LVL_4
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
-        bonus = fighter.bully.lvl * 3
+        bonus = fighter.bully.lvl**2 * 0.5
         fighter.stats.strength += bonus
         fighter.stats.agility += bonus
         fighter.stats.lethality += bonus
         fighter.stats.viciousness += bonus
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
-        malus = fighter.bully.lvl * 0.2
+        malus = fighter.bully.lvl**2 * 0.04
         fighter.stats.strength = max(1, fighter.stats.strength - malus)
         fighter.stats.agility = max(1, fighter.stats.agility - malus)
         fighter.stats.lethality = max(1, fighter.stats.lethality - malus)
@@ -364,7 +365,7 @@ class DragonAscension(BuffFight):
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
-        bonus = fighter.bully.lvl * 0.15
+        bonus = fighter.bully.lvl**2 * 0.003
         fighter.stats.strength += bonus
         fighter.stats.agility += bonus
         fighter.stats.lethality += bonus
@@ -498,19 +499,19 @@ class Friendship(BuffFight):
     description_en:str = "All your friends love you."
     category:CategoryBuff = CategoryBuff.SPECIAL
 
-class Gambler(BuffFight):
-    description:str = "À chaque kill, obtient un buff positif aléatoire."
-    description_en:str = "Get a random positive buff after each kill."
-    category:CategoryBuff = CategoryBuff.SPECIAL
-    def __init__(self, fighter: FightingBully):
-        super().__init__(fighter)
-        self.already_kill:list[FightingBully] = []
-        self.possible_buffs = [name_to_buffs_class[name] for name in name_to_buffs_class.keys() if name_to_buffs_class[name].category in [CategoryBuff.LVL_1, CategoryBuff.LVL_2, CategoryBuff.LVL_3, CategoryBuff.LVL_4, CategoryBuff.LVL_5]]
+# class Gambler(BuffFight):
+#     description:str = "À chaque kill, obtient un buff positif aléatoire."
+#     description_en:str = "Get a random positive buff after each kill."
+#     category:CategoryBuff = CategoryBuff.SPECIAL
+#     def __init__(self, fighter: FightingBully):
+#         super().__init__(fighter)
+#         self.already_kill:list[FightingBully] = []
+#         self.possible_buffs = [name_to_buffs_class[name] for name in name_to_buffs_class.keys() if name_to_buffs_class[name].category in [CategoryBuff.LVL_1, CategoryBuff.LVL_2, CategoryBuff.LVL_3, CategoryBuff.LVL_4, CategoryBuff.LVL_5]]
     
-    def on_death(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
-        if opponent.pv <= 0 and opponent not in self.already_kill:
-            fighter.buffs.append(random.choice(self.possible_buffs)(fighter=fighter))
-            self.already_kill.append(opponent)
+#     def on_death(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
+#         if opponent.pv <= 0 and opponent not in self.already_kill:
+#             fighter.buffs.append(random.choice(self.possible_buffs)(fighter=fighter))
+#             self.already_kill.append(opponent)
 
 class Dragon(BuffFight):
     description:str = "Obtient tous les buffs Dragons"

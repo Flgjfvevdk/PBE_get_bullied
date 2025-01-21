@@ -72,19 +72,18 @@ class DungeonFightingBully():
 
 dungeon_fighter_bully_list = [DungeonFightingBully(name="Thyr O'Flan", pv_max=5, seed=Seed(0.2, 0.45, 0.1, 0.25)),
                               DungeonFightingBully(name="Grobrah Le Musclé", pv_max=7, seed=bully.Seed(0.65, 0.1, 0.2, 0.05)),
-                              DungeonFightingBully(name="Fou Fur", pv_max=6, seed=bully.Seed(0.2, 0.2, 0.5, 0.1)),
-                              DungeonFightingBully(name="wè wè", pv_max=6, seed=bully.Seed(0.4, 0.3, 0.1, 0.2)),
+                              DungeonFightingBully(name="Le Fou Furieux", pv_max=6, seed=bully.Seed(0.2, 0.2, 0.5, 0.1), buffs_tags=["Frustration"]),
+                              DungeonFightingBully(name="L'Athlète", pv_max=6, seed=bully.Seed(0.4, 0.3, 0.1, 0.2)),
                               DungeonFightingBully(name="Craby", pv_max=6, seed=bully.Seed(0.2, 0.1, 0.4, 0.3)),
-                              DungeonFightingBully(name="le gars qu'on choisit en dernier en sport et qui se venge", pv_max=5, seed=bully.Seed(0.1, 0.1, 0.45, 0.35)),
+                              DungeonFightingBully(name="Un gars perdu", pv_max=5, seed=bully.Seed(0.3, 0.1, 0.25, 0.35)),
                               DungeonFightingBully(name="Plu Didier", pv_max=6, seed=bully.Seed(0.2, 0.4, 0.1, 0.3)),
-                              DungeonFightingBully(name="Woah", pv_max=6, seed=bully.Seed(0.3, 0.3, 0.2, 0.2)),
+                              DungeonFightingBully(name="Fury Flip", pv_max=6, seed=bully.Seed(0.3, 0.3, 0.2, 0.2)),
                               DungeonFightingBully(name="Gros Problème", pv_max=8, seed=bully.Seed(0.35, 0.55, 0.01, 0.09), buffs_tags=["Rage"]),
-                              DungeonFightingBully(name="Le Fourbe", pv_max=5, seed=bully.Seed(0.1, 0.2, 0.05, 0.65)),
+                              DungeonFightingBully(name="Le Fourbe", pv_max=6, seed=bully.Seed(0.1, 0.2, 0.05, 0.65)),
                               DungeonFightingBully(name="Nulos", pv_max=5, seed=bully.Seed(0.1, 0.05, 0.4, 0.45))]
 
-dungeon_fighters_lvl_10 = [DungeonFightingBully(name="Serpent diforme", pv_max=6, seed=Seed(0.2, 0.4, 0.3, 0.1), buffs_tags=["SharpTeeth"], rarity=Rarity.TOXIC, can_swap=True),
-                           DungeonFightingBully(name="Grosse araignée mutante", pv_max=10, seed=Seed(0.3, 0.3, 0.4, 0.0), buffs_tags=["Venomous"], rarity=Rarity.TOXIC, can_swap=True, exp_coef=1.0),
-                           DungeonFightingBully(name="Très grosse araignée mutante", pv_max=12, seed=Seed(0.4, 0.2, 0.3, 0.1), buffs_tags=["Venomous"], rarity=Rarity.TOXIC, can_swap=True, exp_coef=1.0),
+dungeon_fighters_lvl_10 = [DungeonFightingBully(name="Araignée mutante", pv_max=10, seed=Seed(0.3, 0.3, 0.4, 0.0), buffs_tags=["Venomous"], rarity=Rarity.TOXIC, can_swap=True, exp_coef=1.0),
+                           DungeonFightingBully(name="Andy State", pv_max=8, seed=Seed(0.3, 0.2, 0.1, 0.4), buffs_tags=["Vilain"], rarity=Rarity.TOXIC, can_swap=True, exp_coef=1.0),
                            DungeonFightingBully(name="Pollution", pv_max=15, seed = Seed(0.1, 0.3, 0.1, 0.5), buffs_tags=["Pollution"], rarity=Rarity.TOXIC, can_swap=True, exp_coef=1.2)
                            ]
 
@@ -98,7 +97,7 @@ dungeon_fighters_lvl_30 = [DungeonFightingBully(name="Dr Malice - Super Vilain",
                           DungeonFightingBully(name="Dr Malice - Constructeur de mecha", pv_max=10, seed=Seed(0.5, 0.5, 0.05, 0.3), buffs_tags=["Mecha"], rarity=Rarity.UNIQUE, can_swap=True, exp_coef=2.0)
                           ]
 
-dungeon_fighters_lvl_40 = [DungeonFightingBully(name="Cupidon", pv_max=40, seed=Seed(0.2, 0.5, 0.0, 0.3), buffs_tags=["GodOfLove"], rarity=Rarity.SUBLIME, can_swap=True, exp_coef=2.0)]
+dungeon_fighters_lvl_40 = [DungeonFightingBully(name="Cupidon", pv_max=40, seed=Seed(0.2, 0.5, 0.0, 0.3), buffs_tags=["GodOfLove"], rarity=Rarity.SUBLIME, can_swap=True, exp_coef=3.0)]
 
 dungeon_fighters_lvl_50 = [DungeonFightingBully(name="Zofia, Gardienne de la porte", pv_max=13, seed=Seed(1.3, 0.3, 0.4, 0.0), buffs_tags=["Brutal", "IronSkin"], rarity=Rarity.UNIQUE, can_swap=True),
                              DungeonFightingBully(name="Chimère", pv_max=10, seed=Seed(0.5, 0.4, 0.7, 0.4), buffs_tags=["SharpTeeth"], rarity=Rarity.UNIQUE, can_swap=True),

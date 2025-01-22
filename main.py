@@ -222,7 +222,7 @@ async def tuto_shop(ctx: Context):
 @bot.command(aliases=['tuto_lb', 'tuto_l'])
 async def tuto_lootbox(ctx: Context):
     await ctx.channel.send(tuto_text.tuto_lootbox)
-@bot.command(aliases=['tuto_bf', 'tuto_buff', 'list_buff', 'list_buffs', 'buffs', 'buff'])
+@bot.command(aliases=['tuto_bf', 'tuto_buff', 'list_buff', 'list_buffs', 'buffs', 'buff', 'info_buff', 'info_buffs', 'infos_buff', 'infos_buffs'])
 async def tuto_buffs(ctx: Context):
     txt = ""
     import inspect, buffs, fighting_bully

@@ -3,7 +3,7 @@ import asyncio
 from pathlib import Path
 import discord
 from fight_manager import TeamFight
-from fighting_bully import FightingBully, get_player_team
+from fighting_bully import FightingBully, add_team_buff, get_player_team
 import interact_game
 import money
 from utils.database import Base
@@ -145,6 +145,7 @@ class ArenaFight:
             enemy_player_team = self.teams.popitem()
             enemy_teamfighters:list[FightingBully] = [FightingBully.create_fighting_bully(b) for b in enemy_player_team[1]]
             self.add_champion_buff(enemy_teamfighters)
+            add_team_buff(enemy_teamfighters)
             await self.thread.send(f"Next teamfight against : \n{str_teamfighters_complete(self.user, enemy_teamfighters)}")
 
             teamfight = TeamFight(ctx=self.ctx, user_1=self.user, user_2=None, player_1=self.player, player_2=None, can_swap=True, channel_cible=self.thread)
@@ -289,19 +290,13 @@ async def update_arenas(bot : Bot):
 
 async def get_bonus_payday(session: AsyncSession, server_id:int,  player_id_str: str) -> int:
     arena = await session.get(Arena, server_id)
-    print("bf")
     if arena is None:
         return 0
-    print("fefefef")
     if arena.teams_ids.get(player_id_str, None) is not None:
-        print("dddd")
         keys = list(arena.teams_ids.keys())
         index = keys.index(player_id_str)
         if index < len(BONUS_PAYDAY_CHAMPION):
-            print("a")
             return BONUS_PAYDAY_CHAMPION[index]
-        print("f")
-    print("aaa")
     return 0
 
 

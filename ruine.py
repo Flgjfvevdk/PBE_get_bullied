@@ -2,7 +2,7 @@ import os
 import random
 from bully import Bully, Rarity, LevelUpException, Stats
 import bully
-from fighting_bully import FightingBully, BuffFight, get_player_team
+from fighting_bully import FightingBully, BuffFight, add_team_buff, get_player_team
 import consumable
 from consumable import Consumable
 import interact_game
@@ -25,7 +25,7 @@ RUIN_CHOICE_TIMEOUT = 60
 THREAD_DELETE_AFTER = 60
 MAX_PV_ENEMY = 8
 COEF_XP_FIGHTER = 0.8
-COEF_GOLD_FIGHTER = 0.1
+COEF_GOLD_FIGHTER = 1.0
 MAX_PV_BOSS = 20
 
 boss_rarity_lvl:dict[int, bully.Rarity] = {k:bully.Rarity.TOXIC for k in range(0,5)} | {k:bully.Rarity.MONSTER for k in range(5,20)} | {k:bully.Rarity.DEVASTATOR for k in range(20,35)} | {k:bully.Rarity.SUBLIME for k in range(35,50)}
@@ -81,10 +81,12 @@ class EnemyRoom():
     @staticmethod
     def generate(level: int, rarity: Rarity) -> "EnemyRoom":
         max_pv_enemy = MAX_PV_ENEMY
-        enemy = Bully("enemy", rarity=rarity, must_load_image= False, max_pv= max_pv_enemy)
+        enemy = Bully("Enemy", rarity=rarity, must_load_image= False, max_pv= max_pv_enemy)
         for k in range(1, level) :
             enemy.level_up_one()
         enemy_fighter = FightingBully.create_fighting_bully(enemy)
+        enemy_fighter.exp_coef = COEF_XP_FIGHTER
+        enemy_fighter.gold_coef = COEF_GOLD_FIGHTER
         return EnemyRoom(enemy_fighter)
     
     async def interact(self, ruin: "Ruin") -> bool:
@@ -165,9 +167,8 @@ class EnemyRoom():
 
             #On calcule les récompenses, on les affiches et on les stock
             (exp_earned, gold_earned) = fight_manager.reward_win_fight(bully_joueur, self.enemy.bully)
-            exp_earned *= COEF_XP_FIGHTER
-            # exp_earned = COEF_XP_FIGHTER * self.enemy.combattant.lvl if exp_earned > 0 else 0
-            gold_earned = int(COEF_GOLD_FIGHTER * gold_earned)
+            exp_earned *= self.enemy.exp_coef
+            gold_earned = int(self.enemy.gold_coef * gold_earned)
             pretext = ""
             if (exp_earned > 0):
                 try:
@@ -305,9 +306,12 @@ class Ruin():
         boss_rarity:bully.Rarity = boss_rarity_lvl[self.level]
         self.rarity_level = boss_rarity
 
+        all_fighters_enemy:list[FightingBully] = []
         
         #Ajout salle boss à la fin
-        self.rooms.append(BossRoom.generate(self.level, boss_rarity))
+        boss_room = BossRoom.generate(self.level, boss_rarity)  
+        self.rooms.append(boss_room)
+        all_fighters_enemy.append(boss_room.enemy)
 
         #Ajout salle Treasure
         for _ in range(nb_salle_treasure):
@@ -315,7 +319,11 @@ class Ruin():
         #Ajout salle Enemy
         for _ in range(nb_salle_enemy):
             rarity = random.choice(fighter_rarities)
-            self.rooms.append(EnemyRoom.generate(self.level, rarity))
+            new_room = EnemyRoom.generate(self.level, rarity)
+            self.rooms.append(new_room)
+            all_fighters_enemy.append(new_room.enemy)
+        
+        add_team_buff(all_fighters_enemy)
 
 
     async def enter(self) -> None:

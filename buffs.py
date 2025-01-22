@@ -377,12 +377,14 @@ class ToxicTeam(BuffFight):
     description:str = "Les coups vicieux bloqués font 1 dégât."
     description_en:str = ""
     category:CategoryBuff = CategoryBuff.TEAM
+    dmg = 0.5
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
-    def apply_damage(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
+    def apply_damage(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if fighter == recap_round.attacker and recap_round.is_success_vicious and recap_round.is_success_block:
-            opponent.pv -= 1
-            return 0, 1
+            opponent.pv -= self.dmg #type: ignore
+            opponent.pv = round(opponent.pv, 1)
+            return 0, self.dmg
         return 0, 0
 
 class MonsterTeam(BuffFight):

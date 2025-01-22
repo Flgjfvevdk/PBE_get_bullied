@@ -43,7 +43,7 @@ class Trap :
         init_R = rarity.base_points
         coef_R = rarity.coef_level_points
 
-        self.difficulty = round((init_R + coef_R *level) /4) + 1
+        self.difficulty = round((init_R + coef_R * level**2/2) /4) + 1
         if(stat_index == None):
             self.index_stat = random.randint(0,3)
         else :

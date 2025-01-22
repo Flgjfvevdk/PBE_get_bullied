@@ -53,6 +53,8 @@ class FightingBully():
     base_stats: Stats
     stats: Stats
     buffs:list[BuffFight] = field(default_factory=lambda: [])
+    exp_coef:float = 1.0
+    gold_coef:float = 1.0
 
     @staticmethod
     def create_fighting_bully(b:Bully) -> "FightingBully":
@@ -75,7 +77,7 @@ class FightingBully():
 
     def get_print(self) -> str:
         text = ""
-        hp_text = f"HP : {self.pv}/{self.bully.max_pv}"
+        hp_text = f"HP : {round(self.pv, 1)}/{self.bully.max_pv}"
         buff_text = self.buffs_str()
         def good_print_float(x:float) -> float|int:
             xf:float = float(x)

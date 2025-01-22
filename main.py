@@ -1,4 +1,5 @@
 # bot.py
+import math
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -341,18 +342,19 @@ async def challenge_error(ctx: Context, error: commands.CommandError):
 #@decorators.author_is_free
 async def explore_dungeon(ctx: Context, level:int|str):
     if isinstance(level, str):
-        if level in ["Phoenix", "phoenix", "phenix", "Phenix"] :
-            level = 111
-        elif level == "bg" or level == "BG" :
-            level= 432
+        for dg_tags in donjon.special_dg_name_number.values():
+            if level in dg_tags:
+                level = next(key for key, value in donjon.special_dg_name_number.items() if level in value)
+                break
         else : 
             await ctx.channel.send("Dungeon level must be a number (or a specific keyword).")
             return
         
+
     if(level <= 0) :
         await ctx.channel.send("Dungeon level must be greater than 0.")
         return
-    if level > 50 and level != 111 and level != 666 and level != 432:
+    if level > 50 and level not in donjon.special_dg_name_number.keys():
         await ctx.channel.send("Level max is 50.")
         return
 
@@ -368,6 +370,12 @@ async def explore_dungeon(ctx: Context, level:int|str):
             if player is None:
                 await ctx.reply(TEXT_JOIN_THE_GAME)
                 return
+            
+            pallier_boss_vaincu = math.floor(player.max_dungeon/10) * 10
+            if (level - 10 > pallier_boss_vaincu) and level not in donjon.special_dg_name_number.keys():
+                await ctx.channel.send(f"You must defeat the dungeon level {math.floor((level-1)/10)*10} before exploring this dungeon.")
+                return
+
             try :
                 await donjon.Dungeon(ctx, bot, player, level).enter()
             except Exception as e:
@@ -532,6 +540,7 @@ async def hire_all(ctx: Context):
             await session.commit()
 
 @bot.command()
+@decorators.is_admin()
 async def kill_all(ctx: Context):
     user = ctx.author
     lock = PlayerLock(user.id)

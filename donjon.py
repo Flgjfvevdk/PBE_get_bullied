@@ -1,20 +1,19 @@
+import asyncio
+import math
 import os
 import random
 from bully import Bully, Rarity, Seed #ne pas confondre avec bully (le fichier)
 import bully #ne pas confondre avec Bully (la class)
+import consumable
+from consumable import Consumable, ConsumableElixirBuff
 from fighting_bully import FightingBully, get_player_team
+import money
 from player_info import Player
 import interact_game
 import fight_manager
-import money
-import math
-import keys
-import asyncio
-import consumable
 
 from dataclasses import dataclass, field, KW_ONLY, replace
 
-from typing import Optional
 from typing import List
 
 from discord.ext.commands import Context, Bot
@@ -41,6 +40,7 @@ ENEMIES_GROUP_SIZE = 6
 
 boss_rarity_lvl:dict[int, bully.Rarity] = {k:bully.Rarity.TOXIC for k in range(0,5)} | {k:bully.Rarity.MONSTER for k in range(5,20)} | {k:bully.Rarity.DEVASTATOR for k in range(20,35)} | {k:bully.Rarity.SUBLIME for k in range(35,50)}
 fighter_rarities_lvl:dict[int, list[bully.Rarity]] = {k:[bully.Rarity.TOXIC] for k in range(0,10)} | {k:[bully.Rarity.TOXIC, bully.Rarity.MONSTER] for k in range(10,15)} | {k:[bully.Rarity.MONSTER] for k in range(15,25)} | {k:[bully.Rarity.MONSTER, bully.Rarity.DEVASTATOR] for k in range(25,30)} | {k:[bully.Rarity.DEVASTATOR] for k in range(30,40)} | {k:[bully.Rarity.DEVASTATOR, bully.Rarity.SUBLIME] for k in range(40,45)} | {k:[bully.Rarity.SUBLIME] for k in range(45,50)}
+special_dg_name_number:dict[int, list[str]] = {111 : ["Phoenix", "phoenix", "Phenix", "phenix"], 666 : ["Hell", "hell", "Enfer", "enfer"], 432 : ["Elisha", "elisha", "BG", "bg"]}
 
 @dataclass
 class DungeonFightingBully():
@@ -61,21 +61,30 @@ class DungeonFightingBully():
             b.level_up_one()
         self.fighting_bully = FightingBully.create_fighting_bully(b=b)
         self.fighting_bully.set_buffs(buffs_tags=self.buffs_tags)
+        self.fighting_bully.exp_coef = self.exp_coef
+        self.fighting_bully.gold_coef = self.gold_coef
 
-    def reward_kill(self, bully_joueur) -> tuple[float, int]:
-        if self.fighting_bully is None : 
-            raise Exception("fighting bully must be initiated")
-        (exp_earned, gold_earned) = fight_manager.reward_win_fight(bully_joueur, self.fighting_bully.bully)
-        exp_earned *= self.exp_coef
-        gold_earned = int(self.gold_coef * gold_earned)
-        return (exp_earned, gold_earned)
+    # def reward_kill(self, bully_joueur) -> tuple[float, int]:
+    #     if self.fighting_bully is None : 
+    #         raise Exception("fighting bully must be initiated")
+    #     (exp_earned, gold_earned) = fight_manager.reward_win_fight(bully_joueur, self.fighting_bully.bully)
+    #     exp_earned *= self.exp_coef
+    #     gold_earned = int(self.gold_coef * gold_earned)
+    #     return (exp_earned, gold_earned)
+
+@dataclass
+class DungeonSpecialInfos():
+    name:str
+    level:int
+    dg_fighters:List[DungeonFightingBully]
+    reward_conso:Consumable|None = None
 
 dungeon_fighter_bully_list = [DungeonFightingBully(name="Thyr O'Flan", pv_max=5, seed=Seed(0.2, 0.45, 0.1, 0.25)),
                               DungeonFightingBully(name="Grobrah Le Musclé", pv_max=7, seed=bully.Seed(0.65, 0.1, 0.2, 0.05)),
                               DungeonFightingBully(name="Le Fou Furieux", pv_max=6, seed=bully.Seed(0.2, 0.2, 0.5, 0.1), buffs_tags=["Frustration"]),
                               DungeonFightingBully(name="L'Athlète", pv_max=6, seed=bully.Seed(0.4, 0.3, 0.1, 0.2)),
                               DungeonFightingBully(name="Craby", pv_max=6, seed=bully.Seed(0.2, 0.1, 0.4, 0.3)),
-                              DungeonFightingBully(name="Un gars perdu", pv_max=5, seed=bully.Seed(0.3, 0.1, 0.25, 0.35)),
+                              DungeonFightingBully(name="Slime perdu", pv_max=5, seed=bully.Seed(0.4, 0.2, 0.3, 0.1), buffs_tags=["SlimyBody"]),
                               DungeonFightingBully(name="Plu Didier", pv_max=6, seed=bully.Seed(0.2, 0.4, 0.1, 0.3)),
                               DungeonFightingBully(name="Fury Flip", pv_max=6, seed=bully.Seed(0.3, 0.3, 0.2, 0.2)),
                               DungeonFightingBully(name="Gros Problème", pv_max=8, seed=bully.Seed(0.35, 0.55, 0.01, 0.09), buffs_tags=["Rage"]),
@@ -84,7 +93,7 @@ dungeon_fighter_bully_list = [DungeonFightingBully(name="Thyr O'Flan", pv_max=5,
 
 dungeon_fighters_lvl_10 = [DungeonFightingBully(name="Araignée mutante", pv_max=10, seed=Seed(0.3, 0.3, 0.4, 0.0), buffs_tags=["Venomous"], rarity=Rarity.TOXIC, can_swap=True, exp_coef=1.0),
                            DungeonFightingBully(name="Andy State", pv_max=8, seed=Seed(0.3, 0.2, 0.1, 0.4), buffs_tags=["Vilain"], rarity=Rarity.TOXIC, can_swap=True, exp_coef=1.0),
-                           DungeonFightingBully(name="Pollution", pv_max=15, seed = Seed(0.1, 0.3, 0.1, 0.5), buffs_tags=["Pollution"], rarity=Rarity.TOXIC, can_swap=True, exp_coef=1.2)
+                           DungeonFightingBully(name="Pollution", pv_max=15, seed = Seed(0.2, 0.4, 0.1, 0.3), buffs_tags=["Pollution"], rarity=Rarity.TOXIC, can_swap=True, exp_coef=1.2)
                            ]
 
 dungeon_fighters_lvl_20 = [DungeonFightingBully(name="Vilain Slime !", pv_max=12, seed=Seed(0.48, 0.3, 0.02, 0.2), buffs_tags=["SlimyPunch", "SlimyBody"], rarity=Rarity.MONSTER, can_swap=True),
@@ -120,13 +129,22 @@ dungeon_fighters_lvl_666 = [DungeonFightingBully(name="Le Diable - Rédigeant un
                             DungeonFightingBully(name="Le Diable - Maitre des morts", pv_max=10, seed=bully.Seed(0.8, 0.8, 0.8, 0), buffs_tags=["RootOfEvil"], rarity=Rarity.UNIQUE, can_swap=True),
                             ]
 
-dungeon_fighters_lvl_legendary = [DungeonFightingBully(name="Phoenix - L'oiseau magnifique", pv_max=14, seed=bully.Seed(0.4, 1.0, 0.7, 0.1), buffs_tags=["Adaptation", "FirePunch"], rarity=Rarity.UNIQUE, can_swap=True),
+dungeon_fighters_lvl_phoenix = [DungeonFightingBully(name="Phoenix - L'oiseau magnifique", pv_max=14, seed=bully.Seed(0.4, 1.0, 0.7, 0.1), buffs_tags=["Adaptation", "FirePunch"], rarity=Rarity.UNIQUE, can_swap=True),
                               DungeonFightingBully(name="Phoenix - L'oeuf de résurrection", pv_max=16, seed=bully.Seed(1.0, 0.0, 0.1, 0.25), buffs_tags=["Adaptation", "FireAura"], rarity=Rarity.UNIQUE, can_swap=True),
                               DungeonFightingBully(name="Phoenix - L'abomination de flamme", pv_max=20, seed=bully.Seed(0.8, 0.6, 0.5, 0.1), buffs_tags=["Adaptation", "ExplosiveTouch", "FirePunch"], rarity=Rarity.UNIQUE, can_swap=True)
                               ]
 
-dungeon_fighters_lvl_bg = [DungeonFightingBully(name="Elisha le BG", pv_max=50, seed=bully.Seed(1.1, 0.4, 0.2, 0), buffs_tags=["Adaptation", "TooPerfect", "PerfectSkin"], rarity=Rarity.UNIQUE, can_swap=True)
-                              ]
+dungeon_fighters_lvl_bg = [DungeonFightingBully(name="Elisha le BG", pv_max=50, seed=bully.Seed(1.1, 0.4, 0.2, 0), buffs_tags=["Adaptation", "TooPerfect", "PerfectSkin"], rarity=Rarity.UNIQUE, can_swap=True)]
+
+
+dungeon_specials_dict:dict[int, DungeonSpecialInfos] = {10 : DungeonSpecialInfos("Dungeon lvl 10 - Boss", 10, dungeon_fighters_lvl_10), 
+                                                        20 : DungeonSpecialInfos("Dungeon lvl 20 - Boss", 20, dungeon_fighters_lvl_20),
+                                                        30 : DungeonSpecialInfos("Dungeon lvl 30 - Boss", 30, dungeon_fighters_lvl_30),
+                                                        40 : DungeonSpecialInfos("Dungeon lvl 40 - Boss", 40, dungeon_fighters_lvl_40),
+                                                        50 : DungeonSpecialInfos("Dungeon lvl 50 - Boss", 50, dungeon_fighters_lvl_50, ConsumableElixirBuff("Dragon Blood", "Dragon")), 
+                                                        111 : DungeonSpecialInfos("Phoenix nest", 15, dungeon_fighters_lvl_phoenix, ConsumableElixirBuff("Phoenix's Feather", "Phoenix")), 
+                                                        666 : DungeonSpecialInfos("Hell", 50, dungeon_fighters_lvl_666, ConsumableElixirBuff("Devil's Pocket Watch", "DevilPocketWatch")), 
+                                                        432 : DungeonSpecialInfos("Elisha's house", 10, dungeon_fighters_lvl_bg, ConsumableElixirBuff("Perfect lotion", "PerfectSkin"))}
 
 @dataclass
 class Dungeon():
@@ -147,7 +165,7 @@ class Dungeon():
     xp_earned_bullies: List[float] = field(init=False)
     thread: Thread = field(init=False)
 
-    reward_conso:consumable.Consumable|None = None
+    reward_conso:Consumable|None = None
 
     def __post_init__(self):
         self.user = self.ctx.author
@@ -164,24 +182,12 @@ class Dungeon():
         fighters_rarities = []
 
         # Configuration pour les niveaux spéciaux
-        if self.level == 50:
-            dungeon_fighters = dungeon_fighters_lvl_50
-            self.reward_conso = consumable.ConsumableElixirBuff("Dragon Blood", "Dragon")
-        elif self.level == 111:
-            self.level = 15
-            self.name = "Phoenix nest"
-            dungeon_fighters = dungeon_fighters_lvl_legendary
-            self.reward_conso = consumable.ConsumableElixirBuff("Phoenix's Feather", "Phoenix")
-        elif self.level == 666:
-            self.level = 50
-            self.name = "Hell"
-            dungeon_fighters = dungeon_fighters_lvl_666
-            self.reward_conso = consumable.ConsumableElixirBuff("Devil's Pocket Watch", "DevilPocketWatch")
-        elif self.level == 432:
-            self.level = 10
-            self.name = "Elisha's house"
-            dungeon_fighters = dungeon_fighters_lvl_bg
-            self.reward_conso = consumable.ConsumableElixirBuff("Perfect lotion", "PerfectSkin")
+        if self.level in dungeon_specials_dict.keys():
+            level_key = self.level
+            self.name = dungeon_specials_dict[level_key].name
+            dungeon_fighters = dungeon_specials_dict[level_key].dg_fighters
+            self.reward_conso = dungeon_specials_dict[level_key].reward_conso
+            self.level = dungeon_specials_dict[level_key].level
 
         # Configuration pour les autres niveaux
         else:
@@ -228,6 +234,7 @@ class Dungeon():
         except Exception as e:
             print(e)
 
+        #Le joueur a gagné le donjon
         else:
             #On est plus dans le combat, le joueur à vaincu le donjon
             await self.ctx.channel.send(f"{self.ctx.author.name} has beaten the {self.name}!") 
@@ -253,10 +260,9 @@ class Dungeon():
             await self.exit(THREAD_DELETE_AFTER)
 
     async def handle_fight(self, can_switch = False):
-        #On affiche le prochain ennemy
         fighting_bully_enemy = self.enemies_fighters[self.current_floor]
-        text_enemy_coming = f"An enemy is coming! {fighting_bully_enemy.get_print()}"
-        await self.thread.send(f"{bully.mise_en_forme_str(text_enemy_coming)}") 
+        text_enemy_coming = f"{fighting_bully_enemy.get_print()}"
+        await self.thread.send(f"Next enemy :\n{bully.mise_en_forme_str(text_enemy_coming)}") 
         
         fighting_bully_joueur, num_bully_j = await interact_game.player_choose_fighting_bully(ctx=self.ctx, fighting_bullies=self.fighters_joueur, user=self.ctx.author, channel_cible=self.thread, timeout=DUNGEON_CHOICE_TIMEOUT)
 
@@ -281,8 +287,8 @@ class Dungeon():
         if(fighting_bully_joueur.pv > 0) :
             #Le joueur a gagné. On calcul les récompenses, on les affiches et on les stocks
             (exp_earned, gold_earned) = fight_manager.reward_win_fight(bully_joueur, fighting_bully_enemy.bully)
-            exp_earned *= COEF_XP_FIGHTER
-            gold_earned = int(COEF_GOLD_FIGHTER * gold_earned)
+            exp_earned *= fighting_bully_enemy.exp_coef #COEF_XP_FIGHTER
+            gold_earned = int(fighting_bully_enemy.gold_coef * gold_earned) #int(COEF_GOLD_FIGHTER * gold_earned)
             pretext = ""
             if (exp_earned > 0):
                 try:

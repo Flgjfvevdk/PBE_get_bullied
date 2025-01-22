@@ -88,7 +88,6 @@ class EnemyRoom():
         return EnemyRoom(enemy_fighter)
     
     async def interact(self, ruin: "Ruin") -> bool:
-        # await ruin.thread.send(f"An enemy stands in your way! \n{bully.mise_en_forme_str(self.enemy.bully.get_print(compact_print=True))}")
         await ruin.thread.send(f"An enemy stands in your way! \n{bully.mise_en_forme_str(self.enemy.get_print())}")
         while True:
             fighter = await self.fighter_choice(ruin)

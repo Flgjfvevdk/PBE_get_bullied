@@ -152,20 +152,37 @@ def get_player_team(player:player_info.Player, is_team_buff_active = True):
 
 def add_team_buff(fighters:list[FightingBully]):
     compteur_rarity:dict[Rarity, int] = {r:0 for r in Rarity}
+    team_buff_rarity:Rarity|None = None
+
     for f in fighters:
         compteur_rarity[f.bully.rarity] += 1
-    team_buff_tag:str|None = None
     if compteur_rarity[Rarity.TOXIC] >= 3:
-        team_buff_tag = "ToxicTeam"
+        team_buff_rarity = Rarity.TOXIC
     elif compteur_rarity[Rarity.MONSTER] >= 3:
-        team_buff_tag = "MonsterTeam"
+        team_buff_rarity = Rarity.MONSTER
     elif compteur_rarity[Rarity.DEVASTATOR] >= 3:
-        team_buff_tag = "DevastatorTeam"
+        team_buff_rarity = Rarity.DEVASTATOR
     elif compteur_rarity[Rarity.SUBLIME] >= 3:
-        team_buff_tag = "SublimeTeam"
-    if team_buff_tag is not None:
+        team_buff_rarity = Rarity.SUBLIME
+    if team_buff_rarity is not None:
+        buff_team, buff_true = rarity_to_buff_tags(team_buff_rarity)
         for f in fighters:
-            f.add_buff(team_buff_tag)
+            if f.bully.rarity == team_buff_rarity:
+                f.add_buff(buff_true)
+            else :
+                f.add_buff(buff_team)
+
+def rarity_to_buff_tags(r:Rarity) -> tuple[str, str]:
+    if r == Rarity.TOXIC:
+        return ("ToxicTeam", "TrueToxic")
+    elif r == Rarity.MONSTER:
+        return ("MonsterTeam", "TrueMonster")
+    elif r == Rarity.DEVASTATOR:
+        return ("DevastatorTeam", "TrueDevastator")
+    elif r == Rarity.SUBLIME:
+        return ("SublimeTeam", "TrueSublime")
+    else:
+        return ("", "")
 
 def create_buff_instance(buff_name: str, fighter:FightingBully) -> BuffFight: 
     import buffs

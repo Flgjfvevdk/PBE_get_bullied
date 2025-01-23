@@ -374,8 +374,7 @@ class DragonAscension(BuffFight):
 
 #Team Buffs
 class ToxicTeam(BuffFight):
-    description:str = "Les coups vicieux bloqués font 1 dégât."
-    description_en:str = ""
+    description:str = "Les coups vicieux bloqués font 0.5 dégât."
     category:CategoryBuff = CategoryBuff.TEAM
     dmg = 0.5
     def __init__(self, fighter:FightingBully):
@@ -386,31 +385,46 @@ class ToxicTeam(BuffFight):
             opponent.pv = round(opponent.pv, 1)
             return 0, self.dmg
         return 0, 0
+class TrueToxic(ToxicTeam):
+    description:str = "Les coups vicieux bloqués font 1 dégât."
+    dmg = 1.0
 
 class MonsterTeam(BuffFight):
     description:str = "Se soigne de 1 HP en faisant un coup critique."
     description_en:str = ""
     category:CategoryBuff = CategoryBuff.TEAM
-    def __init__(self, fighter:FightingBully):
-        super().__init__(fighter)
     def apply_heal(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
         if fighter == recap_round.attacker and recap_round.is_success_lethal and fighter.pv + 1 <= fighter.bully.max_pv:
             fighter.pv += 1
             return 1, 0
+        return 0, 0
+class TrueMonster(MonsterTeam):
+    description:str = "Ses coups critères soigne de 1 HP et inflige 1 dégât supplémentaire."
+    category:CategoryBuff = CategoryBuff.TEAM
+    def apply_damage(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
+        if fighter == recap_round.attacker and recap_round.is_success_lethal and fighter.pv + 1 <= fighter.bully.max_pv:
+            opponent.pv -= 1
+            return 0, 1
         return 0, 0
 
 class DevastatorTeam(BuffFight):
     description:str = "Les coups non critiques font 1 dégât supplémentaire."
     description_en:str = ""
     category:CategoryBuff = CategoryBuff.TEAM
-    def __init__(self, fighter:FightingBully):
-        super().__init__(fighter)
     def apply_damage(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
         if fighter == recap_round.attacker and not recap_round.is_success_lethal and not recap_round.is_success_block:
             opponent.pv -= 1
             return 0, 1
         return 0, 0
-    
+class TrueDevastator(BuffFight):
+    description:str = "Inflige 1 dégât supplémentaire à chaque attaque."
+    category:CategoryBuff = CategoryBuff.TEAM
+    def apply_damage(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
+        if fighter == recap_round.attacker and not recap_round.is_success_block:
+            opponent.pv -= 1
+            return 0, 1
+        return 0, 0
+
 class SublimeTeam(BuffFight):
     description:str = "Commence les combats avec 2 pv supplémentaire."
     description_en:str = ""
@@ -418,6 +432,8 @@ class SublimeTeam(BuffFight):
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
         fighter.pv += 2
+class TrueSublime(SublimeTeam):
+    pass
 
 #Buff Negatif
 class Poisoned(BuffFight):

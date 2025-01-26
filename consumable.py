@@ -1,5 +1,5 @@
 from utils.database import Base
-from bully import Bully, Stats
+from bully import Bully, Stats, Rarity, BULLY_MAX_LEVEL, mise_en_forme_str
 from discord.ext.commands import Context, Bot
 import discord
 import interact_game
@@ -135,6 +135,38 @@ class ConsumableElixirBuff(Consumable):
         except Exception:
             return f"ERROR ELIXIR"
 
+class ConsumableWaterLvl(Consumable):
+    __mapper_args__ = {
+        "polymorphic_identity": "waterlvl",
+        "polymorphic_load": "selectin"
+    }
+    __tablename__ = "waterLVL"
+
+    id: Mapped[int] = mapped_column(ForeignKey("consumable.id"), init=False, primary_key=True)
+    val: Mapped[int]
+    rarity : Mapped[Rarity]
+
+    def apply(self, b:Bully):
+        if self.rarity != b.rarity:
+            raise ConsumableUseException(f"This water is made for **{self.rarity.name}** bullies, not **{b.rarity.name}**")
+        b.lvl += self.val
+        b.lvl = min(b.lvl, b.max_level_reached, BULLY_MAX_LEVEL)
+
+    def get_print(self) -> CText:
+        txt = mise_en_forme_str(f"{self.name} : on use, a bully of rarity {self.rarity.name} will recover a maximum of {self.val} levels.")
+        return CText(txt)
+        
+
+    def get_effect(self) -> str:
+        txt = (f"{self.name} : on use, a bully of rarity **{self.rarity.name}** will recover a maximum of **{self.val} levels**.")
+        return txt
+
+
+#____________________________________________________________________________________________________________________
+class ConsumableUseException(Exception):
+    def __init__(self, text=""):
+        self.text = text
+        super().__init__(text)
 #_______________________________________________________________________
 #_______________________________________________________________________
 #_______________________________________________________________________
@@ -174,7 +206,11 @@ async def use_consumable(ctx: Context, user: discord.abc.User, player: 'player_i
     if consumable_selected is None:
         await channel_cible.send(content="You didn't select any consumable.")
     else : 
-        consumable_selected.apply(bully_selected)
+        try :
+            consumable_selected.apply(bully_selected)
+        except ConsumableUseException as e:
+            await channel_cible.send(content=e.text)
+            return
         await channel_cible.send(content=f"Consumable ({consumable_selected.name}) has been successfully applied!")
         player.consumables.remove(consumable_selected)
         await session.delete(consumable_selected)          

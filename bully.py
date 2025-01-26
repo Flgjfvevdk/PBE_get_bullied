@@ -241,6 +241,7 @@ class Bully(Base):
         default=None
     )
     buff_fight_tag: Mapped[str] = mapped_column(default= "NoBuff")
+    max_level_reached:Mapped[int] = mapped_column(default=1)
 
     def __post_init__(self, must_load_image:bool):
         if(must_load_image):
@@ -248,6 +249,7 @@ class Bully(Base):
         if self.stats is None or (None in self.stats.__dict__.items()):
             self.generate_bully_stat()
 
+        self.max_level_reached = self.lvl
 
     def generate_bully_stat(self) -> None:
         self.stats = Stats(1,1,1,1)
@@ -330,6 +332,7 @@ class Bully(Base):
 
     def level_up_one(self):
         self.lvl += 1
+        self.max_level_reached = max(self.lvl, self.max_level_reached)
         if self.rarity == Rarity.UNIQUE :
             self.increase_stat_unique_rarity(self.lvl)
             
@@ -523,7 +526,7 @@ def str_text_stat(value_stat:int):
         text_stat += "."
     return text_stat
 
-def mise_en_forme_str(text):
+def mise_en_forme_str(text) -> str:
     new_text:str = "```ansi\n" + text + "```"
     new_text = new_text.replace("UNIQUE", "[2;35m[1;35mU[0m[2;35m[0m[2;34m[1;34mn[0m[2;34m[0m[2;31m[1;31mi[0m[2;31m[0m[2;32m[1;32mq[0m[2;32m[0m[2;33m[1;33mu[0m[2;33m[0m[2;35m[1;35me[0m[2;35m[0m")
     new_text = new_text.replace("SUBLIME", "[2;35m[1;35mSublime[0m[2;35m[0m")

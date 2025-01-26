@@ -637,7 +637,7 @@ async def admin_new_shop(ctx: Context):
 
 @bot.command()
 @decorators.is_admin()
-async def admin_open_shop(ctx: Context):
+async def admin_add_server_to_list(ctx: Context):
     if ctx.guild is None:
         await ctx.send('This command can only be used in a server, not in a DM.')
         return
@@ -651,6 +651,16 @@ async def admin_open_shop(ctx: Context):
     else:
         await ctx.send(f'Server {ctx.guild.name} is already saved.')
 
+@bot.command()
+@decorators.is_admin()
+async def admin_set_max_dg_lvl(ctx: Context, lvl:int):
+    async with database.new_session() as session:
+        player = await session.get(Player, ctx.author.id)
+        if player is None:
+            await ctx.reply(TEXT_JOIN_THE_GAME)
+            return
+        player.max_dungeon = lvl
+        await session.commit()
 
 @bot.command()
 @decorators.is_admin()
@@ -671,7 +681,6 @@ async def py_admin(ctx: Context):
 @bot.command()
 @decorators.is_admin()
 @decorators.pbe_only()
-#@decorators.author_is_free
 async def give_lvl(ctx: Context, nombre_lvl : Optional[int] = None ):
     user = ctx.author
     lock = PlayerLock(user.id)
@@ -691,7 +700,7 @@ async def give_lvl(ctx: Context, nombre_lvl : Optional[int] = None ):
 
 @bot.command()
 @decorators.is_admin()
-async def add_c(ctx: Context):
+async def add_food(ctx: Context):
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
@@ -705,6 +714,25 @@ async def add_c(ctx: Context):
                 await ctx.reply(TEXT_JOIN_THE_GAME)
                 return
             c = consumable.AlimentEnum.Gigot.new_conso(2)
+            player.consumables.append(c)
+            await session.commit()
+
+@bot.command()
+@decorators.is_admin()
+async def add_water(ctx: Context):
+    user = ctx.author
+    lock = PlayerLock(user.id)
+    if not lock.check():
+        await ctx.send("You are already in an action.")
+        return
+    
+    with lock:
+        async with database.new_session() as session:
+            player = await session.get(Player, ctx.author.id)
+            if player is None:
+                await ctx.reply(TEXT_JOIN_THE_GAME)
+                return
+            c = consumable.ConsumableWaterLvl("WaterMst", 3, bully.Rarity.MONSTER)
             player.consumables.append(c)
             await session.commit()
 

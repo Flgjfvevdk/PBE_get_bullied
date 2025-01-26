@@ -13,7 +13,6 @@ CHOICE_TIMEOUT = 30
 
 async def trade_offer(ctx:Context, user_1:discord.abc.User, user_2:discord.abc.User, player_1: Player, player_2: Player):
     text = f"{user_1.mention} want to trade with {user_2.mention} !"
-    #On créer l'event qui sera set quand le bouton sera cliqué par user_2. La valeur du bouton (de la réponse) sera stocké dans var
     event = asyncio.Event()
     var:Dict[str, bool] = {"choix" : False}
 
@@ -44,6 +43,14 @@ async def trade_offer(ctx:Context, user_1:discord.abc.User, user_2:discord.abc.U
     bully_2 = await interact_game.select_bully(ctx, user_2, player_2, timeout=CHOICE_TIMEOUT)
     await ctx.channel.send(trade_str(user_1, user_2, bully_1, bully_2))
     
+    # Is trade possible ?
+    if bully_1.lvl > player_2.max_dungeon :
+        await ctx.channel.send(f"{user_2.name} can't receive {bully_1.name}[lvl:{bully_1.lvl}] because their max dungeon level is {player_2.max_dungeon}.")
+        return
+    if bully_2.lvl > player_1.max_dungeon :
+        await ctx.channel.send(f"{user_1.name} can't receive {bully_2.name}[lvl:{bully_2.lvl}] because their max dungeon level is {player_1.max_dungeon}.")
+        return
+
     # Confirm trade
     event_confirm_1 = asyncio.Event()
     event_confirm_2 = asyncio.Event()

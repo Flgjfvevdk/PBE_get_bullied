@@ -242,7 +242,7 @@ class TreasureRoom():
 
     @staticmethod
     def generate(level: int) -> "TreasureRoom":
-        gold = int(0.3 * level**2 + 10)
+        gold = int(0.35 * level**2 + 10)
         return TreasureRoom(gold=gold)
 
     async def interact(self, ruin: "Ruin"):

@@ -86,6 +86,11 @@ async def select_fighters(ctx: Context, user_1: discord.abc.User, user_2: discor
     
     return fighting_bully_1, fighting_bully_2
 
+class RecapExpGold:
+    def __init__(self, exp_earned:float, gold_earned:int):
+        self.exp_earned = exp_earned
+        self.gold_earned = gold_earned
+
 class Fight():
     def __init__(self, ctx:Context, fighter_1:FightingBully, fighter_2:FightingBully, user_1: discord.abc.User|None = None, user_2: discord.abc.User|None=None
                  , player_1: Player|None=None, player_2: Player|None = None, for_fun = False, channel_cible = None, nb_swaps_1:float = 0, nb_swaps_2:float = 0):
@@ -128,7 +133,7 @@ class Fight():
             self.events_click_swap.append(asyncio.Event())
             self.labels_swap.append(f"Swap j2 {(': ' + str(self.nb_swaps_2)) if self.nb_swaps_2 < math.inf else ''}")
 
-        self.do_end_fight = True
+        # self.do_end_fight = True
 
     async def start_fight(self):
         await self.apply_buff_before_fight()
@@ -148,9 +153,9 @@ class Fight():
                     if self.events_click_swap[k].is_set():
                         raise InterruptionCombat(self.fighter_1.pv, self.fighter_2.pv, user_interrupt=self.users_can_swap[k])
 
-        if self.do_end_fight:           
-            await self.end_fight()
-        return
+        # if self.do_end_fight:           
+        recapExpGold = await self.end_fight()
+        return recapExpGold
 
     async def play_round(self):
         pv_perdu = 0
@@ -251,19 +256,27 @@ class Fight():
         for b in self.fighter_2.buffs:
             b.on_death(fighter=self.fighter_2, opponent=self.fighter_1, recap_round=recap_round)
 
-    async def end_fight(self):
+    async def end_fight(self) -> RecapExpGold:
         if(self.fighter_1.pv <= 0):
             bully_gagnant = self.fighter_2.bully 
             bully_perdant = self.fighter_1.bully 
+            fighting_bully_perdant = self.fighter_1
         elif(self.fighter_2.pv <= 0):
             bully_gagnant = self.fighter_1.bully 
             bully_perdant = self.fighter_2.bully 
+            fighting_bully_perdant = self.fighter_2
         else:
             raise Exception("aucun perdant?")
         
         await self.channel_cible.send(f"{bully_gagnant.name} won the fight!")
         if (not self.for_fun) :
+            bully_gagnant.increment_win_loose(win=True)
+            bully_perdant.increment_win_loose(win=False)
+
             (exp_earned, gold_earned) = reward_win_fight(bully_gagnant, bully_perdant)
+            exp_earned *= fighting_bully_perdant.exp_coef
+            gold_earned = int(gold_earned * fighting_bully_perdant.gold_coef)
+
             pretext = ""
             if (exp_earned > 0):
                 try :
@@ -279,15 +292,9 @@ class Fight():
             
             txt:str = await bully_perdant.die_in_fight()
             await self.channel_cible.send(pretext + txt)
-            # if bully_perdant.rarity is Rarity.NOBODY:
-            #     await self.channel_cible.send(f"{pretext}{bully_perdant.name} died in terrible agony")
-            #     await bully_perdant.kill()
-            # else : 
-            #     lvl_loss = max(1, math.floor(bully_perdant.lvl/5))
-            #     lvl_loss = min(lvl_loss, bully_perdant.lvl - 1)
-            #     bully_perdant.decrease_lvl(lvl_loss)
-            #     await self.channel_cible.send(f"{pretext}{bully_perdant.name} lost {lvl_loss} levels")
-        return
+        else : 
+            exp_earned, gold_earned = 0.0, 0
+        return RecapExpGold(exp_earned, gold_earned)
         
     
     async def setup_message(self):

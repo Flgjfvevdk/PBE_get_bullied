@@ -2,15 +2,15 @@ import asyncio
 import math
 import os
 import random
-from bully import Bully, Rarity, Seed #ne pas confondre avec bully (le fichier)
 import bully #ne pas confondre avec Bully (la class)
+from bully import Bully, Rarity, Seed #ne pas confondre avec bully (le fichier)
 import consumable
 from consumable import Consumable, ConsumableElixirBuff
 from fighting_bully import FightingBully, add_team_buff, get_player_team
 import money
 from player_info import Player
 import interact_game
-import fight_manager
+from fight_manager import RecapExpGold, Fight, InterruptionCombat, reward_win_fight
 
 from dataclasses import dataclass, field, KW_ONLY, replace
 
@@ -64,13 +64,6 @@ class DungeonFightingBully():
         self.fighting_bully.exp_coef = self.exp_coef
         self.fighting_bully.gold_coef = self.gold_coef
 
-    # def reward_kill(self, bully_joueur) -> tuple[float, int]:
-    #     if self.fighting_bully is None : 
-    #         raise Exception("fighting bully must be initiated")
-    #     (exp_earned, gold_earned) = fight_manager.reward_win_fight(bully_joueur, self.fighting_bully.bully)
-    #     exp_earned *= self.exp_coef
-    #     gold_earned = int(self.gold_coef * gold_earned)
-    #     return (exp_earned, gold_earned)
 
 @dataclass
 class DungeonSpecialInfos():
@@ -270,12 +263,12 @@ class Dungeon():
         while True:
             try: 
                 nb_swaps = math.inf if can_switch else 0
-                fight = fight_manager.Fight(self.ctx, user_1=self.user, player_1=self.player, fighter_1=fighting_bully_joueur, fighter_2=fighting_bully_enemy, nb_swaps_1=nb_swaps, channel_cible=self.thread)
+                fight = Fight(self.ctx, user_1=self.user, player_1=self.player, fighter_1=fighting_bully_joueur, fighter_2=fighting_bully_enemy, nb_swaps_1=nb_swaps, channel_cible=self.thread)
                 fight.do_end_fight = False
-                await fight.start_fight()
+                recapExpGold:RecapExpGold = await fight.start_fight()
                 
             #Permet de faire une interruption du combat et de changer de bully qui se bat.
-            except fight_manager.InterruptionCombat as erreur:
+            except InterruptionCombat as erreur:
                 print(erreur)
                 fighting_bully_joueur = await self.fighter_change(fighting_bully_joueur)
                 num_bully_j = self.fighters_joueur.index(fighting_bully_joueur)
@@ -286,9 +279,10 @@ class Dungeon():
         #On regarde qui a perdu (le joueur ou l'ennemi)
         if(fighting_bully_joueur.pv > 0) :
             #Le joueur a gagné. On calcul les récompenses, on les affiches et on les stocks
-            (exp_earned, gold_earned) = fight_manager.reward_win_fight(bully_joueur, fighting_bully_enemy.bully)
-            exp_earned *= fighting_bully_enemy.exp_coef #COEF_XP_FIGHTER
-            gold_earned = int(fighting_bully_enemy.gold_coef * gold_earned) #int(COEF_GOLD_FIGHTER * gold_earned)
+            # (exp_earned, gold_earned) = reward_win_fight(bully_joueur, fighting_bully_enemy.bully)
+            # exp_earned *= fighting_bully_enemy.exp_coef #COEF_XP_FIGHTER
+            # gold_earned = int(fighting_bully_enemy.gold_coef * gold_earned) #int(COEF_GOLD_FIGHTER * gold_earned)
+            (exp_earned, gold_earned) = recapExpGold.exp_earned, recapExpGold.gold_earned
             pretext = ""
             if (exp_earned > 0):
                 try:

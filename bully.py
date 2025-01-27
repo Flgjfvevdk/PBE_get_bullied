@@ -242,6 +242,8 @@ class Bully(Base):
     )
     buff_fight_tag: Mapped[str] = mapped_column(default= "NoBuff")
     max_level_reached:Mapped[int] = mapped_column(default=1)
+    nb_win_true_fight:Mapped[int] = mapped_column(default=0)
+    nb_loose_true_fight:Mapped[int] = mapped_column(default=0)
 
     def __post_init__(self, must_load_image:bool):
         if(must_load_image):
@@ -409,6 +411,11 @@ class Bully(Base):
     def get_print(self, compact_print = False, current_hp:int|None = None):
         return str_print_bully(self, compact_print, current_hp=current_hp)
     
+    def increment_win_loose(self, win:bool):
+        if win :
+            self.nb_win_true_fight += 1
+        else :
+            self.nb_loose_true_fight += 1
 
     #Pour gérer l'image du bully
     def get_image(self) -> Path:

@@ -6,7 +6,7 @@ from fighting_bully import FightingBully, BuffFight, add_team_buff, get_player_t
 import consumable
 from consumable import Consumable
 import interact_game
-import fight_manager
+from fight_manager import Fight, InterruptionCombat, RecapExpGold, reward_win_fight
 import money
 import keys
 import math
@@ -146,12 +146,12 @@ class EnemyRoom():
         while True:
             try: 
                 nb_swaps = math.inf if self.can_switch else 0
-                fight = fight_manager.Fight(ruin.ctx, user_1=ruin.user, player_1=ruin.player, fighter_1=fighter, fighter_2=self.enemy, nb_swaps_1=nb_swaps, channel_cible=ruin.thread)
-                fight.do_end_fight = False
-                await fight.start_fight()
+                fight = Fight(ruin.ctx, user_1=ruin.user, player_1=ruin.player, fighter_1=fighter, fighter_2=self.enemy, nb_swaps_1=nb_swaps, channel_cible=ruin.thread)
+                # fight.do_end_fight = False
+                recapExpGold:RecapExpGold = await fight.start_fight()
 
             #Permet de faire une interruption du combat et de changer de bully qui se bat.
-            except fight_manager.InterruptionCombat as erreur:
+            except InterruptionCombat as erreur:
                 print(erreur)
                 fighter = await self.fighter_change(ruin, fighter)
             else:
@@ -166,9 +166,11 @@ class EnemyRoom():
             is_success = True
 
             #On calcule les récompenses, on les affiches et on les stock
-            (exp_earned, gold_earned) = fight_manager.reward_win_fight(bully_joueur, self.enemy.bully)
-            exp_earned *= self.enemy.exp_coef
-            gold_earned = int(self.enemy.gold_coef * gold_earned)
+            # (exp_earned, gold_earned) = reward_win_fight(bully_joueur, self.enemy.bully)
+            # exp_earned *= self.enemy.exp_coef
+            # gold_earned = int(self.enemy.gold_coef * gold_earned)
+            (exp_earned, gold_earned) = recapExpGold.exp_earned, recapExpGold.gold_earned
+
             pretext = ""
             if (exp_earned > 0):
                 try:

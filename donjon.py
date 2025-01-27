@@ -264,7 +264,6 @@ class Dungeon():
             try: 
                 nb_swaps = math.inf if can_switch else 0
                 fight = Fight(self.ctx, user_1=self.user, player_1=self.player, fighter_1=fighting_bully_joueur, fighter_2=fighting_bully_enemy, nb_swaps_1=nb_swaps, channel_cible=self.thread)
-                # fight.do_end_fight = False
                 recapExpGold:RecapExpGold = await fight.start_fight()
                 
             #Permet de faire une interruption du combat et de changer de bully qui se bat.
@@ -279,9 +278,6 @@ class Dungeon():
         #On regarde qui a perdu (le joueur ou l'ennemi)
         if(fighting_bully_joueur.pv > 0) :
             #Le joueur a gagné. On calcul les récompenses, on les affiches et on les stocks
-            # (exp_earned, gold_earned) = reward_win_fight(bully_joueur, fighting_bully_enemy.bully)
-            # exp_earned *= fighting_bully_enemy.exp_coef #COEF_XP_FIGHTER
-            # gold_earned = int(fighting_bully_enemy.gold_coef * gold_earned) #int(COEF_GOLD_FIGHTER * gold_earned)
             (exp_earned, gold_earned) = recapExpGold.exp_earned, recapExpGold.gold_earned
             pretext = ""
             if (exp_earned > 0):

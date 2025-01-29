@@ -422,7 +422,7 @@ class Bully(Base):
         buff_text = ""
         if self.buff_fight_tag != 'NoBuff':
             import buffs
-            buff_text = f"Buff - {self.buff_fight_tag} : {buffs.name_to_buffs_class[self.buff_fight_tag].description}"
+            buff_text = f"Buff - {self.buff_fight_tag} : {buffs.name_to_buffs_class[self.buff_fight_tag].description}\n"
             
         win_lose_text = f"Crushed bullies  : {self.nb_win_true_fight} | Brutal losses : {self.nb_loose_true_fight}"
 

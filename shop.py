@@ -50,10 +50,6 @@ async def init_shop():
     restock_shop_loop.start()
 
 async def restock_shop() -> None:
-    # bullies_in_shop.clear()
-    # for k in range(SHOP_MAX_BULLY):
-    #     b = new_bully_shop()
-    #     bullies_in_shop.append(b)
     bullies_in_shop_server.clear()
     shop_servers_id = load_shop_servers()
     for server_id in shop_servers_id:

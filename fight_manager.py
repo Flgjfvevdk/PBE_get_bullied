@@ -275,7 +275,9 @@ class Fight():
 
             (exp_earned, gold_earned) = reward_win_fight(bully_gagnant, bully_perdant)
             exp_earned *= fighting_bully_perdant.exp_coef
+            exp_earned = round(exp_earned, 1)
             gold_earned = int(gold_earned * fighting_bully_perdant.gold_coef)
+
 
             pretext = ""
             if (exp_earned > 0):

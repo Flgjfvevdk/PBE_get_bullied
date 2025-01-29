@@ -240,32 +240,64 @@ async def print_bullies(ctx: Context, player: Player, compact_print=False, print
         channel_cible = ctx.channel
 
     text = "Your bullies:"
-    images: list[Path] = []
+    # images: list[Path] = []
+    images: dict[int, Path] = {}
 
-    for b in player.get_equipe():
+    player_bullies = player.get_equipe()
+    for b in player_bullies:
         text += "\n___________\n"
         text += b.get_print(compact_print=compact_print)
         if print_images:
             image_path = b.image_file_path
             image_path_str = str(image_path).replace("\\", "/")
             if image_path is not None and os.path.isfile(image_path_str):
-                images.append(Path(image_path_str))
+                # images.append(Path(image_path_str))
+                images[b.id] = Path(image_path_str)
             else : 
-                images.append(bully.BULLY_DEFAULT_PATH_IMAGE)
+                # images.append(bully.BULLY_DEFAULT_PATH_IMAGE)
+                images[b.id] = bully.BULLY_DEFAULT_PATH_IMAGE
         
     try:
         text = bully.mise_en_forme_str(text)
     except Exception as e:
         print(e)
 
-    if print_images:
+    event = asyncio.Event()
+    var:Dict[str, Bully | None] = {"choix" : None}
+    if print_images and False:
         if images:
             files = [discord.File(image) for image in images]
-            await channel_cible.send(content=text, files=files)
+            message = await channel_cible.send(content=text, files=files)
         else:
-            await channel_cible.send(text)
+            message = await channel_cible.send(text)
     else:
-        await channel_cible.send(text)
+        message = await channel_cible.send(text)
+
+    await message.edit(view = ViewBullyChoice(user=ctx.author, event=event, list_choix=player_bullies, variable_pointer = var)) 
+    
+    try:
+        await asyncio.wait_for(event.wait(), timeout=CHOICE_TIMEOUT)
+
+        bully_selected = var["choix"]
+        if(not bully_selected) : 
+            raise Exception("No selected bully")
+            
+        text_info = bully_selected.str_all_infos()
+        if print_images:
+            if images:
+                
+                file = discord.File(images[bully_selected.id])
+                await message.reply(content=bully.mise_en_forme_str(text_info), file=file)
+            else:
+                await message.reply(bully.mise_en_forme_str(text_info))
+        else:
+            await message.reply(bully.mise_en_forme_str(text_info))
+        
+    except Exception as e:
+        pass
+    finally:
+        await message.edit(view = None)
+
     return
 
 def str_bullies(bullies:list[Bully], print_images = False) -> tuple[str, Optional[list[discord.File]]]:

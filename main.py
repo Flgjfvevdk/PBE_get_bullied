@@ -449,7 +449,7 @@ async def arena(ctx: Context):
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 # Par rapport au club ____________________________
-@bot.command(aliases=['print', 'pr', 'bullies', 'team'])
+@bot.command(aliases=['print', 'pr', 'bullies', 'team', 'equipe', 'bully'])
 async def club(ctx: Context, user:Optional[discord.User |discord.Member] = None):
     if(user is None):
         user = ctx.author

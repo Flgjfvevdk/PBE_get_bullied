@@ -287,10 +287,10 @@ class Dungeon():
                     await self.thread.send(f"{bully_joueur.name} {lvl_except.text}")
 
                 self.xp_earned_bullies[num_bully_j] += exp_earned
-                pretext += f"{bully_joueur.name} earned {exp_earned} xp!\n"
+                # pretext += f"{bully_joueur.name} earned {exp_earned} xp!\n"
             if (gold_earned > 0):
                 money.give_money(self.player, montant=gold_earned)
-                pretext += f"{self.ctx.author} earned {gold_earned}{money.MONEY_EMOJI}!\n"
+                # pretext += f"{self.ctx.author} earned {gold_earned}{money.MONEY_EMOJI}!\n"
 
             #On envoie le message de succès et on progress dans le dungeon
             await self.thread.send(f"{pretext}{fighting_bully_enemy.bully.name} is dead! You progress in the dungeon.")

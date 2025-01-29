@@ -1,7 +1,6 @@
 import math
 import os
 import random
-import shutil
 from typing import Any, List, Optional, Tuple
 from dataclasses import dataclass, replace, InitVar, KW_ONLY, fields
 from pathlib import Path
@@ -408,14 +407,44 @@ class Bully(Base):
         if session is not None:
             await session.delete(self)
 
-    def get_print(self, compact_print = False, current_hp:int|None = None):
-        return str_print_bully(self, compact_print, current_hp=current_hp)
-    
     def increment_win_loose(self, win:bool):
         if win :
             self.nb_win_true_fight += 1
         else :
             self.nb_loose_true_fight += 1
+
+    def get_print(self, compact_print = False):
+        return str_print_bully(self, compact_print)
+    
+    def str_all_infos(self) :
+        text = ""
+        hp_text = f"Max HP : {self.max_pv}"
+        buff_text = ""
+        if self.buff_fight_tag != 'NoBuff':
+            import buffs
+            buff_text = f"Buff - {self.buff_fight_tag} : {buffs.name_to_buffs_class[self.buff_fight_tag].description}"
+            
+        win_lose_text = f"Crushed bullies  : {self.nb_win_true_fight} | Brutal losses : {self.nb_loose_true_fight}"
+
+        text += self.name + "\tRarity : " + self.rarity.name
+        text += f"\nlvl : {self.lvl} [max level = {self.max_level_reached}]"
+        text += "\texp : " + str(self.exp)
+        text += "\t" + hp_text + "\n" + buff_text
+        
+        text += "\nStrength : - - -"
+        text += str_text_stat(int(self.stats.strength))
+        
+        text += "\nAgility :- - - -"
+        text += str_text_stat(int(self.stats.agility))
+
+        text += "\nLethality :- - -"
+        text += str_text_stat(int(self.stats.lethality))
+
+        text += "\nViciousness :- -"
+        text += str_text_stat(int(self.stats.viciousness))
+
+        text += "\n\n" + win_lose_text
+        return text
 
     #Pour gérer l'image du bully
     def get_image(self) -> Path:
@@ -474,9 +503,9 @@ class Bully(Base):
 # ________________________________________________________________________________________________________________________________________________
 
 # Pour gérer les print ______________________________________________
-def str_print_bully(bully:Bully, compact_print = False, current_hp:int|None = None):
+def str_print_bully(bully:Bully, compact_print = False):
     text = ""
-    hp_text = f"Max HP : {bully.max_pv}" if current_hp is None else f"HP : {current_hp}/{bully.max_pv}"
+    hp_text = f"Max HP : {bully.max_pv}"
     buff_text = f"Buff : {bully.buff_fight_tag}" if bully.buff_fight_tag != 'NoBuff' else ""
     def good_print_float(x:float) -> float|int:
         xf:float = float(x)
@@ -492,19 +521,16 @@ def str_print_bully(bully:Bully, compact_print = False, current_hp:int|None = No
         text += "\nlvl : " + str(bully.lvl)
         text += "\texp : " + str(bully.exp)
         text += "\t" + hp_text + "\t" + buff_text
-        #On print la force
+        
         text += "\nStrength : - - -"
         text += str_text_stat(int(bully.stats.strength))
         
-        #On print l'agilité
         text += "\nAgility :- - - -"
         text += str_text_stat(int(bully.stats.agility))
 
-        #On print la lethalité
         text += "\nLethality :- - -"
         text += str_text_stat(int(bully.stats.lethality))
 
-        #On print la vicieusité
         text += "\nViciousness :- -"
         text += str_text_stat(int(bully.stats.viciousness))
 

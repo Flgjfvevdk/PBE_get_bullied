@@ -1,10 +1,9 @@
 from utils.database import Base
 from bully import Bully, Stats, Rarity, BULLY_MAX_LEVEL, mise_en_forme_str
 from discord.ext.commands import Context, Bot
-import discord
+import discord, asyncio
 import interact_game
 import player_info
-import asyncio
 from dataclasses import KW_ONLY, replace, dataclass
 from utils.color_str import CText
 from sqlalchemy import ForeignKey, String
@@ -14,6 +13,7 @@ from sqlalchemy.ext.asyncio.session import async_object_session
 import enum
 import buffs
 from fighting_bully import BuffFight
+from utils.embed import create_embed
 
 CHOICE_TIMEOUT = 60
 CONSO_NUMBER_MAX = 10
@@ -269,14 +269,33 @@ def str_consumables(player: 'player_info.Player') -> CText:
     text.txt("\n\n(Use !!use_consumable to use one)")
     return text
 
+# def embed_consumables(player: 'player_info.Player', user: discord.abc.User, *, select=False) -> discord.Embed:
+#     embed=discord.Embed(title=f"{user.display_name}'s consumables", color=0x77767b)
+#     if select: embed.title = "Choose a consumable"
+#     if not select: embed.set_footer(text="Enter !!use_consumable to use one.")
+#     if len(player.consumables) == 0:
+#         embed.description = "You have no consumables :("
+#         if not select: embed.set_footer(text="But you may get some from ruins!")
+#     for i,c in enumerate(player.consumables):
+#         embed.add_field(name=f"{i+1}. {c.name}", value=c.get_effect(), inline=not select)
+#     if not select and user.avatar is not None: embed.set_thumbnail(url=user.avatar.url)
+#     return embed
+
 def embed_consumables(player: 'player_info.Player', user: discord.abc.User, *, select=False) -> discord.Embed:
-    embed=discord.Embed(title=f"{user.display_name}'s consumables", color=0x77767b)
-    if select: embed.title = "Choose a consumable"
-    if not select: embed.set_footer(text="Enter !!use_consumable to use one.")
-    if len(player.consumables) == 0:
-        embed.description = "You have no consumables :("
-        if not select: embed.set_footer(text="But you may get some from ruins!")
-    for i,c in enumerate(player.consumables):
-        embed.add_field(name=f"{i+1}. {c.name}", value=c.get_effect(), inline=not select)
-    if not select and user.avatar is not None: embed.set_thumbnail(url=user.avatar.url)
-    return embed
+    title = "Choose a consumable" if select else f"{user.display_name}'s consumables"
+    description_lines = []
+
+    if not player.consumables:
+        description_lines.append("You have no consumables :(")
+        footnote = "But you may get some from ruins!" if not select else None
+    else:
+        for i, c in enumerate(player.consumables):
+            description_lines.append(f"**{i+1}. {c.name}**{c.get_effect()}")
+
+        footnote = None if select else "Enter !!use_consumable to use one."
+
+    thumbnail = user.avatar.url if not select and user.avatar is not None else None 
+    columns = 2 if len(description_lines) > 5 else 1  # Two-column format if many consumables
+
+    return create_embed(title, description_lines, footnote=footnote, thumbnail=thumbnail, columns=columns)
+

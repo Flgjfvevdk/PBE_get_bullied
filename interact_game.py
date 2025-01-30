@@ -240,6 +240,7 @@ async def print_bullies(ctx: Context, player: Player, compact_print=False, print
         channel_cible = ctx.channel
 
     text = "Your bullies:"
+    split_txt = []
     # images: list[Path] = []
     images: dict[int, Path] = {}
 
@@ -247,6 +248,7 @@ async def print_bullies(ctx: Context, player: Player, compact_print=False, print
     for b in player_bullies:
         text += "\n___________\n"
         text += b.get_print(compact_print=compact_print)
+        split_txt.append(bully.mise_en_forme_str(b.get_print(compact_print=compact_print)))
         if print_images:
             image_path = b.image_file_path
             image_path_str = str(image_path).replace("\\", "/")
@@ -271,7 +273,9 @@ async def print_bullies(ctx: Context, player: Player, compact_print=False, print
         else:
             message = await channel_cible.send(text)
     else:
-        message = await channel_cible.send(text)
+        # message = await channel_cible.send(text)
+        from utils.embed import create_embed
+        message = await channel_cible.send(embed=create_embed("Your bullies", split_txt, columns=1, str_between_element=""))
 
     await message.edit(view = ViewBullyChoice(user=ctx.author, event=event, list_choix=player_bullies, variable_pointer = var)) 
     
@@ -286,8 +290,13 @@ async def print_bullies(ctx: Context, player: Player, compact_print=False, print
         if print_images:
             if images:
                 
-                file = discord.File(images[bully_selected.id])
-                await message.reply(content=bully.mise_en_forme_str(text_info), file=file)
+                # file = discord.File(images[bully_selected.id])
+                # await message.reply(content=bully.mise_en_forme_str(text_info), file=file)
+
+                filename = str(images[bully_selected.id])
+                print("filename is ", filename)
+                file = discord.File(images[bully_selected.id], filename=filename)
+                await message.reply(embed=create_embed(title="",  description_lines=[bully.mise_en_forme_str(text_info)]), file=file)
             else:
                 await message.reply(bully.mise_en_forme_str(text_info))
         else:

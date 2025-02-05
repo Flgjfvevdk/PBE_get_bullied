@@ -44,10 +44,10 @@ async def trade_offer(ctx:Context, user_1:discord.abc.User, user_2:discord.abc.U
     await ctx.channel.send(trade_str(user_1, user_2, bully_1, bully_2))
     
     # Is trade possible ?
-    if bully_1.lvl > player_2.max_dungeon :
+    if bully_1.lvl > player_2.max_dungeon + 1 :
         await ctx.channel.send(f"{user_2.name} can't receive {bully_1.name}[lvl:{bully_1.lvl}] because their max dungeon level is {player_2.max_dungeon}.")
         return
-    if bully_2.lvl > player_1.max_dungeon :
+    if bully_2.lvl > player_1.max_dungeon + 1 :
         await ctx.channel.send(f"{user_1.name} can't receive {bully_2.name}[lvl:{bully_2.lvl}] because their max dungeon level is {player_1.max_dungeon}.")
         return
 

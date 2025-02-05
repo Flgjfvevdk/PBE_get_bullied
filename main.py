@@ -41,7 +41,7 @@ from utils.paginate import paginate, paginate_dict
 from discord.ext.commands import Bot, Context, CommandNotFound
 from discord import Embed
 import reserve
-from supply_bully import run_snack_machine
+from supply_bully import run_snack_machine, run_water_fountain
 
 
 TOKEN = getenv("DISCORD_TOKEN")
@@ -593,7 +593,7 @@ async def show_consumables(ctx: Context):
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 # Les commandes pour les supply_bully : 
-@bot.command()
+@bot.command(aliases=['sm', 'snack', 'smachine', 'snackmachine'])
 async def snack_machine(ctx: Context, value:int|None = None):
     user = ctx.author
     lock = PlayerLock(user.id)
@@ -607,8 +607,24 @@ async def snack_machine(ctx: Context, value:int|None = None):
                 await ctx.reply("You can't use any commands if the target didn't join")
                 return
 
-            # Appel de la méthode qui gère l'interaction
             await run_snack_machine(ctx, bot, session, user, player = player, value = value)
+
+@bot.command(aliases=['wf', 'water', 'wfountain', 'fontaine', 'waterfountain'])
+async def water_fountain(ctx: Context, level: int | None = None):
+    """Commande pour acheter un consommable Water XP."""
+    user = ctx.author
+    lock = PlayerLock(user.id)
+    if not lock.check():
+        await ctx.send("You are already in an action.")
+        return
+    with lock:
+        async with database.new_session() as session:
+            player = await session.get(Player, user.id)
+            if player is None:
+                await ctx.reply("Vous devez rejoindre le jeu pour utiliser cette commande.")
+                return
+
+            await run_water_fountain(ctx, bot, session, user, player, value=level)
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 

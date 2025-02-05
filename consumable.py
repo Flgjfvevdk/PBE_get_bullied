@@ -149,8 +149,9 @@ class ConsumableWaterLvl(Consumable):
     def apply(self, b:Bully):
         if self.rarity != b.rarity:
             raise ConsumableUseException(f"This water is made for **{self.rarity.name}** bullies, not **{b.rarity.name}**")
-        b.lvl += self.val
-        b.lvl = min(b.lvl, b.max_level_reached, BULLY_MAX_LEVEL)
+        if b.lvl < b.max_level_reached and b.lvl < BULLY_MAX_LEVEL:
+            b.lvl += self.val
+            b.lvl = min(b.lvl, b.max_level_reached, BULLY_MAX_LEVEL)
 
     def get_print(self) -> CText:
         txt = mise_en_forme_str(f"{self.name} : on use, a bully of rarity {self.rarity.name} will recover a maximum of {self.val} levels.")
@@ -242,6 +243,7 @@ async def select_consumable(ctx: Context, user: discord.abc.User, player: 'playe
     except Exception as e: 
         print(e)
 
+    await message_consumable_choix.delete()
     return selected_consumable
 
 async def remove_consumable(ctx: Context, user: discord.abc.User, player: 'player_info.Player', channel_cible=None, timeout = CHOICE_TIMEOUT) -> None : 

@@ -41,6 +41,7 @@ from utils.paginate import paginate, paginate_dict
 from discord.ext.commands import Bot, Context, CommandNotFound
 from discord import Embed
 import reserve
+from supply_bully import run_snack_machine
 
 
 TOKEN = getenv("DISCORD_TOKEN")
@@ -588,7 +589,26 @@ async def show_consumables(ctx: Context):
             return
         embed = consumable.embed_consumables(player,user)
         await ctx.channel.send(embed=embed)
-        
+
+
+# //////////////////////////////////////////////////////////////////////////////////////////////////////
+# Les commandes pour les supply_bully : 
+@bot.command()
+async def snack_machine(ctx: Context, value:int|None = None):
+    user = ctx.author
+    lock = PlayerLock(user.id)
+    if not lock.check():
+        await ctx.send("You are already in an action.")
+        return
+    with lock:
+        async with database.new_session() as session:
+            player = await session.get(Player, user.id)
+            if player is None:
+                await ctx.reply("You can't use any commands if the target didn't join")
+                return
+
+            # Appel de la méthode qui gère l'interaction
+            await run_snack_machine(ctx, bot, session, user, player = player, value = value)
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 

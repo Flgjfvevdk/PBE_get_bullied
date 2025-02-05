@@ -432,16 +432,16 @@ class Bully(Base):
         text += "\t" + hp_text + "\n" + buff_text
         
         text += "\nStrength : - - -"
-        text += str_text_stat(int(self.stats.strength))
+        text += str_text_stat(self.stats.strength)
         
         text += "\nAgility :- - - -"
-        text += str_text_stat(int(self.stats.agility))
+        text += str_text_stat(self.stats.agility)
 
         text += "\nLethality :- - -"
-        text += str_text_stat(int(self.stats.lethality))
+        text += str_text_stat(self.stats.lethality)
 
         text += "\nViciousness :- -"
-        text += str_text_stat(int(self.stats.viciousness))
+        text += str_text_stat(self.stats.viciousness)
 
         text += "\n\n" + win_lose_text
         return text
@@ -507,9 +507,7 @@ def str_print_bully(bully:Bully, compact_print = False):
     text = ""
     hp_text = f"Max HP : {bully.max_pv}"
     buff_text = f"Buff : {bully.buff_fight_tag}" if bully.buff_fight_tag != 'NoBuff' else ""
-    def good_print_float(x:float) -> float|int:
-        xf:float = float(x)
-        return int(xf) if xf.is_integer() else round(xf, 1)
+    
     if(compact_print) :
         text += bully.name + " | lvl : " + str(bully.lvl) + " | Rarity : " + bully.rarity.name + " | " + hp_text + " | " + buff_text + "\n\t" 
         text += " |S : "+ str(good_print_float(bully.stats.strength))
@@ -523,39 +521,43 @@ def str_print_bully(bully:Bully, compact_print = False):
         text += "\t" + hp_text + "\t" + buff_text
         
         text += "\nStrength : - - -"
-        text += str_text_stat(int(bully.stats.strength))
+        text += str_text_stat(bully.stats.strength)
         
         text += "\nAgility :- - - -"
-        text += str_text_stat(int(bully.stats.agility))
+        text += str_text_stat(bully.stats.agility)
 
         text += "\nLethality :- - -"
-        text += str_text_stat(int(bully.stats.lethality))
+        text += str_text_stat(bully.stats.lethality)
 
         text += "\nViciousness :- -"
-        text += str_text_stat(int(bully.stats.viciousness))
+        text += str_text_stat(bully.stats.viciousness)
 
     return text
 
-def str_text_stat(value_stat:int):
+def str_text_stat(value_stat:float):
     """
     Retourne un truc de la forme : "04▮▮▮▮". avec "04" la valeur de la stat, et le même nombre de fois le charactère "▮"
     """
+    int_value = int(value_stat)
+    float_value = good_print_float(value_stat)
     text_stat = ""
-    if(value_stat >= 10):
-            text_stat += str(value_stat)
-    else :
-        text_stat += ("0" + str(value_stat))
+    if(float_value >= 10):
+            text_stat += str(float_value)
+    elif (float_value == int_value):
+        text_stat += ("0" + str(int_value))
+    else : 
+        text_stat += str(float_value)
 
-    while value_stat >= 1000:
-        value_stat -= 1000
+    while int_value >= 1000:
+        int_value -= 1000
         text_stat += "⭐"
-    while value_stat >= 100:
-        value_stat -= 100
+    while int_value >= 100:
+        int_value -= 100
         text_stat +="*"
-    while value_stat >= 10:
-        value_stat-= 10
+    while int_value >= 10:
+        int_value-= 10
         text_stat += "▮"
-    for k in range(value_stat):
+    for k in range(int_value):
         text_stat += "."
     return text_stat
 
@@ -571,6 +573,10 @@ def mise_en_forme_str(text) -> str:
 
 
 ##//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+def good_print_float(x:float) -> float|int:
+    xf:float = float(x)
+    return int(xf) if xf.is_integer() else round(xf, 1)
 
 # Pour gérer buff de stat selon rareté 
 def new_points_lvl_up(lvl, rarity=Rarity.NOBODY) -> int:

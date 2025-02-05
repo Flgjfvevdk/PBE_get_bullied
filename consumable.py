@@ -269,17 +269,6 @@ def str_consumables(player: 'player_info.Player') -> CText:
     text.txt("\n\n(Use !!use_consumable to use one)")
     return text
 
-# def embed_consumables(player: 'player_info.Player', user: discord.abc.User, *, select=False) -> discord.Embed:
-#     embed=discord.Embed(title=f"{user.display_name}'s consumables", color=0x77767b)
-#     if select: embed.title = "Choose a consumable"
-#     if not select: embed.set_footer(text="Enter !!use_consumable to use one.")
-#     if len(player.consumables) == 0:
-#         embed.description = "You have no consumables :("
-#         if not select: embed.set_footer(text="But you may get some from ruins!")
-#     for i,c in enumerate(player.consumables):
-#         embed.add_field(name=f"{i+1}. {c.name}", value=c.get_effect(), inline=not select)
-#     if not select and user.avatar is not None: embed.set_thumbnail(url=user.avatar.url)
-#     return embed
 
 def embed_consumables(player: 'player_info.Player', user: discord.abc.User, *, select=False) -> discord.Embed:
     title = "Choose a consumable" if select else f"{user.display_name}'s consumables"

@@ -25,7 +25,7 @@ CHOICE_TIMEOUT = 40
 MAX_ARENA_TEAMS = 3
 PRICE_ENTER = 100
 REWARD_WIN_RANK = [300, 200, 120] #Il gagne une proportion de cette somme en fonction de son rang
-BONUS_PAYDAY_CHAMPION = [400, 250, 100]
+BONUS_PAYDAY_CHAMPION = [2, 1.5, 1.2]
 
 class Arena(Base):
     __tablename__ = "arena"

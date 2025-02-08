@@ -4,8 +4,7 @@ from datetime import datetime, timezone, timedelta
 from player_info import Player
 
 # Var payday
-PAYDAY_COOLDOWN = 8 #* 60 * 60
-PAYDAY_VALUE = 250
+PAYDAY_COOLDOWN = 1 #8 * 60 * 60
 
 MONEY_EMOJI = "🩹"
 MONEY_JOIN_VALUE = 500
@@ -34,9 +33,11 @@ def get_money_user(player: Player) -> int:
     return player.money
 
 
-def give_money(player: Player, montant:int = PAYDAY_VALUE):
+def give_money(player: Player, montant:int):
     player.money += montant
 
+def payday_value(player:Player)->int:
+    return round(0.9 * player.max_ruin**2 + 250)
 
 def format_temps(secondes:int):
     minutes, secondes = divmod(secondes, 60)

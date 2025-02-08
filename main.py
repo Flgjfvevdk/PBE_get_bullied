@@ -114,10 +114,11 @@ async def payday(ctx: Context):
 
         server_id = ctx.guild.id #type: ignore
         bonus_champion = await arena_system.get_bonus_payday(session, server_id, player.id.__str__())
-        bonus_arena_str = f"+{bonus_champion} {money.MONEY_EMOJI} (arena champion bonus)" if bonus_champion > 0 else ""
-        money.give_money(player, montant=money.PAYDAY_VALUE + bonus_champion)
+        bonus_arena_str = f"×{bonus_champion} (arena champion bonus)" if bonus_champion > 0 else ""
+        py_val = money.payday_value(player)
+        money.give_money(player, montant=money.payday_value(player) * bonus_champion)
         await ctx.send(
-            f"Vous avez reçu des {money.MONEY_EMOJI} ! +{money.PAYDAY_VALUE}{money.MONEY_EMOJI} {bonus_arena_str}\n"
+            f"Vous avez reçu des {money.MONEY_EMOJI} ! +{py_val}{money.MONEY_EMOJI} {bonus_arena_str}\n"
             f"Vous avez {money.get_money_user(player)} {money.MONEY_EMOJI}"
         )
 
@@ -395,7 +396,7 @@ async def explore_ruin(ctx: Context, level:int):
     if(level <= 0) :
         await ctx.channel.send("Ruin level must be greater than 0")
         return
-    if(level >= 50) :
+    if(level > 50) :
         await ctx.channel.send("50 is the maximum")
         return
     
@@ -700,6 +701,17 @@ async def admin_set_max_dg_lvl(ctx: Context, lvl:int):
 
 @bot.command()
 @decorators.is_admin()
+async def admin_set_max_ruin_lvl(ctx: Context, lvl:int):
+    async with database.new_session() as session:
+        player = await session.get(Player, ctx.author.id)
+        if player is None:
+            await ctx.reply(TEXT_JOIN_THE_GAME)
+            return
+        player.max_ruin = lvl
+        await session.commit()
+
+@bot.command()
+@decorators.is_admin()
 async def py_admin(ctx: Context):
     async with database.new_session() as session:
         player = await session.get(Player, ctx.author.id)
@@ -709,7 +721,7 @@ async def py_admin(ctx: Context):
         
         money.give_money(player, montant=10000)
         await ctx.send(
-            f"Vous avez reçu des {money.MONEY_EMOJI} ! (+{money.PAYDAY_VALUE}{money.MONEY_EMOJI})\n"
+            f"Vous avez reçu des {money.MONEY_EMOJI} ! (+{10000}{money.MONEY_EMOJI})\n"
             f"Vous avez {money.get_money_user(player)} {money.MONEY_EMOJI}"
         )
         await session.commit()

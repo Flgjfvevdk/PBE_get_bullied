@@ -173,10 +173,10 @@ class EnemyRoom():
                     bully_joueur.give_exp(exp_earned)
                 except LevelUpException as lvl_except:
                     await ruin.thread.send(f"{bully_joueur.name} {lvl_except.text}")
-                pretext += f"{fighter.bully.name} earned {exp_earned} xp\n"
+                # pretext += f"{fighter.bully.name} earned {exp_earned} xp\n"
             if (gold_earned > 0):
                 money.give_money(ruin.player, montant=gold_earned)
-                pretext += f"{ruin.user.name} earned {gold_earned}{money.MONEY_EMOJI}\n"
+                # pretext += f"{ruin.user.name} earned {gold_earned}{money.MONEY_EMOJI}\n"
 
             #On envoie le message de succès et on progress dans le dungeon
             await ruin.thread.send(f"{pretext}{self.enemy.bully.name} is dead! You progress in the ruin.")
@@ -186,8 +186,6 @@ class EnemyRoom():
             is_success = False
 
             #On tue le bully qui est ded
-            await ruin.thread.send(f"{fighter.bully.name} died in terrible agony")
-            await fighter.bully.kill()
             ruin.fighters_joueur.remove(fighter)
 
         return is_success
@@ -339,7 +337,6 @@ class Ruin():
             # Pop removes the last item
             while not await self.rooms.pop().interact(self):
                 pass
-                # self.reset_stats_bullies()
 
             await self.thread.send(f"Congratulation {self.user}, you beat the boss!")
         except interact_game.CancelChoiceException as e:
@@ -351,6 +348,9 @@ class Ruin():
                 f"[{self.ctx.author}] -> You don't have this bully.\n" #TODO: fix with ui
                 "Your team left the ruin."
             )
+        else :
+            if self.level > self.player.max_ruin:
+                self.player.max_ruin = self.level
         finally:
             await self.exit()
 

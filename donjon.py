@@ -210,6 +210,7 @@ class Dungeon():
         except Exception as e:
             print(e)
             return
+        
         #On fait la boucle de combat
         try:
             while self.current_floor < len(self.enemies_fighters):
@@ -273,7 +274,6 @@ class Dungeon():
                 num_bully_j = self.fighters_joueur.index(fighting_bully_joueur)
             else:
                 break
-        
         bully_joueur = fighting_bully_joueur.bully
         #On regarde qui a perdu (le joueur ou l'ennemi)
         if(fighting_bully_joueur.pv > 0) :
@@ -287,27 +287,16 @@ class Dungeon():
                     await self.thread.send(f"{bully_joueur.name} {lvl_except.text}")
 
                 self.xp_earned_bullies[num_bully_j] += exp_earned
-                # pretext += f"{bully_joueur.name} earned {exp_earned} xp!\n"
+                
             if (gold_earned > 0):
                 money.give_money(self.player, montant=gold_earned)
-                # pretext += f"{self.ctx.author} earned {gold_earned}{money.MONEY_EMOJI}!\n"
-
+                
             #On envoie le message de succès et on progress dans le dungeon
             await self.thread.send(f"{pretext}{fighting_bully_enemy.bully.name} is dead! You progress in the dungeon.")
             self.current_floor += 1
 
         else : 
             #Le joueur à perdu. 
-            txt:str = await bully_joueur.die_in_fight()
-            await self.thread.send(txt)
-            # if bully_joueur.rarity == Rarity.NOBODY :
-            #     await self.thread.send(f"{bully_joueur.name} died in terrible agony.")
-            #     await bully_joueur.kill()
-            # else : 
-            #     lvl_loss = max(1, math.floor(bully_joueur.lvl/5))
-            #     lvl_loss = min(lvl_loss, bully_joueur.lvl - 1)
-            #     bully_joueur.decrease_lvl(lvl_loss)
-            #     await self.thread.send(f"{bully_joueur.name} lost {lvl_loss} level")
             self.fighters_joueur.pop(num_bully_j)
             self.xp_earned_bullies.pop(num_bully_j)
 

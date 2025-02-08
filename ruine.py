@@ -298,7 +298,7 @@ class Ruin():
         nb_salle_regen = 0
         nb_salle_trap = 0
 
-        fighter_rarities:list[bully.Rarity] = fighter_rarities_lvl[self.level]
+        fighter_rarities:list[bully.Rarity] = fighter_rarities_lvl[self.level - 1]
         boss_rarity:bully.Rarity = boss_rarity_lvl[self.level]
         self.rarity_level = boss_rarity
 

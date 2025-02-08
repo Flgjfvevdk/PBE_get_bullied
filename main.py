@@ -415,7 +415,6 @@ async def explore_ruin(ctx: Context, level:int):
             try:
                 await ruine.Ruin(ctx, bot, player, level).enter()
             except Exception as e :
-                print("on est ici : ", e)
                 raise e
             await session.commit()
 

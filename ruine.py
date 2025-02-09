@@ -164,7 +164,7 @@ class EnemyRoom():
         while True:
             try: 
                 nb_swaps = math.inf if self.can_switch else 0
-                fight = Fight(ruin.ctx, user_1=ruin.user, player_1=ruin.player, fighter_1=fighter, fighter_2=self.enemy, nb_swaps_1=nb_swaps, channel_cible=ruin.thread)
+                fight = Fight(ruin.ctx, user_1=ruin.user, player_1=ruin.player, fighter_1=fighter, fighter_2=self.enemy, nb_swaps_1=nb_swaps, channel_cible=ruin.thread, can_be_timeout_damage_2=False)
                 recapExpGold:RecapExpGold = await fight.start_fight()
 
             #Permet de faire une interruption du combat et de changer de bully qui se bat.

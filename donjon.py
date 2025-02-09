@@ -264,7 +264,7 @@ class Dungeon():
         while True:
             try: 
                 nb_swaps = math.inf if can_switch else 0
-                fight = Fight(self.ctx, user_1=self.user, player_1=self.player, fighter_1=fighting_bully_joueur, fighter_2=fighting_bully_enemy, nb_swaps_1=nb_swaps, channel_cible=self.thread)
+                fight = Fight(self.ctx, user_1=self.user, player_1=self.player, fighter_1=fighting_bully_joueur, fighter_2=fighting_bully_enemy, nb_swaps_1=nb_swaps, channel_cible=self.thread, can_be_timeout_damage_2=False)
                 recapExpGold:RecapExpGold = await fight.start_fight()
                 
             #Permet de faire une interruption du combat et de changer de bully qui se bat.

@@ -21,6 +21,9 @@ CHOICE_TIMEOUT = 30
 RECAP_MAX_EMOJI = 15
 FIGHT_MSG_TIME_UPDATE = 1.0
 
+TIMEOUT_START_ROUND = 30
+TIMEOUT_DELAIE_INCREASE_DAMAGE = 10
+
 
 async def proposition_fight(ctx:Context, user_1:discord.abc.User, user_2:discord.abc.User, player_1: Player, player_2: Player, bot: Bot, for_fun = False):
     text_challenge = f"{user_1.mention} challenges {user_2.mention} !"
@@ -93,7 +96,8 @@ class RecapExpGold:
 
 class Fight():
     def __init__(self, ctx:Context, fighter_1:FightingBully, fighter_2:FightingBully, user_1: discord.abc.User|None = None, user_2: discord.abc.User|None=None
-                 , player_1: Player|None=None, player_2: Player|None = None, for_fun = False, channel_cible = None, nb_swaps_1:float = 0, nb_swaps_2:float = 0):
+                 , player_1: Player|None=None, player_2: Player|None = None, for_fun = False, channel_cible = None, nb_swaps_1:float = 0, nb_swaps_2:float = 0,
+                 can_be_timeout_damage_1:bool = True, can_be_timeout_damage_2:bool = True):
         self.ctx = ctx
         self.user_1 = user_1
         self.user_2 = user_2
@@ -109,14 +113,12 @@ class Fight():
         self.max_pv_1 = self.fighter_1.bully.max_pv
         self.max_pv_2 = self.fighter_2.bully.max_pv
 
-        # self.message:discord.Message
-        # self.embed1:discord.Embed
-        # self.embed2:discord.Embed
         self.message_1:discord.Message
         self.message_mid:discord.Message
         self.message_2:discord.Message
         self.emojis_recap:list[list["str"]]= [[],[]]
         self.tour = random.randint(0,1)
+        self.nb_rounds = 0
 
         self.nb_swaps_1 = nb_swaps_1 if isinstance(user_1, discord.abc.User) else 0
         self.nb_swaps_2 = nb_swaps_2 if isinstance(user_2, discord.abc.User) else 0
@@ -133,7 +135,8 @@ class Fight():
             self.events_click_swap.append(asyncio.Event())
             self.labels_swap.append(f"Swap j2 {(': ' + str(self.nb_swaps_2)) if self.nb_swaps_2 < math.inf else ''}")
 
-        # self.do_end_fight = True
+        self.can_be_timeout_damage_1 = can_be_timeout_damage_1
+        self.can_be_timeout_damage_2 = can_be_timeout_damage_2
 
     async def start_fight(self):
         await self.apply_buff_before_fight()
@@ -158,6 +161,9 @@ class Fight():
         return recapExpGold
 
     async def play_round(self):
+        self.nb_rounds += 1
+        self.apply_timeout_damage()
+        
         pv_perdu = 0
         attacker, defender = (self.fighter_1, self.fighter_2) if self.tour == 0 else (self.fighter_2, self.fighter_1)
         recap_round = fighting_bully.RecapRound(attacker, defender, False, False, False, False, 0)
@@ -215,6 +221,21 @@ class Fight():
         await self.apply_buff_fight(recap_round=recap_round)
         return
     
+    def apply_timeout_damage(self):
+        if self.nb_rounds > TIMEOUT_START_ROUND:
+            diff_rounds = self.nb_rounds - TIMEOUT_START_ROUND
+            damage = 1 + diff_rounds // TIMEOUT_DELAIE_INCREASE_DAMAGE
+            if (self.can_be_timeout_damage_1):
+                self.fighter_1.pv -= damage
+                self.emojis_recap[0].append("💀")
+            else : 
+                self.emojis_recap[0].append("👻")
+            if (self.can_be_timeout_damage_2):
+                self.fighter_2.pv -= damage
+                self.emojis_recap[1].append("💀")
+            else : 
+                self.emojis_recap[1].append("👻")
+
     async def apply_buff_before_fight(self):
         for b in self.fighter_1.buffs:
             b.before_fight(fighter=self.fighter_1, opponent=self.fighter_2)
@@ -334,7 +355,6 @@ class Fight():
         
     async def update_message(self):
         texts = self.texts_fight()
-        # await self.message.edit(embeds=[self.embed1, self.embed_mid, self.embed2])
         await self.message_mid.edit(content=texts[2])
         if self.embed1.description != texts[0]:
             self.embed1.description = texts[0]

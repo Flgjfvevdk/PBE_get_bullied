@@ -3,7 +3,7 @@ import asyncio
 from pathlib import Path
 import discord
 from fight_manager import TeamFight
-from fighting_bully import FightingBully, add_team_buff, get_player_team
+from fighting_bully import FightingBully, get_player_team, setup_buffs_team
 import interact_game
 import money
 from utils.database import Base
@@ -145,7 +145,7 @@ class ArenaFight:
             enemy_player_team = self.teams.popitem()
             enemy_teamfighters:list[FightingBully] = [FightingBully.create_fighting_bully(b) for b in enemy_player_team[1]]
             self.add_champion_buff(enemy_teamfighters)
-            add_team_buff(enemy_teamfighters)
+            setup_buffs_team(enemy_teamfighters, is_team_buff_active=True)
             await self.thread.send(f"Next teamfight against : \n{str_teamfighters_complete(self.user, enemy_teamfighters)}")
 
             teamfight = TeamFight(ctx=self.ctx, user_1=self.user, user_2=None, player_1=self.player, player_2=None, can_swap=True, channel_cible=self.thread)

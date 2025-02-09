@@ -2,7 +2,7 @@ import os
 import random
 from bully import Bully, Rarity, LevelUpException, Stats
 import bully
-from fighting_bully import FightingBully, BuffFight, add_team_buff, get_player_team
+from fighting_bully import FightingBully, BuffFight, get_player_team, setup_buffs_team
 import consumable
 from consumable import Consumable
 import interact_game
@@ -371,7 +371,7 @@ class Ruin():
             self.rooms.append(new_room)
             all_fighters_enemy.append(new_room.enemy)
         
-        add_team_buff(all_fighters_enemy)
+        setup_buffs_team(all_fighters_enemy, is_team_buff_active=True)
 
 
     async def enter(self) -> None:

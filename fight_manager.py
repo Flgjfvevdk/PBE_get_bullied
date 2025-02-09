@@ -432,13 +432,13 @@ class TeamFight():
         if team_1 is not None:
             self.team_1 = team_1.copy()
         elif self.player_1 is not None:
-            self.team_1 = get_player_team(self.player_1)
+            self.team_1 = get_player_team(self.player_1, is_team_buff_active=True)
         else :
             raise Warning("Team 1 failed to setup")
         if team_2 is not None:
             self.team_2 = team_2.copy()
         elif self.player_2 is not None:
-            self.team_2 =  get_player_team(self.player_2) 
+            self.team_2 =  get_player_team(self.player_2, is_team_buff_active=True) 
         else :
             raise Warning("Team 2 failed to setup")
 

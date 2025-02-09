@@ -57,9 +57,9 @@ class FightingBully():
     gold_coef:float = 1.0
 
     @staticmethod
-    def create_fighting_bully(b:Bully) -> "FightingBully":
+    def create_fighting_bully(b:Bully, forbid_buffs_tags:list[str]=[]) -> "FightingBully":
         fighter = FightingBully(bully=b, pv=b.max_pv, base_stats=replace(b.stats), stats=replace(b.stats))#, buffs=create_buff_instance(b.buff_fight_tag))
-        if (b.buff_fight_tag != "NoBuff"):
+        if (b.buff_fight_tag != "NoBuff" and b.buff_fight_tag not in forbid_buffs_tags):
             fighter.buffs.append(create_buff_instance(b.buff_fight_tag, fighter=fighter))
         return fighter
     
@@ -140,15 +140,27 @@ class RecapRound():
             raise Warning("Input fighter is neither attacker nor defender")
             return 0
 
-def get_player_team(player:player_info.Player, is_team_buff_active = True):
+def get_player_team(player:player_info.Player, is_team_buff_active = True, is_filter_unique_buffs = True):
+    import buffs
     fighters:list[FightingBully] = []
+    forbid_buffs_tags:list[str] = []
     for b in player.get_equipe():
-        new_fighter = FightingBully.create_fighting_bully(b)
+        new_fighter = FightingBully.create_fighting_bully(b, forbid_buffs_tags=forbid_buffs_tags)
         fighters.append(new_fighter)
+        BuffClass = buffs.name_to_buffs_class[b.buff_fight_tag]
+        if is_filter_unique_buffs and b.buff_fight_tag not in forbid_buffs_tags and BuffClass.category == CategoryBuff.UNIQUE:
+            forbid_buffs_tags.append(b.buff_fight_tag)
     
+    setup_buffs_team(fighters, is_team_buff_active)
+    
+    return fighters
+
+def setup_buffs_team(fighters:list[FightingBully], is_team_buff_active = True):
     if is_team_buff_active:
         add_team_buff(fighters)
+
     return fighters
+
 
 def add_team_buff(fighters:list[FightingBully]):
     compteur_rarity:dict[Rarity, int] = {r:0 for r in Rarity}
@@ -171,6 +183,18 @@ def add_team_buff(fighters:list[FightingBully]):
                 f.add_buff(buff_true)
             else :
                 f.add_buff(buff_team)
+
+def filter_unique_buffs(fighters:list[FightingBully]):
+    unique_buffs_name:list[str] = []
+    for f in fighters:
+        for b in f.buffs:
+            if b.category == CategoryBuff.UNIQUE:
+                if b.name not in unique_buffs_name:
+                    unique_buffs_name.append(b.name)
+                else:
+                    f.buffs.remove(b)
+    
+            
 
 def rarity_to_buff_tags(r:Rarity) -> tuple[str, str]:
     if r == Rarity.TOXIC:

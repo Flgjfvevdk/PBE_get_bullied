@@ -458,11 +458,13 @@ class InLove(BuffFight):
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
         self.jauge:int = 0
+        self.description = f"In Love : {self.jauge}% (Meurt à 100%)."
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if recap_round.attacker == fighter and not recap_round.is_success_block:
             self.jauge = max(0, self.jauge - self.love_decrease)
         if self.jauge >= 100:
             fighter.pv = 0
+        self.description = f"In Love : {self.jauge}% (Meurt à 100%)."
 class Dizzy(BuffFight):
     description:str = "Agility divisé par 2 pendant 1 round."
     description_en:str = ""
@@ -534,7 +536,7 @@ class Friendship(BuffFight):
 class Dragon(BuffFight):
     description:str = "Obtient tous les buffs Dragons"
     description_en:str = ""
-    category:CategoryBuff = CategoryBuff.SPECIAL
+    category:CategoryBuff = CategoryBuff.UNIQUE
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
         fighter.buffs = [DragonSkin(fighter=fighter), DragonResilience(fighter=fighter), DragonAscension(fighter=fighter)]
@@ -569,7 +571,7 @@ class Champion(BuffFight):
 class Cat(BuffFight):
     description:str = "9 vies !"
     description_en:str = "Cats have 9 lives!"
-    category:CategoryBuff = CategoryBuff.UNIQUE
+    category:CategoryBuff = CategoryBuff.SPECIAL
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
         self.description:str = "9 vies !"
@@ -583,7 +585,7 @@ class Cat(BuffFight):
 class Vilain(BuffFight):
     description:str = "Augmente sa Viciousness quand l'ennemi subit un malus vicieux."
     description_en:str = "Increase Viciousness when the enemy suffers from a vicious attack."
-    category:CategoryBuff = CategoryBuff.UNIQUE
+    category:CategoryBuff = CategoryBuff.SPECIAL
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
@@ -593,7 +595,7 @@ class Vilain(BuffFight):
 class SpaceCake(BuffFight):
     description:str = "Quand l'adversaire reçoit un coup, échange 2 de ses stats."
     description_en:str = "When striking an enemy, swap two of their stats."
-    category:CategoryBuff = CategoryBuff.UNIQUE
+    category:CategoryBuff = CategoryBuff.SPECIAL
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
@@ -606,7 +608,7 @@ class SpaceCake(BuffFight):
 class SuppaFastAndFurious(BuffFight):
     description:str = "Attaque rapide = + de dégât."
     description_en:str = "Fast attacks = more damage."
-    category:CategoryBuff = CategoryBuff.UNIQUE
+    category:CategoryBuff = CategoryBuff.SPECIAL
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
     def apply_damage(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
@@ -617,7 +619,7 @@ class SuppaFastAndFurious(BuffFight):
 class StrangeGift(BuffFight):
     description:str = "Remplace les buffs de l'ennemi par du poison en mourrant."
     description_en:str = "On death, replace the enemy's buffs with a debuff."
-    category:CategoryBuff = CategoryBuff.UNIQUE
+    category:CategoryBuff = CategoryBuff.SPECIAL
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
     def on_death(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
@@ -627,7 +629,7 @@ class StrangeGift(BuffFight):
 class ExplosiveTouch(BuffFight):
     description:str = "Les blocages et attaques réussient inflige 1 dégât à tous."
     description_en:str = ""
-    category:CategoryBuff = CategoryBuff.UNIQUE
+    category:CategoryBuff = CategoryBuff.SPECIAL
     def apply_damage(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
         if fighter == recap_round.defender and recap_round.is_success_block:
             fighter.pv -= 1
@@ -725,7 +727,7 @@ class GodOfLove(BuffFight):
 #Pour le phoenix
 class FireAura(BuffFight):
     description:str = "Inflige 1 dégât à l'adversaire."
-    category:CategoryBuff = CategoryBuff.UNIQUE
+    category:CategoryBuff = CategoryBuff.SPECIAL
     def __init__(self, fighter:FightingBully, tour_restant=math.inf):
         super().__init__(fighter)
         self.tour = tour_restant
@@ -741,7 +743,7 @@ class FireAura(BuffFight):
         return 0, 1
 class FirePunch(BuffFight) :
     description:str = "Ses coups critiques brulent l'adversaire."
-    category:CategoryBuff = CategoryBuff.UNIQUE
+    category:CategoryBuff = CategoryBuff.SPECIAL
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if fighter == recap_round.attacker and recap_round.is_success_lethal :
             burn_debuffs = [b for b in opponent.buffs if isinstance(b, Burning)]
@@ -759,7 +761,7 @@ class FirePunch(BuffFight) :
         return
 class Phoenix(BuffFight):
     description:str = "Renaît de ses cendres dans une aura de feu."
-    category:CategoryBuff = CategoryBuff.SPECIAL
+    category:CategoryBuff = CategoryBuff.UNIQUE
     def on_death(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if fighter.pv <= 0 :
             fighter.pv = 5
@@ -770,7 +772,7 @@ class Phoenix(BuffFight):
 #Pour le Diable
 class DevilDeal(BuffFight):
     description:str = "Force l'adversaire a vendre son âme."
-    category:CategoryBuff = CategoryBuff.UNIQUE
+    category:CategoryBuff = CategoryBuff.SPECIAL
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
         self.name = "Devil's Deal"
@@ -785,7 +787,7 @@ class DevilDeal(BuffFight):
         if not self.deal_done : fighter.pv = 1
 class YourSoulIsMine(BuffFight):
     description:str = "N'a plus d'âme. Meurt dans quelques rounds."
-    category:CategoryBuff = CategoryBuff.UNIQUE
+    category:CategoryBuff = CategoryBuff.SPECIAL
     max_round = 10
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
@@ -799,7 +801,7 @@ class YourSoulIsMine(BuffFight):
             self.description:str = f"Meurt dans {self.round} rounds."
 class FinalCountdown(BuffFight):
     description:str = "Tue l'adversaire dans quelques rounds."
-    category:CategoryBuff = CategoryBuff.UNIQUE
+    category:CategoryBuff = CategoryBuff.SPECIAL
     max_round = 10
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
@@ -814,7 +816,7 @@ class FinalCountdown(BuffFight):
             self.description:str = f"Tue l'adversaire dans {self.round} rounds."
 class DevilMinion(BuffFight):
     description:str = "Vole des stats aux adversaires avec un âme."
-    category:CategoryBuff = CategoryBuff.UNIQUE
+    category:CategoryBuff = CategoryBuff.SPECIAL
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
         self.name = "Devil's Minion"
@@ -875,7 +877,7 @@ class OriginalSin(BuffFight):
 #Pour le BG
 class TooPerfect(BuffFight):
     description:str = "Annule les attaques vicieuses."
-    category:CategoryBuff = CategoryBuff.UNIQUE
+    category:CategoryBuff = CategoryBuff.SPECIAL
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
         if recap_round.is_success_vicious:
             if opponent == recap_round.attacker:

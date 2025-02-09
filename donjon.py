@@ -6,7 +6,7 @@ import bully #ne pas confondre avec Bully (la class)
 from bully import Bully, Rarity, Seed #ne pas confondre avec bully (le fichier)
 import consumable
 from consumable import Consumable, ConsumableElixirBuff
-from fighting_bully import FightingBully, add_team_buff, get_player_team
+from fighting_bully import FightingBully, get_player_team, setup_buffs_team
 import money
 from player_info import Player
 import interact_game
@@ -200,7 +200,7 @@ class Dungeon():
             if df.fighting_bully is None:
                 raise Exception("L'initialisation n'a pas été bien faite")
             enemies_fighters.append(df.fighting_bully)
-        add_team_buff(enemies_fighters)
+        setup_buffs_team(enemies_fighters, is_team_buff_active=True)
         return enemies_fighters
 
     async def enter(self) -> None:

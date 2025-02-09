@@ -140,10 +140,10 @@ class Stats(MutableComposite):
 
     def to_str_color(self)-> str:
         import math
-        txt_s = f"{color_str.BlueNode(str(round(self.strength, max(0,2-round(math.log10(self.strength)))))).colorized()}"
-        txt_a = f"{color_str.YellowNode(str(round(self.agility, max(0,2-round(math.log10(self.agility)))))).colorized()}"
-        txt_l = f"{color_str.RedNode(str(round(self.lethality, max(0,2-round(math.log10(self.lethality)))))).colorized()}"
-        txt_v = f"{color_str.GreenNode(str(round(self.viciousness, max(0,2-round(math.log10(self.viciousness)))))).colorized()}"
+        txt_s = f"{color_str.BlueNode(str(round(self.strength, max(0,2-round(math.log10(max(self.strength, 1))))))).colorized()}"
+        txt_a = f"{color_str.YellowNode(str(round(self.agility, max(0,2-round(math.log10(max(self.agility, 1))))))).colorized()}"
+        txt_l = f"{color_str.RedNode(str(round(self.lethality, max(0,2-round(math.log10(max(self.lethality, 1))))))).colorized()}"
+        txt_v = f"{color_str.GreenNode(str(round(self.viciousness, max(0,2-round(math.log10(max(self.viciousness, 1))))))).colorized()}"
         
         return f"|{txt_s}|{txt_a}|{txt_l}|{txt_v}|"
     

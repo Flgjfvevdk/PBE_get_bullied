@@ -511,7 +511,25 @@ class Burning(BuffFight):
     def add_compteur(self, val:int):
         self.compteur += val
         self.update_description()
-
+class Petrified(BuffFight):
+    description:str = "Agility à 1 pendant quelques rounds."
+    description_en:str = "Agility at 1 for quelques rounds."
+    category:CategoryBuff = CategoryBuff.DEBUFF
+    def __init__(self, fighter:FightingBully, time = 4):
+        super().__init__(fighter)
+        self.time = time
+        self.saved_agility = fighter.stats.agility
+        fighter.stats.agility = 1
+        self.description:str = f"Agility à 1 pendant {self.time} rounds."
+    def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
+        self.time -= 1
+        self.description:str = f"Agility à 1 pendant {self.time} rounds."
+        if self.time <= 0:
+            fighter.stats.agility = self.saved_agility
+            fighter.buffs.remove(self)
+        else : 
+            fighter.stats.agility = 1
+        return
 
 #Special Buff (for special occasion)
 class Friendship(BuffFight):
@@ -640,6 +658,15 @@ class ExplosiveTouch(BuffFight):
             opponent.pv -= 1
             return 1, 1
         return 0, 0
+class Medusa(BuffFight):
+    description:str = "Inflige le debuff Petrified au premier adversaire rencontré."
+    description_en:str = "Inflict Petrified debuff to the first opponents."
+    category:CategoryBuff = CategoryBuff.UNIQUE
+    def before_fight(self, fighter: FightingBully, opponent: FightingBully):
+        opponent.buffs.append(Petrified(opponent))
+        fighter.buffs.remove(self)
+        return
+
 class Parrain(BuffFight):
     description:str = "Ses coups critiques rendent l'ennemi Dizzy (malus Agility pendant 1 tour)."
     description_en:str = ""

@@ -320,7 +320,7 @@ class Fight():
             # Création du premier embed avec une miniature (image à gauche) et un texte d'exemple
             self.embed1 = discord.Embed(title=f"{self.fighter_1.bully.name}", description=texts[0], color=0x3498db)
             self.embed1.set_thumbnail(url="attachment://bully_image_file_1.png")
-
+            
             # Création du second embed avec une miniature (image à droite) et un texte d'exemple
             self.embed2 = discord.Embed(title=f"{self.fighter_2.bully.name}", description=texts[1], color=0xe74c3c)
             self.embed2.set_thumbnail(url="attachment://bully_image_file_2.png")

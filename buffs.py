@@ -390,7 +390,7 @@ class TrueToxic(ToxicTeam):
     dmg = 1.0
 
 class MonsterTeam(BuffFight):
-    description:str = "Se soigne de 1 HP en faisant un coup critique."
+    description:str = "Ses coups critiques soignent 1 HP."
     description_en:str = ""
     category:CategoryBuff = CategoryBuff.TEAM
     def apply_heal(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
@@ -399,7 +399,7 @@ class MonsterTeam(BuffFight):
             return 1, 0
         return 0, 0
 class TrueMonster(MonsterTeam):
-    description:str = "Ses coups critères soigne de 1 HP et inflige 1 dégât supplémentaire."
+    description:str = "Ses coups critiques soignent 1 HP et inflige 1 dégât supplémentaire."
     category:CategoryBuff = CategoryBuff.TEAM
     def apply_damage(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
         if fighter == recap_round.attacker and recap_round.is_success_lethal and fighter.pv + 1 <= fighter.bully.max_pv:

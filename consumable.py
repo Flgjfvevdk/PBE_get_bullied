@@ -188,7 +188,7 @@ async def add_conso_to_player(ctx: Context, player: 'player_info.Player', c:Cons
             await channel_cible.send("You have too many consumables, the new one is destroyed.")
 
     if len(player.consumables) < CONSO_NUMBER_MAX :
-        await channel_cible.send("You receive a new consumable: " + c.name + "!")
+        await channel_cible.send(f"The consumable: {c.name} has been added in your inventory.")
         player.consumables.append(c)
 
 async def use_consumable(ctx: Context, user: discord.abc.User, player: 'player_info.Player', session:AsyncSession, bot: Bot, channel_cible=None) :

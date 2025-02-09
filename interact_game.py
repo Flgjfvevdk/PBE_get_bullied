@@ -434,7 +434,7 @@ async def player_choose_fighting_bully(ctx:Context, fighting_bullies:list[Fighti
     else : 
         raise CancelChoiceException("No selected bully")
 
-    await channel_cible.send(f"{user} sends {bully_selected.name} to fight") 
+    await channel_cible.send(f"{user} select {bully_selected.name}.") 
     return fighting_bully, bully_number
 
 async def suicide_bully(ctx: Context, user: discord.abc.User, player: Player, bot: Bot, channel_cible=None, timeout = CHOICE_TIMEOUT) -> None :

@@ -261,10 +261,13 @@ class Fight():
             bully_gagnant = self.fighter_2.bully 
             bully_perdant = self.fighter_1.bully 
             fighting_bully_perdant = self.fighter_1
+
+            user_gagnant, user_perdant = self.user_2, self.user_1
         elif(self.fighter_2.pv <= 0):
             bully_gagnant = self.fighter_1.bully 
             bully_perdant = self.fighter_2.bully 
             fighting_bully_perdant = self.fighter_2
+            user_gagnant, user_perdant = self.user_1, self.user_2
         else:
             raise Exception("aucun perdant?")
         
@@ -287,13 +290,16 @@ class Fight():
                     await self.channel_cible.send(f"{bully_gagnant.name} {lvl_except.text}")
                 pretext += f"{bully_gagnant.name} earned {exp_earned} xp\n"
             if (gold_earned > 0):
-                user_gagnant, player_gagnant = (self.user_1, self.player_1) if bully_gagnant == self.fighter_1.bully else (self.user_2, self.player_2)
+                player_gagnant = self.player_1 if bully_gagnant == self.fighter_1.bully else self.player_2
                 if user_gagnant is not None and player_gagnant is not None:
                     money.give_money(player_gagnant, montant=gold_earned)
                     pretext += f"{user_gagnant.name} earned {gold_earned}{money.MONEY_EMOJI}\n"
             
-            txt:str = await bully_perdant.die_in_fight()
-            await self.channel_cible.send(pretext + txt)
+            txt = ""
+            if (user_perdant is not None):
+                txt = await bully_perdant.die_in_fight()
+            if (pretext+txt !=""):
+                await self.channel_cible.send(pretext + txt)
         else : 
             exp_earned, gold_earned = 0.0, 0
         return RecapExpGold(exp_earned, gold_earned)

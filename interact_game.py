@@ -21,6 +21,7 @@ from discord.ext.commands import Context, Bot
 BULLY_NUMBER_MAX = 5
 ITEM_NUMBER_MAX = 6
 CHOICE_TIMEOUT = 20
+NB_REFERRAL_REWARD = 5
 
 
 class CancelChoiceException(Exception):
@@ -188,14 +189,17 @@ async def invite_join(ctx: Context, parrain:Player, user:discord.Member|discord.
         join_accept:bool = var["choix"]
         await message.delete()
         if join_accept :
-            # new_player = await join_game(ctx, user, session, channel_cible)
             new_player = Player(money.MONEY_JOIN_VALUE)
             new_player.id = user.id
             try:
                 session.add(new_player)
+                parrain.nb_referrals += 1
                 parrain.money += money.MONEY_REFERRAL
                 bully_gift = Bully(f"{ctx.author.name}'s gift", stats=bully.Stats(8, 8, 8, 8), buff_fight_tag="Friendship")
                 new_player.bullies.append(bully_gift)
+                if (parrain.nb_referrals == NB_REFERRAL_REWARD):
+                    await ctx.send(f"{ctx.author.mention} you have invited {NB_REFERRAL_REWARD} friends ! You deserve a prize (ask for it :wink: )") 
+                await ctx.send(f"{user} has joined the game!")
                 await session.commit()
             except IntegrityError:
                 await ctx.reply("You have already joined the game.")

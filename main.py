@@ -50,7 +50,7 @@ TOKEN = getenv("DISCORD_TOKEN")
 intents = discord.Intents.default()
 intents.message_content = True
 
-TEXT_JOIN_THE_GAME:str = "Please join the game first ! (!!join)"
+TEXT_JOIN_THE_GAME:str = texts[lang]["join"]
 
 class GetBulliedBot(Bot):
     def __init__(self, *args, **kwargs):
@@ -95,7 +95,7 @@ async def invite(ctx: Context, user:discord.Member):
             await ctx.reply(TEXT_JOIN_THE_GAME)
             return
         if await session.get(Player, user.id) is not None :
-            await ctx.reply(f"{user} has already joined the game.")
+            await ctx.reply(texts[lang]["other_already_joined"].format(other=user))
             return
         await interact_game.invite_join(ctx, player_parrain, user, session=session)
        
@@ -110,18 +110,20 @@ async def payday(ctx: Context):
         
         cooldown_restant = await money.cooldown_restant_pay(player)
         if cooldown_restant > 0:
-            await ctx.send(f"Vous devez attendre encore {money.format_temps(round(cooldown_restant))} avant de pouvoir utiliser cette commande à nouveau.")
+            await ctx.send(texts[lang]["cooldown_wait"].format(cd=money.format_temps(round(cooldown_restant))))
             return
 
         server_id = ctx.guild.id #type: ignore
         bonus_champion = await arena_system.get_bonus_payday(session, server_id, player.id.__str__())
-        bonus_arena_str = f"×{bonus_champion} (arena champion bonus)" if bonus_champion > 1 else ""
+        bonus_arena_str = texts[lang]["arena_bonus_py"].format(bonus=bonus_champion) if bonus_champion > 1 else ""
+        # bonus_arena_str = f"×{bonus_champion} (arena champion bonus)" if bonus_champion > 1 else ""
         py_val = money.payday_value(player)
         money.give_money(player, montant=py_val * bonus_champion)
-        await ctx.send(
-            f"Vous avez reçu des {money.MONEY_EMOJI} ! +{py_val}{money.MONEY_EMOJI} {bonus_arena_str}\n"
-            f"Vous avez {money.get_money_user(player)} {money.MONEY_EMOJI}"
-        )
+        await ctx.send(texts[lang]["payday"].format(recu=py_val, bonus_str=bonus_arena_str, money_emoji=money.MONEY_EMOJI, total_money=money.get_money_user(player)))
+        # await ctx.send(
+        #     f"Vous avez reçu des {money.MONEY_EMOJI} ! +{py_val}{money.MONEY_EMOJI} {bonus_arena_str}\n"
+        #     f"Vous avez {money.get_money_user(player)} {money.MONEY_EMOJI}"
+        # )
 
         # Enregistrer l'heure actuelle comme dernière utilisation de la commande
         money.enregistrer_cooldown_pay(player)
@@ -134,18 +136,10 @@ async def bank(ctx: Context):
         if player is None:
             await ctx.reply(TEXT_JOIN_THE_GAME)
             return
-        
-        await ctx.send(f"You have {money.get_money_user(player)} {money.MONEY_EMOJI}")
+        await ctx.send(texts[lang]["bank"].format(money=money.get_money_user(player), money_emoji=money.MONEY_EMOJI))
+        # await ctx.send(f"You have {money.get_money_user(player)} {money.MONEY_EMOJI}")
 
-# @bot.command(aliases=['jeton', 'jetons', 'token', 'tokens', 'key', 'keys'])
-# async def print_key(ctx: Context):
-#     async with database.new_session() as session:
-#         player = await session.get(Player, ctx.author.id)
-#         if player is None:
-#             await ctx.reply(TEXT_JOIN_THE_GAME)
-#             return
-        
-#         await ctx.send(f"You have {keys.get_keys_user(player)} {keys.KEYS_ICON}")
+
 
 @bot.command(aliases=['patch', 'update'])
 async def patchnote(ctx: Context):
@@ -175,20 +169,22 @@ async def print_shop(ctx: Context):
 async def buy_lootbox(ctx: Context):
     user = ctx.author
     if not PlayerLock(user.id).check():
-        await ctx.reply(f"You are already in an interaction.")
+        await ctx.reply(texts[lang]["already_in_action"])
         return
     await lootbox.shop_lootbox(ctx, user=user)
 
 @bot.command(aliases=['ty', 'sayty', 'credits'])
 async def say_thanks(ctx: Context):
-    await ctx.send("Thanks to everyone who takes part in this game!")
+    await ctx.send(texts[lang]["thanks"])
+    # await ctx.send("Thanks to everyone who takes part in this game!")
 
 @bot.command(aliases=['sacrifice', 'kill'])
 async def suicide(ctx: Context):
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
-        await ctx.send("You are already in an action.")
+        await ctx.send(texts[lang]["already_in_action"])
+        # await ctx.send("You are already in an action.")
         return
     with lock:
         async with database.new_session() as session:
@@ -253,11 +249,13 @@ async def challenge(ctx: Context, opponent:discord.Member):
 
     lock1 = PlayerLock(user.id)
     if not lock1.check():
-        await ctx.send("You are already in an action.")
+        await ctx.send(texts[lang]["already_in_action"])
+        #await ctx.send("You are already in an action.")
         return
     lock2 = PlayerLock(opponent.id)
     if not lock2.check():
-        await ctx.channel.send(f"Sorry, but {opponent} is already busy!")
+        await ctx.send(texts[lang]["other_is_in_action"].format(other=opponent))
+        # await ctx.channel.send(f"Sorry, but {opponent} is already busy!")
         return
     
     with lock1, lock2:
@@ -268,7 +266,8 @@ async def challenge(ctx: Context, opponent:discord.Member):
                 await ctx.reply(TEXT_JOIN_THE_GAME)
                 return
             if p2 is None:
-                await ctx.reply(f"{opponent} has not joined the game.")
+                await ctx.reply(texts[lang]["other_hasnt_joined"].format(other=opponent))
+                #await ctx.reply(f"{opponent} has not joined the game.")
                 return
             await fight_manager.proposition_fight(ctx, user, opponent, p1, p2, bot)
             await session.commit()
@@ -281,11 +280,13 @@ async def fun_challenge(ctx: Context, opponent:discord.Member):
     
     lock1 = PlayerLock(user.id)
     if not lock1.check():
-        await ctx.send("You are already in an action.")
+        await ctx.send(texts[lang]["already_in_action"])
+        #await ctx.send("You are already in an action.")
         return
     lock2 = PlayerLock(opponent.id)
     if not lock2.check():
-        await ctx.channel.send(f"Sorry, but {opponent} is already busy!")
+        await ctx.send(texts[lang]["other_is_in_action"].format(other=opponent))
+        # await ctx.channel.send(f"Sorry, but {opponent} is already busy!")
         return
 
     with lock1, lock2:
@@ -296,7 +297,7 @@ async def fun_challenge(ctx: Context, opponent:discord.Member):
                 await ctx.reply(TEXT_JOIN_THE_GAME)
                 return
             if p2 is None:
-                await ctx.reply(f"{opponent} has not joined the game.")
+                await ctx.reply(texts[lang]["other_hasnt_joined"].format(other=opponent))
                 return
             await fight_manager.proposition_fight(ctx, user, opponent, p1, p2, bot, for_fun=True)
 
@@ -307,16 +308,19 @@ async def team_challenge(ctx: Context, opponent:discord.Member):
     user = ctx.author
 
     if user == opponent:
-        await ctx.send("You can't team challenge yourself.")
+        await ctx.send(texts[lang]["cant_self_tf"])
+        # await ctx.send("You can't team challenge yourself.")
         return
     
     lock1 = PlayerLock(user.id)
     if not lock1.check():
-        await ctx.send("You are already in an action.")
+        await ctx.send(texts[lang]["already_in_action"])
+        # await ctx.send("You are already in an action.")
         return
     lock2 = PlayerLock(opponent.id)
     if not lock2.check():
-        await ctx.channel.send(f"Sorry, but {opponent} is already busy!")
+        await ctx.send(texts[lang]["other_is_in_action"].format(other=opponent))
+        # await ctx.channel.send(f"Sorry, but {opponent} is already busy!")
         return
 
     with lock1, lock2:
@@ -327,18 +331,15 @@ async def team_challenge(ctx: Context, opponent:discord.Member):
                 await ctx.reply(TEXT_JOIN_THE_GAME)
                 return
             if p2 is None:
-                await ctx.reply(f"{opponent} has not joined the game.")
+                await ctx.reply(texts[lang]["other_hasnt_joined"].format(other=opponent))
+                # await ctx.reply(f"{opponent} has not joined the game.")
                 return
             await fight_manager.proposition_team_fight(ctx, user_1=user, user_2=opponent, player_1=p1, player_2=p2, for_fun=True)
 
     return
 
 
-@challenge.error
-@fun_challenge.error
-async def challenge_error(ctx: Context, error: commands.CommandError):
-    if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(f"Error: Missing required argument `{error.param.name}`.")
+
 
     
 @bot.command(aliases=['dungeon', 'donjon', 'dj', 'dg'])
@@ -350,21 +351,25 @@ async def explore_dungeon(ctx: Context, level:int|str):
                 level = next(key for key, value in donjon.special_dg_name_number.items() if level in value)
                 break
         else : 
-            await ctx.channel.send("Dungeon level must be a number (or a specific keyword).")
+            await ctx.send(texts[lang]["dg_error_param"])
+            # await ctx.channel.send("Dungeon level must be a number (or a specific keyword).")
             return
         
 
     if(level <= 0) :
-        await ctx.channel.send("Dungeon level must be greater than 0.")
+        await ctx.send(texts[lang]["dg_greater_0"])
+        # await ctx.channel.send("Dungeon level must be greater than 0.")
         return
     if level > 50 and level not in donjon.special_dg_name_number.keys():
-        await ctx.channel.send("Level max is 50.")
+        await ctx.send(texts[lang]["dg_lower_50"])
+        # await ctx.channel.send("Level max is 50.")
         return
 
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
-        await ctx.send("You are already in an action.")
+        await ctx.send(texts[lang]["already_in_action"])
+        # await ctx.send("You are already in an action.")
         return
 
     with lock:
@@ -376,7 +381,9 @@ async def explore_dungeon(ctx: Context, level:int|str):
             
             pallier_boss_vaincu = math.floor(player.max_dungeon/10) * 10
             if (level - 10 > pallier_boss_vaincu) and level not in donjon.special_dg_name_number.keys():
-                await ctx.channel.send(f"You must defeat the dungeon level {math.floor((level-1)/10)*10} before exploring this dungeon.")
+                pallier_minimum = math.floor((level-1)/10)*10
+                await ctx.send(texts[lang]["dg_pallier"].format(lvl_pallier=pallier_minimum))
+                # await ctx.channel.send(f"You must defeat the dungeon level {pallier_minimum} before exploring this dungeon.")
                 return
 
             try :
@@ -386,26 +393,24 @@ async def explore_dungeon(ctx: Context, level:int|str):
                 raise e
             await session.commit()
     
-#On peut réutiliser la fonction erreur de challenge
-@explore_dungeon.error
-async def explore_dungeon_error(ctx: Context, error: commands.CommandError):
-    if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(f"Error: Missing required argument `{error.param.name}`. Please provide a dungeon level. Example : dungeon 10")
 
 @bot.command(aliases=['ruin', 'ruine'])
 #@decorators.author_is_free
 async def explore_ruin(ctx: Context, level:int):
     if(level <= 0) :
-        await ctx.channel.send("Ruin level must be greater than 0")
+        await ctx.send(texts[lang]["ruin_greater_0"])
+        # await ctx.channel.send("Ruin level must be greater than 0")
         return
     if(level > 50) :
-        await ctx.channel.send("50 is the maximum")
+        await ctx.send(texts[lang]["ruin_lower_50"])
+        # await ctx.channel.send("50 is the maximum")
         return
     
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
-        await ctx.send("You are already in an action.")
+        await ctx.send(texts[lang]["already_in_action"])
+        # await ctx.send("You are already in an action.")
         return
 
     with lock:
@@ -420,12 +425,16 @@ async def explore_ruin(ctx: Context, level:int):
                 raise e
             await session.commit()
 
-#On peut réutiliser la fonction erreur de challenge
-@explore_ruin.error
-async def explore_ruin_error(ctx: Context, error: commands.CommandError):
-    if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(f"Error: Missing required argument `{error.param.name}`. Please provide a ruin level. Example : ruin 10")
 
+@challenge.error
+@fun_challenge.error
+@team_challenge.error
+@explore_dungeon.error
+@explore_ruin.error
+async def challenge_error(ctx: Context, error: commands.CommandError):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send(texts[lang]["missing_argument"].format(arg=error.param.name))
+        # await ctx.send(f"Error: Missing required argument `{error.param.name}`.")
 
 @bot.command(aliases=['arene'])
 async def arena(ctx: Context):
@@ -437,7 +446,8 @@ async def arena(ctx: Context):
     async with database.new_session() as session:
         arena = await session.get(Arena, server_id)
         if arena is None:
-            await ctx.send("No arena found for this server. Please create an arena first.")
+            await ctx.send(texts[lang]["no_arena"])
+            # await ctx.send("No arena found for this server. Please create an arena first.")
             return
 
         player = await session.get(Player, user.id)
@@ -478,16 +488,19 @@ async def print_reserve(ctx: Context, user:Optional[discord.User |discord.Member
 async def trade(ctx: Context, other:discord.Member):
     user = ctx.author
     if user == other:
-        await ctx.send("You can't trade with yourself.")
+        await ctx.send(texts[lang]["cant_trade_self"])
+        # await ctx.send("You can't trade with yourself.")
         return
 
     lock1 = PlayerLock(user.id)
     if not lock1.check():
-        await ctx.send("You are already in an action.")
+        await ctx.send(texts[lang]["already_in_action"])
+        # await ctx.send("You are already in an action.")
         return
     lock2 = PlayerLock(other.id)
     if not lock2.check():
-        await ctx.channel.send(f"Sorry, but {other} is already busy!")
+        await ctx.send(texts[lang]["other_is_in_action"].format(other=other))
+        # await ctx.channel.send(f"Sorry, but {other} is already busy!")
         return
     
     with lock1, lock2:
@@ -498,7 +511,8 @@ async def trade(ctx: Context, other:discord.Member):
                 await ctx.reply(TEXT_JOIN_THE_GAME)
                 return
             if p2 is None:
-                await ctx.reply(f"{other} has not joined the game.")
+                await ctx.reply(texts[lang]["other_hasnt_joined"].format(other=other))
+                # await ctx.reply(f"{other} has not joined the game.")
                 return
             await trades.trade_offer(ctx, user, other, p1, p2)
             await session.commit()
@@ -512,7 +526,8 @@ async def hire(ctx: Context):
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
-        await ctx.send("You are already in an action.")
+        await ctx.send(texts[lang]["already_in_action"])
+        # await ctx.send("You are already in an action.")
         return
 
     with lock:
@@ -529,7 +544,8 @@ async def hire_all(ctx: Context):
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
-        await ctx.send("You are already in an action.")
+        await ctx.send(texts[lang]["already_in_action"])
+        # await ctx.send("You are already in an action.")
         return
 
     with lock:
@@ -548,7 +564,8 @@ async def kill_all(ctx: Context):
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
-        await ctx.send("You are already in an action.")
+        await ctx.send(texts[lang]["already_in_action"])
+        # await ctx.send("You are already in an action.")
         return
     with lock:
         async with database.new_session() as session:
@@ -568,7 +585,7 @@ async def use_consumable(ctx: Context):
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
-        await ctx.send("You are already in an action.")
+        await ctx.send(texts[lang]["already_in_action"])
         return
 
     with lock:
@@ -600,7 +617,7 @@ async def snack_machine(ctx: Context, value:int|None = None):
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
-        await ctx.send("You are already in an action.")
+        await ctx.send(texts[lang]["already_in_action"])
         return
     with lock:
         async with database.new_session() as session:
@@ -617,7 +634,7 @@ async def water_fountain(ctx: Context, level: int | None = None):
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
-        await ctx.send("You are already in an action.")
+        await ctx.send(texts[lang]["already_in_action"])
         return
     with lock:
         async with database.new_session() as session:
@@ -658,7 +675,7 @@ async def admin_give(ctx: Context,user: discord.User, name: str, lvl:int, rarity
     async with database.new_session() as session:
         player = await session.get(Player, user.id)
         if player is None:
-            await ctx.reply("{user} hasn't joined the game.")
+            await ctx.reply(texts[lang]["other_hasnt_joined"].format(other=user))
             return
         await interact_game.add_bully_to_player(ctx, player, b)
         await session.commit()
@@ -827,12 +844,11 @@ async def del_c(ctx: Context):
             await session.commit()
 
 
-@bot.command(aliases=['ua', 'update_arena', 'create_arena', 'create_arenas'])
+@bot.command(aliases=['update_arena', 'create_arena', 'create_arenas'])
 @decorators.is_admin()
 async def update_arenas(ctx: Context):
     await arena_system.update_arenas(bot)
     await ctx.send("Arenas updated successfully.")
-        
 
 @bot.command()
 @decorators.is_admin()

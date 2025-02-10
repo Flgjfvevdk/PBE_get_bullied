@@ -4,26 +4,26 @@ lang = "fr"
 texts = {
     "fr":{
         "join":"Veuillez rejoindre le jeu avant ! (!!join)",
-        "other_hadnt_joined":"{other} n'a pas rejoint le jeu.",
+        "other_hasnt_joined":"{other} n'a pas rejoint le jeu.",
         "other_already_joined":"{user} a déjà rejoint le jeu.",
         "cooldown_wait": "Vous devez attendre encore {cd} avant de pouvoir utiliser cette commande à nouveau.",
         "arena_bonus_py": "×{bonus} (bonus champion d'arène)",
         "payday": ("Vous avez reçu des {money_emoji} ! +{recu}{money_emoji} {bonus_str}\n"
                     "Vous avez {total_money} {money_emoji}"),
-        "bank": "Vous avez {money} {money_emoji}.",
+        "bank": "Vous avez {money} {money_emoji}",
         "already_in_action": "Vous êtes déjà en interaction.",
         "other_is_in_action" : "{other} est déjà en interaction.",
-        "thanks":"Merci à tous ceux qui participent à ce jeu ! (admin : Flgjfvevdk)",
-        "cant_self_tf":"Vous ne pouvez pas vous team challenge vous-même.",
-        "missing_argument":"Erreur : Argument requis manquant `{error.param.name}`.",
-        "dg_error_param" : "Le paramètre doit être un nombre (ou un mot-clé spécifique).",
+        "thanks" : "Merci à tous ceux qui participent à ce jeu ! (admin : Flgjfvevdk)",
+        "cant_self_tf" :"Vous ne pouvez pas vous team challenge vous-même.",
+        "missing_argument" :"Erreur : Argument requis manquant `{arg}`.",
+        "dg_error_param" : "Le paramètre 'level' doit être un nombre (ou un mot-clé spécifique).",
         "dg_greater_0" : "Le niveau du donjon doit être supérieur à 0.",
-        "dg_lower_50": "Le niveau maximum du donjon est 50.",
-        "dg_pallier": "Vous devez vaincre le niveau de donjon {lvl_pallier} avant d'explorer ce donjon.",
-        "rn_greater_0": "Le niveau de la ruine doit être supérieur à 0.",
-        "rn_lower_50": "Le niveau maximum de la ruine est 50.",
+        "dg_lower_50" : "Le niveau maximum du donjon est 50.",
+        "dg_pallier" : "Vous devez vaincre le niveau de donjon {lvl_pallier} avant d'explorer ce donjon.",
+        "ruin_greater_0" : "Le niveau de la ruine doit être supérieur à 0.",
+        "ruin_lower_50": "Le niveau maximum de la ruine est 50.",
         "no_arena" : "Aucune arène trouvée pour ce serveur. Veuillez créer une arène d'abord.",
-        "trade_self": "Vous ne pouvez pas échanger avec vous-même.",
+        "cant_trade_self": "Vous ne pouvez pas échanger avec vous-même.",
 
         #arena
         "arena_enter":"{user} rentre dans l'arène !",
@@ -68,9 +68,9 @@ texts = {
 
         #fight_manager
         "challenge_fight": "{user1} défie {user2} !",
-        "challenge_fight_for_fun": "{user1} défie {user2} à un combat amical (pas de mort, pas d'xp)!",
+        "challenge_fight_for_fun": "{user1} défie {user2} pour un combat amical (pas de mort, pas d'xp)!",
         "challenge_teamfight": "{user1} défie {user2} dans un combat d'équipe!",
-        "challenge_teamfight_for_fun": "{user1} défie {user2} à un combat d'équipe amical (pas de mort, pas d'xp)!",
+        "challenge_teamfight_for_fun": "{user1} défie {user2} dans un combat d'équipe amical (pas de mort, pas d'xp)!",
         "challenge_accepted": "Défi accepté !",
         "challenge_declined": "Défi refusé",
         "timeout_choose_fighter": "Temps écoulé, réagissez plus vite la prochaine fois, {user}.",
@@ -161,28 +161,28 @@ texts = {
         "trade_canceled": "Échange annulé."
 
     },
-    "en:":{
+    "en":{
         "join":"Please join the game first ! (!!join)",
-        "other_hadnt_joined":"{other} hasn't joined the game.",
+        "other_hasnt_joined":"{other} hasn't joined the game.",
         "other_already_joined":"{user} has already joined the game.",
         "cooldown_wait": "You must wait {cd} before using this command again.",
         "arena_bonus_py": "×{bonus} (arena champion bonus)",
         "payday": ("You received {money_emoji} ! +{recu}{money_emoji} {bonus_str}\n"
                    "You have {total_money} {money_emoji}"),
-        "bank": "You have {money} {money_emoji}.",
+        "bank": "You have {money} {money_emoji}",
         "already_in_action": "You are already in an interaction.",
         "other_is_in_action" : "{other} is already in an interaction.",
         "thanks":"Thanks to everyone who takes part in this game! (admin : Flgjfvevdk)",
         "cant_self_tf":"You can't team challenge yourself.",
-        "missing_argument":"Error: Missing required argument `{error.param.name}`.",
-        "dg_error_param" : "The parameter must be a number (or a specific keyword).",
+        "missing_argument":"Error: Missing required argument `{arg}`.",
+        "dg_error_param" : "The parameter 'level' must be a number (or a specific keyword).",
         "dg_greater_0" : "Dungeon level must be greater than 0.",
         "dg_lower_50": "Maximum dungeon level is 50.",
         "dg_pallier":"You must defeat the dungeon level {lvl_pallier} before exploring this dungeon.",
-        "rn_greater_0": "Ruin level must be greater than 0.",
-        "rn_lower_50": "Maximum ruin level is 50.",
+        "ruin_greater_0 ": "Ruin level must be greater than 0.",
+        "ruin_lower_50": "Maximum ruin level is 50.",
         "no_arena" : "No arena found for this server. Please create an arena first.",
-        "trade_self": "You can't trade with yourself.",
+        "cant_trade_self": "You can't trade with yourself.",
 
         #arena
         "arena_enter":"{user} enters the arena!",

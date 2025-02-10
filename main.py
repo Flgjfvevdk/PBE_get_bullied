@@ -42,6 +42,7 @@ from discord.ext.commands import Bot, Context, CommandNotFound
 from discord import Embed
 import reserve
 from supply_bully import run_snack_machine, run_water_fountain
+from all_texts import texts, lang
 
 
 TOKEN = getenv("DISCORD_TOKEN")
@@ -114,9 +115,9 @@ async def payday(ctx: Context):
 
         server_id = ctx.guild.id #type: ignore
         bonus_champion = await arena_system.get_bonus_payday(session, server_id, player.id.__str__())
-        bonus_arena_str = f"×{bonus_champion} (arena champion bonus)" if bonus_champion > 0 else ""
+        bonus_arena_str = f"×{bonus_champion} (arena champion bonus)" if bonus_champion > 1 else ""
         py_val = money.payday_value(player)
-        money.give_money(player, montant=money.payday_value(player) * bonus_champion)
+        money.give_money(player, montant=py_val * bonus_champion)
         await ctx.send(
             f"Vous avez reçu des {money.MONEY_EMOJI} ! +{py_val}{money.MONEY_EMOJI} {bonus_arena_str}\n"
             f"Vous avez {money.get_money_user(player)} {money.MONEY_EMOJI}"
@@ -136,15 +137,15 @@ async def bank(ctx: Context):
         
         await ctx.send(f"You have {money.get_money_user(player)} {money.MONEY_EMOJI}")
 
-@bot.command(aliases=['jeton', 'jetons', 'token', 'tokens', 'key', 'keys'])
-async def print_key(ctx: Context):
-    async with database.new_session() as session:
-        player = await session.get(Player, ctx.author.id)
-        if player is None:
-            await ctx.reply(TEXT_JOIN_THE_GAME)
-            return
+# @bot.command(aliases=['jeton', 'jetons', 'token', 'tokens', 'key', 'keys'])
+# async def print_key(ctx: Context):
+#     async with database.new_session() as session:
+#         player = await session.get(Player, ctx.author.id)
+#         if player is None:
+#             await ctx.reply(TEXT_JOIN_THE_GAME)
+#             return
         
-        await ctx.send(f"You have {keys.get_keys_user(player)} {keys.KEYS_ICON}")
+#         await ctx.send(f"You have {keys.get_keys_user(player)} {keys.KEYS_ICON}")
 
 @bot.command(aliases=['patch', 'update'])
 async def patchnote(ctx: Context):
@@ -164,7 +165,7 @@ async def commands_list(ctx: Context):
             continue
         aliases = ", ".join(command.aliases) if command.aliases else "No aliases"
         command_list += f"**{command.name}**: {aliases}\n"
-    await ctx.send(f"Available commands:\n{command_list}")
+    await ctx.send(f"Commandes:\n{command_list}")
 
 @bot.command(aliases=['shop', 'ps'])
 async def print_shop(ctx: Context):
@@ -385,6 +386,7 @@ async def explore_dungeon(ctx: Context, level:int|str):
                 raise e
             await session.commit()
     
+#On peut réutiliser la fonction erreur de challenge
 @explore_dungeon.error
 async def explore_dungeon_error(ctx: Context, error: commands.CommandError):
     if isinstance(error, commands.MissingRequiredArgument):
@@ -418,6 +420,7 @@ async def explore_ruin(ctx: Context, level:int):
                 raise e
             await session.commit()
 
+#On peut réutiliser la fonction erreur de challenge
 @explore_ruin.error
 async def explore_ruin_error(ctx: Context, error: commands.CommandError):
     if isinstance(error, commands.MissingRequiredArgument):
@@ -430,7 +433,6 @@ async def arena(ctx: Context):
         return
 
     user = ctx.author
-    
     server_id = ctx.guild.id
     async with database.new_session() as session:
         arena = await session.get(Arena, server_id)
@@ -604,7 +606,7 @@ async def snack_machine(ctx: Context, value:int|None = None):
         async with database.new_session() as session:
             player = await session.get(Player, user.id)
             if player is None:
-                await ctx.reply("You can't use any commands if the target didn't join")
+                await ctx.reply(TEXT_JOIN_THE_GAME)
                 return
 
             await run_snack_machine(ctx, bot, session, user, player = player, value = value)
@@ -621,7 +623,7 @@ async def water_fountain(ctx: Context, level: int | None = None):
         async with database.new_session() as session:
             player = await session.get(Player, user.id)
             if player is None:
-                await ctx.reply("Vous devez rejoindre le jeu pour utiliser cette commande.")
+                await ctx.reply(TEXT_JOIN_THE_GAME)
                 return
 
             await run_water_fountain(ctx, bot, session, user, player, value=level)
@@ -656,7 +658,7 @@ async def admin_give(ctx: Context,user: discord.User, name: str, lvl:int, rarity
     async with database.new_session() as session:
         player = await session.get(Player, user.id)
         if player is None:
-            await ctx.reply("You can't use any commands if the target didn't join")
+            await ctx.reply("{user} hasn't joined the game.")
             return
         await interact_game.add_bully_to_player(ctx, player, b)
         await session.commit()

@@ -291,12 +291,12 @@ async def update_arenas(bot : Bot):
 async def get_bonus_payday(session: AsyncSession, server_id:int,  player_id_str: str) -> int:
     arena = await session.get(Arena, server_id)
     if arena is None:
-        return 0
+        return 1
     if arena.teams_ids.get(player_id_str, None) is not None:
         keys = list(arena.teams_ids.keys())
         index = keys.index(player_id_str)
         if index < len(BONUS_PAYDAY_CHAMPION):
             return BONUS_PAYDAY_CHAMPION[index]
-    return 0
+    return 1
 
 

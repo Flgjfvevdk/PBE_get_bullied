@@ -26,9 +26,11 @@ texts = {
         "cant_trade_self": "Vous ne pouvez pas échanger avec vous-même.",
 
         #arena
-        "arena_enter":"{user} rentre dans l'arène !",
+        "arena_enter":"{user} entre dans l'arène !",
+        "arena_ask_enter": "{user}, voulez-vous entrer dans l'arène ? (Prix = {price} {money_emoji})",
+        "arena_label":"Entrer dans l'arène (et payer {price})",
         "arena_no_money": "{user}, vous n'avez pas assez de {money_emoji} pour entrer dans l'arène. (Prix = {price})",
-        "arena_next_teamfight": "Prochain combat d'équipe contre :\n{teamfighters}",
+        "arena_next_teamfight": "Prochain teamfight contre :\n{teamfighters}",
         "arena_reached_rank": "{user}, vous avez atteint le rang {rank} dans l'arène ! (récompense : {reward} {money_emoji})",
         "arena_no_improve_rank": "{user}, vous n'avez pas amélioré votre rang dans l'arène.",
 
@@ -186,6 +188,8 @@ texts = {
 
         #arena
         "arena_enter":"{user} enters the arena!",
+        "arena_ask_enter": "{user}, do you want to enter the arena?  (Price = {price} {money_emoji})",
+        "arena_label":"Enter The Arena (and pay {price})",
         "arena_no_money": "{user}, you do not have enough {money_emoji} to enter the arena. (Price = {price})",
         "arena_next_teamfight": "Next teamfight against:\n{teamfighters}",
         "arena_reached_rank": "{user}, you have reached rank {rank} in the arena! (reward: {reward} {money_emoji})",

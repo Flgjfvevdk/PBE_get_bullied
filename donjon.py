@@ -23,6 +23,7 @@ import discord
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from all_texts import texts, lang
 
 
 
@@ -130,14 +131,16 @@ dungeon_fighters_lvl_phoenix = [DungeonFightingBully(name="Phoenix - L'oiseau ma
 dungeon_fighters_lvl_bg = [DungeonFightingBully(name="Elisha le BG", pv_max=50, seed=bully.Seed(1.1, 0.4, 0.2, 0), buffs_tags=["Adaptation", "TooPerfect", "PerfectSkin"], rarity=Rarity.UNIQUE, can_swap=True)]
 
 
-dungeon_specials_dict:dict[int, DungeonSpecialInfos] = {10 : DungeonSpecialInfos("Dungeon lvl 10 - Boss", 10, dungeon_fighters_lvl_10), 
+dungeon_specials_dict:dict[int, DungeonSpecialInfos] = {
+                                                        10 : DungeonSpecialInfos("Dungeon lvl 10 - Boss", 10, dungeon_fighters_lvl_10), 
                                                         20 : DungeonSpecialInfos("Dungeon lvl 20 - Boss", 20, dungeon_fighters_lvl_20),
                                                         30 : DungeonSpecialInfos("Dungeon lvl 30 - Boss", 30, dungeon_fighters_lvl_30),
                                                         40 : DungeonSpecialInfos("Dungeon lvl 40 - Boss", 40, dungeon_fighters_lvl_40),
                                                         50 : DungeonSpecialInfos("Dungeon lvl 50 - Boss", 50, dungeon_fighters_lvl_50, ConsumableElixirBuff("Dragon Blood", "Dragon")), 
                                                         111 : DungeonSpecialInfos("Phoenix nest", 15, dungeon_fighters_lvl_phoenix, ConsumableElixirBuff("Phoenix's Feather", "Phoenix")), 
-                                                        666 : DungeonSpecialInfos("Hell", 50, dungeon_fighters_lvl_666, ConsumableElixirBuff("Devil's Pocket Watch", "DevilPocketWatch")), 
-                                                        432 : DungeonSpecialInfos("Elisha's house", 10, dungeon_fighters_lvl_bg, ConsumableElixirBuff("Perfect lotion", "PerfectSkin"))}
+                                                        432 : DungeonSpecialInfos("Elisha's house", 10, dungeon_fighters_lvl_bg, ConsumableElixirBuff("Perfect lotion", "PerfectSkin")),
+                                                        666 : DungeonSpecialInfos("Hell", 50, dungeon_fighters_lvl_666, ConsumableElixirBuff("Devil's Pocket Watch", "DevilPocketWatch"))
+                                                        }
 
 @dataclass
 class Dungeon():
@@ -204,7 +207,8 @@ class Dungeon():
         return enemies_fighters
 
     async def enter(self) -> None:
-        message = await self.ctx.channel.send(f"{self.ctx.author.mention} enters the {self.name}")
+        message = await self.ctx.channel.send(texts[lang]["dungeon_enter"].format(user=self.ctx.author.mention, dungeon_name=self.name))
+        # message = await self.ctx.channel.send(f"{self.ctx.author.mention} enters the {self.name}")
         try :
             self.thread = await self.ctx.channel.create_thread(name=f"{self.name}", message=message) #type: ignore
         except Exception as e:
@@ -218,21 +222,24 @@ class Dungeon():
                 await self.handle_fight(can_switch = (fighting_bully_enemy in self.can_swap_enemies))
 
         except interact_game.CancelChoiceException as e:
-            await self.thread.send(f"{self.ctx.author.name} cancelled the fight and left the dungeon")
+            await self.thread.send(texts[lang]["dungeon_cancel"].format(user=self.ctx.author.mention))
+            # await self.thread.send(f"{self.ctx.author.name} cancelled the fight and left the dungeon")
         except asyncio.exceptions.TimeoutError as e:
-            await self.thread.send(f"Your team left the dungeon. Choose faster next time {self.ctx.author}.")
+            await self.thread.send(texts[lang]["dungeon_team_left_timeout"].format(user=self.ctx.author))
+            # await self.thread.send(f"Your team left the dungeon. Choose faster next time {self.ctx.author}.")
         except IndexError as e:
-            await self.thread.send(
-                f"Your team left the dungeon."
-            )
+            await self.thread.send(texts[lang]["dungeon_team_left"])
+            # await self.thread.send(f"Your team left the dungeon.")
         except Exception as e:
             print(e)
 
         #Le joueur a gagné le donjon
         else:
             #On est plus dans le combat, le joueur à vaincu le donjon
-            await self.ctx.channel.send(f"{self.ctx.author.name} has beaten the {self.name}!") 
-            await self.thread.send(f"{self.ctx.author.name} has beaten the {self.name}!") 
+            txt_w = texts[lang]["dungeon_win"].format(user=self.ctx.author.mention, dungeon_name=self.name)
+            # txt_w = f"{self.ctx.author.name} has beaten the {self.name}!"
+            await self.ctx.channel.send(txt_w)
+            await self.thread.send(txt_w)
 
             #on donne la récompense d'xp aux joueurs encore en vie
             for i,fighter in enumerate(self.fighters_joueur):
@@ -256,7 +263,9 @@ class Dungeon():
     async def handle_fight(self, can_switch = False):
         fighting_bully_enemy = self.enemies_fighters[self.current_floor]
         text_enemy_coming = f"{fighting_bully_enemy.get_print()}"
-        await self.thread.send(f"Next enemy :\n{bully.mise_en_forme_str(text_enemy_coming)}") 
+
+        await self.thread.send(texts[lang]["dungeon_next_enemy"].format(enemy=bully.mise_en_forme_str(text_enemy_coming)))
+        # await self.thread.send(f"Next enemy :\n{bully.mise_en_forme_str(text_enemy_coming)}") 
         
         fighting_bully_joueur, num_bully_j = await interact_game.player_choose_fighting_bully(ctx=self.ctx, fighting_bullies=self.fighters_joueur, user=self.ctx.author, channel_cible=self.thread, timeout=DUNGEON_CHOICE_TIMEOUT)
 
@@ -279,7 +288,7 @@ class Dungeon():
         if(fighting_bully_joueur.pv > 0) :
             #Le joueur a gagné. On calcul les récompenses, on les affiches et on les stocks
             (exp_earned, gold_earned) = recapExpGold.exp_earned, recapExpGold.gold_earned
-            pretext = ""
+            
             if (exp_earned > 0):
                 try:
                     bully_joueur.give_exp(exp_earned)
@@ -292,7 +301,8 @@ class Dungeon():
                 money.give_money(self.player, montant=gold_earned)
                 
             #On envoie le message de succès et on progress dans le dungeon
-            await self.thread.send(f"{pretext}{fighting_bully_enemy.bully.name} is dead! You progress in the dungeon.")
+            await self.thread.send(texts[lang]["dungeon_enemy_dead"].format(enemy_name=fighting_bully_enemy.bully.name))
+            # await self.thread.send(f"{fighting_bully_enemy.bully.name} is dead! You progress in the dungeon.")
             self.current_floor += 1
 
         else : 
@@ -305,11 +315,14 @@ class Dungeon():
             fighter, new_num_bully_j = await interact_game.player_choose_fighting_bully(ctx=self.ctx, fighting_bullies=self.fighters_joueur, user=self.ctx.author, channel_cible=self.thread, timeout=DUNGEON_CHOICE_TIMEOUT)
 
         except interact_game.CancelChoiceException:
-            await self.thread.send(f"{fighter.bully.name} stays in fight.")
+            await self.thread.send(texts[lang]["dungeon_no_change"].format(fighter_name=fighter.bully.name))
+            # await self.thread.send(f"{fighter.bully.name} stays in fight.")
         except asyncio.exceptions.TimeoutError:
-            await self.thread.send(f"Too slow, {fighter.bully.name} stays in fight.")
+            await self.thread.send(texts[lang]["dungeon_change_too_slow"].format(fighter_name=fighter.bully.name))
+            # await self.thread.send(f"Too slow, {fighter.bully.name} stays in fight.")
         except IndexError:
-            await self.thread.send(f"Error, {fighter.bully.name} stays in fight.")
+            await self.thread.send(texts[lang]["dungeon_change_error"].format(fighter_name=fighter.bully.name))
+            # await self.thread.send(f"Error, {fighter.bully.name} stays in fight.")
         return fighter
     
     def reset_stats_bullies(self) -> None:
@@ -336,9 +349,11 @@ async def str_leaderboard_donjon(session: AsyncSession) -> str:
     # Afficher le classement des joueurs
     for joueur in classement_joueurs:
         if joueur.max_dungeon > 0:
-            text_classement+= f"<@{joueur.id}> - Highest Dungeon Level Reached: {joueur.max_dungeon}\n"
+            text_classement+= texts[lang]["dungeon_highest_ranked"].format(player_id=joueur.id, max_dungeon=joueur.max_dungeon) + "\n"
+            # text_classement+= f"<@{joueur.id}> - Highest Dungeon Level Reached: {joueur.max_dungeon}\n"
         else:
-            text_classement+= f"<@{joueur.id}> is not ranked.\n"
+            text_classement += texts[lang]["dungeon_not_ranked"].format(player_id=joueur.id) + "\n"
+            # text_classement+= f"<@{joueur.id}> is not ranked.\n"
 
     return text_classement
 

@@ -65,15 +65,17 @@ texts = {
 
         #dungeon
         "dungeon_enter": "{user} entre dans {dungeon_name}",
-        "dungeon_cancel": "{user} a annulé le combat et quitté le donjon",
+        "dungeon_cancel": "{user} a annulé le combat et quitté le donjon.",
         "dungeon_team_left_timeout": "Votre équipe a quitté le donjon. Choisissez plus vite la prochaine fois {user}.",
         "dungeon_team_left": "Votre équipe a quitté le donjon.",
-        "dungeon_win_channel": "{user} a vaincu {dungeon_name} !",
-        "dungeon_win_thread": "{user} a vaincu {dungeon_name} !",
+        "dungeon_win": "{user} a vaincu {dungeon_name} !",
         "dungeon_next_enemy": "Prochain ennemi :\n{enemy}",
-        "dungeon_enemy_dead": "{pretext}{enemy_name} est mort ! Vous progressez dans le donjon.",
+        "dungeon_enemy_dead": "{enemy_name} est mort ! Vous progressez dans le donjon.",
+        "dungeon_no_change": "{fighter_name} reste en combat.",
         "dungeon_change_too_slow": "Trop lent, {fighter_name} reste en combat.",
         "dungeon_change_error": "Erreur, {fighter_name} reste en combat.",
+        "dungeon_highest_ranked": "<@{player_id}> - Niveau de Donjon le plus élevé vaincu : {max_dungeon}",
+        "dungeon_not_ranked": "<@{player_id}> - n'est pas classé en Donjon.",
 
         #fight_manager
         "challenge_fight": "{user1} défie {user2} !",
@@ -233,15 +235,17 @@ texts = {
 
         #dungeon
         "dungeon_enter": "{user} enters {dungeon_name}",
-        "dungeon_cancel": "{user} cancelled the fight and left the dungeon",
+        "dungeon_cancel": "{user} cancelled the fight and left the dungeon.",
         "dungeon_team_left_timeout": "Your team left the dungeon. Choose faster next time {user}.",
         "dungeon_team_left": "Your team left the dungeon.",
-        "dungeon_win_channel": "{user} has beaten {dungeon_name}!",
-        "dungeon_win_thread": "{user} has beaten {dungeon_name}!",
+        "dungeon_win": "{user} has beaten {dungeon_name}!",
         "dungeon_next_enemy": "Next enemy:\n{enemy}",
-        "dungeon_enemy_dead": "{pretext}{enemy_name} is dead! You progress in the dungeon.",
+        "dungeon_enemy_dead": "{enemy_name} is dead! You progress in the dungeon.",
+        "dungeon_no_change": "{fighter_name} stays in fight.",
         "dungeon_change_too_slow": "Too slow, {fighter_name} stays in fight.",
         "dungeon_change_error": "Error, {fighter_name} stays in fight.",
+        "dungeon_highest_ranked": "<@{player_id}> - Highest Dungeon Level Reached: {max_dungeon}",
+        "dungeon_not_ranked": "<@{player_id}> - is not ranked in Dungeon.",
 
         #fight_manager
         "challenge_fight": "{user1} challenges {user2}!",

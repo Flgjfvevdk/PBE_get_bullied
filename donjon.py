@@ -85,7 +85,7 @@ dungeon_fighter_bully_list = [DungeonFightingBully(name="Thyr O'Flan", pv_max=5,
                               DungeonFightingBully(name="Le Fourbe", pv_max=6, seed=bully.Seed(0.1, 0.2, 0.05, 0.65)),
                               DungeonFightingBully(name="Nulos", pv_max=5, seed=bully.Seed(0.1, 0.05, 0.4, 0.45))]
 
-dungeon_fighters_lvl_10 = [DungeonFightingBully(name="Araignée mutante", pv_max=10, seed=Seed(0.3, 0.3, 0.4, 0.0), buffs_tags=["Venomous"], rarity=Rarity.TOXIC, can_swap=True, exp_coef=1.0),
+dungeon_fighters_lvl_10 = [DungeonFightingBully(name="Serpent mutant", pv_max=10, seed=Seed(0.3, 0.3, 0.4, 0.0), buffs_tags=["Venomous"], rarity=Rarity.TOXIC, can_swap=True, exp_coef=1.0),
                            DungeonFightingBully(name="Andy State", pv_max=8, seed=Seed(0.3, 0.2, 0.1, 0.4), buffs_tags=["Vilain"], rarity=Rarity.TOXIC, can_swap=True, exp_coef=1.0),
                            DungeonFightingBully(name="Pollution", pv_max=15, seed = Seed(0.2, 0.4, 0.1, 0.3), buffs_tags=["Pollution"], rarity=Rarity.TOXIC, can_swap=True, exp_coef=1.2)
                            ]
@@ -93,7 +93,7 @@ dungeon_fighters_lvl_10 = [DungeonFightingBully(name="Araignée mutante", pv_max
 dungeon_fighters_lvl_20 = [DungeonFightingBully(name="Vilain Slime !", pv_max=12, seed=Seed(0.48, 0.3, 0.02, 0.2), buffs_tags=["SlimyPunch", "SlimyBody"], rarity=Rarity.MONSTER, can_swap=True),
                            DungeonFightingBully(name="Vampire", pv_max=10, seed=Seed(0.25, 0.35, 0.1, 0.3), buffs_tags=["Vampire"], rarity=Rarity.MONSTER, can_swap=True, exp_coef=1.0),
                            DungeonFightingBully(name="Loup-garou", pv_max=12, seed=Seed(0.4, 0.2, 0.3, 0.1), buffs_tags=["Lycanthropy"], rarity=Rarity.MONSTER, can_swap=True, exp_coef=1.0),
-                           DungeonFightingBully(name="Abomination", pv_max=20, seed = Seed(0.4, 0.3, 0.3, 0.0), buffs_tags=["Vampire", "Lycanthropy", "MonsterTeam"], rarity=Rarity.MONSTER, can_swap=True, exp_coef=1.5)
+                           DungeonFightingBully(name="Abomination", pv_max=20, seed = Seed(0.4, 0.3, 0.3, 0.0), buffs_tags=["Vampire", "Lycanthropy"], rarity=Rarity.MONSTER, can_swap=True, exp_coef=1.5)
                            ]
 
 dungeon_fighters_lvl_30 = [DungeonFightingBully(name="Dr Malice - Super Vilain", pv_max=20, seed=Seed(0.25, 0.4, 0.05, 0.3), buffs_tags=["Vilain"], rarity=Rarity.DEVASTATOR, can_swap=True, exp_coef=1.0),

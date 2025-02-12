@@ -706,6 +706,7 @@ class Mecha(BuffFight):
     def apply_damage(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
         if not self.is_mecha_active:
             self.jauge += self.increase_jauge
+            self.update_description()
             return 0,0
         else : 
             bonus_damage = self.jauge /10
@@ -720,8 +721,11 @@ class Mecha(BuffFight):
                 self.is_mecha_active = True
                 fighter.stats.agility = self.saved_agility
                 fighter.pv = self.pv_max_mecha
+                print("on est la et :", self.is_mecha_active)
+                self.update_description()
     
     def update_description(self):
+        print("bam : ", self.is_mecha_active)
         if not self.is_mecha_active:
             self.description = f"Construction du mecha en cours ({self.jauge}%)."
         else : 

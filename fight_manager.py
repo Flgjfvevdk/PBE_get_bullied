@@ -282,8 +282,8 @@ class Fight():
             bully_gagnant = self.fighter_2.bully 
             bully_perdant = self.fighter_1.bully 
             fighting_bully_perdant = self.fighter_1
-
             user_gagnant, user_perdant = self.user_2, self.user_1
+
         elif(self.fighter_2.pv <= 0):
             bully_gagnant = self.fighter_1.bully 
             bully_perdant = self.fighter_2.bully 
@@ -297,10 +297,13 @@ class Fight():
             bully_gagnant.increment_win_loose(win=True)
             bully_perdant.increment_win_loose(win=False)
 
-            (exp_earned, gold_earned) = reward_win_fight(bully_gagnant, bully_perdant)
-            exp_earned *= fighting_bully_perdant.exp_coef
-            exp_earned = round(exp_earned, 1)
-            gold_earned = int(gold_earned * fighting_bully_perdant.gold_coef)
+            if (user_gagnant is None ):
+                (exp_earned, gold_earned) = (0.0, 0)
+            else : 
+                (exp_earned, gold_earned) = reward_win_fight(bully_gagnant, bully_perdant)
+                exp_earned *= fighting_bully_perdant.exp_coef
+                exp_earned = round(exp_earned, 1)
+                gold_earned = int(gold_earned * fighting_bully_perdant.gold_coef)
 
 
             pretext = ""
@@ -573,11 +576,10 @@ def value_to_bar_str(v:int, max_value=10) -> str:
     return t
 
 def buff_to_str(buffs:list[fighting_bully.BuffFight]):
-    # txt = "\n" if buffs == [] else "\nBuff : |" 
     txt = "\n" if buffs == [] else "\nBuff : \n" 
     for b in buffs : 
         # txt += f" {b.name} |"
-        txt += f" {b.name} : {b.description}\n"
+        txt += f" **{b.name}** : {b.description}\n"
     return txt
 
 # Les récompenses 

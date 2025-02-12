@@ -13,6 +13,7 @@ from typing import Optional, List, Dict, TypeVar, Generic
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 import asyncio
 from utils.locks import PlayerLock
+from all_texts import texts, lang
 
 MAX_BULLY_RESERVE = 10
 TIMEOUT_RESERVE_MODIF = 60
@@ -24,12 +25,14 @@ async def add_bully_reserve(ctx: Context, player: Player, b: Bully, channel_cibl
         channel_cible = ctx.channel
         
     if len(player.get_reserve()) >= MAX_BULLY_RESERVE:
-        await channel_cible.send(f"You cannot have more than {MAX_BULLY_RESERVE} bullies!")
+        await channel_cible.send(texts[lang]["reserve_max_bullies"].format(max_reserve=MAX_BULLY_RESERVE))
+        # await channel_cible.send(f"You cannot have more than {MAX_BULLY_RESERVE} bullies!")
         return
     b.in_reserve = True
     player.bullies.append(b)
 
-    await channel_cible.send("You have a new bully in reserve : " + b.name)   
+    await channel_cible.send(texts[lang]["new_bully_reserve"].format(bully=b.name))
+    # await channel_cible.send("You have a new bully in reserve : " + b.name)   
 
 async def switch_reserve(ctx: Context, player: Player, b: Bully, go_reserve:bool, channel_cible=None) -> None :
     #Par défaut, le channel d'envoie est le channel du contexte
@@ -41,10 +44,12 @@ async def switch_reserve(ctx: Context, player: Player, b: Bully, go_reserve:bool
     if nb_empty_space > 0:
         #On fait le switch
         b.in_reserve = go_reserve
-        await channel_cible.send(f"{b.name} have been moved in your {'reserve' if go_reserve else 'active team'}")  
+        await channel_cible.send(texts[lang]["bullie_moved"].format(bully=b.name, target=(texts[lang]["reserve"] if go_reserve else texts[lang]["active_team"])))
+        # await channel_cible.send(f"{b.name} have been moved in your {'reserve' if go_reserve else 'active team'}")  
 
     else :
-        await channel_cible.send(f"Your {'reserve' if go_reserve else 'active team'} is already full") 
+        await channel_cible.send(texts[lang]["team_full"].format(target=(texts[lang]["reserve"] if go_reserve else texts[lang]["active_team"])))
+        # await channel_cible.send(f"Your {'reserve' if go_reserve else 'active team'} is already full") 
 
 
 async def print_reserve(ctx: Context, user: discord.abc.User, player: Player, bot: Bot, session:AsyncSession, compact_print=False, print_images=False, channel_cible=None) -> None:
@@ -52,7 +57,8 @@ async def print_reserve(ctx: Context, user: discord.abc.User, player: Player, bo
     if(channel_cible==None):
         channel_cible = ctx.channel
 
-    text = f"{user}, your bullies in reserve:"
+    text = texts[lang]["reserve_bullies_info"].format(user=user)
+    # text = f"{user}, your bullies in reserve:"
     images: list[Path] = []
 
     for b in player.get_reserve():
@@ -71,7 +77,8 @@ async def print_reserve(ctx: Context, user: discord.abc.User, player: Player, bo
     #On init les variables
     event = asyncio.Event()
     var:Dict[str, int | None] = {"choix" : None}
-    view = interact_game.ViewChoice(user=user, event=event, list_choix=[0,1,2], list_choix_name=["Send bully to reserve", "Send bully to team", "Switch team and reserve"], variable_pointer=var)
+    view = interact_game.ViewChoice(user=user, event=event, list_choix=[0,1,2], 
+                    list_choix_name=[texts[lang]["label_send_reserve"], texts[lang]["label_send_team"], texts[lang]["label_switch_team_reserve"]], variable_pointer=var)
 
     if print_images and images:
         files = [discord.File(image) for image in images]
@@ -90,7 +97,8 @@ async def print_reserve(ctx: Context, user: discord.abc.User, player: Player, bo
         user = ctx.author
         lock = PlayerLock(user.id)
         if not lock.check():
-            await ctx.send("You are already in an action.")
+            await ctx.reply(texts[lang]["already_in_action"])
+            # await ctx.send("You are already in an action.")
             return
         with lock:
             try:
@@ -105,10 +113,12 @@ async def print_reserve(ctx: Context, user: discord.abc.User, player: Player, bo
                     bully_reserve = await interact_game.select_bully(ctx=ctx, user=user, player=player, from_team=False)
                     bully_team.in_reserve = True
                     bully_reserve.in_reserve = False
-                    await channel_cible.send(f"{bully_team.name} and {bully_reserve.name} switched")  
+                    await channel_cible.send(texts[lang]["reserve_switch_bullies"].format(bully1=bully_team.name, bully2=bully_reserve.name))
+                    # await channel_cible.send(f"{bully_team.name} and {bully_reserve.name} switched")  
                 await session.commit()
             except IndexError as e:
-                await channel_cible.send(f"Your team or reserve is empty")  
+                await channel_cible.send(texts[lang]["empty_team_or_reserve"])
+                # await channel_cible.send(f"Your team or reserve is empty")  
             except Exception as e:
                 await message_reserve.edit(view=None)
         

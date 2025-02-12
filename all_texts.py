@@ -123,11 +123,17 @@ texts = {
 
         #reserve
         "reserve_bullies_info": "{user}, vos bullies en réserve :",
-        "reserve_max_bullies": "Vous ne pouvez pas avoir plus de {max_reserve} bullies !",
+        "reserve_max_bullies": "Vous ne pouvez pas avoir plus de {max_reserve} bullies  dans votre réserve.",
         "new_bully_reserve": "Vous avez un nouveau bully en réserve : {bully}",
-        "bullie_moved": "{name} a été déplacé(e) vers votre {target}.",
+        "bullie_moved": "{bully} a été déplacé(e) vers votre {target}.",
         "team_full": "Votre {target} est déjà pleine.",
         "empty_team_or_reserve": "Votre équipe ou votre réserve est vide",
+        "active_team": "équipe active",
+        "reserve" : "réserve",
+        "label_send_reserve" :"Envoyer un bully en réserve",
+        "label_send_team" : "Envoyer un bully dans votre équipe", 
+        "label_switch_team_reserve" : "Switch team and réserve",
+        "reserve_switch_bullies" : "{bully1} et {bully2} ont été échangés.",
 
         #ruine
         "ruin_enter": "{user} entre dans une ruine mystérieuse [lvl : {level}]",
@@ -302,11 +308,17 @@ texts = {
 
         #reserve
         "reserve_bullies_info": "{user}, your bullies in reserve:",
-        "reserve_max_bullies": "You cannot have more than {max_reserve} bullies!",
+        "reserve_max_bullies": "You cannot have more than {max_reserve} bullies in your reserve.",
         "new_bully_reserve": "You have a new bully in reserve: {bully}",
         "bullie_moved": "{name} has been moved to your {target}.",
         "team_full": "Your {target} is already full.",
         "empty_team_or_reserve": "Your team or reserve is empty",
+        "active_team" : "active team",
+        "reserve" : "reserve",
+        "label_send_reserve" :"Send bully to reserve",
+        "label_send_team" : "Send bully to team", 
+        "label_switch_team_reserve" : "Switch team and reserve",
+        "reserve_switch_bullies" : "{bully1} and {bully2} have been switched.",
 
         #ruine
         "ruin_enter": "{user} enters a mysterious ruin [lvl: {level}]",

@@ -35,6 +35,9 @@ texts = {
         "arena_no_improve_rank": "{user}, vous n'avez pas amélioré votre rang dans l'arène.",
 
         #consumable
+        "consumable_aliment_effect":"Debuff **{nerf}** pour buff **{buff}** d'une valeur max : {value}.",
+        "consumable_water_rarity_error" : "Cette Water est faite pour les bullies **{water_rarity}**, pas **{bully_rarity}**",
+        "consumable_water_effect":"{name} : à l'utilisation, un bully de rareté **{rarity}** récupérera un maximum de **{value} niveaux**.",
         "consumable_too_many_select": (
             "Vous avez trop de consommables. "
             "Veuillez sélectionner un consommable existant pour le remplacer."
@@ -50,11 +53,15 @@ texts = {
         ),
         "consumable_no_selection": "Vous n'avez sélectionné aucun consommable.",
         "consumable_applied": (
-            "Le consommable ({name}) a été appliqué avec succès !"
+            "Le consommable ({name}) a été appliqué avec succès !"
         ),
         "consumable_none": (
-            "Vous n'avez aucun consommable. Faites des ruines pour en obtenir."
+            "Vous n'avez aucun consommable :("
         ),
+        "consumable_do_ruin": "Faites des ruines pour en obtenir.",
+        "consumable_choose_title": "Choisissez un consommable",
+        "consumable_user_title": "Consommables de {user}",
+        "consumable_use_command": "!!use_consumable pour en utiliser un",
 
         #dungeon
         "dungeon_enter": "{user} entre dans {dungeon_name}",
@@ -196,6 +203,9 @@ texts = {
         "arena_no_improve_rank": "{user}, you did not improve your rank in the arena.",
         
         #consumable
+        "consumable_aliment_effect":"Debuff **{nerf}** to buff **{buff}** by up to {value}.",
+        "consumable_water_rarity_error" : "This water is made for **{water_rarity}** bullies, not **{bully_rarity}**",
+        "consumable_water_effect":"{name} : on use, a bully of rarity **{rarity}** will recover a maximum of **{value} levels**.",
         "consumable_too_many_select": (
             "You have too many consumables. "
             "Please select one consumable you own to replace with the new one."
@@ -214,8 +224,12 @@ texts = {
             "Consumable ({name}) has been successfully applied!"
         ),
         "consumable_none": (
-            "You don't have any consumables. Do a ruin to get one."
+            "You don't have any consumables. :("
         ),
+        "consumable_do_ruin": "But you may get some from ruins!",
+        "consumable_choose_title": "Choose a consumable",
+        "consumable_user_title": "{user}'s consumables",
+        "consumable_use_command": "!!use_consumable to use one.",
 
         #dungeon
         "dungeon_enter": "{user} enters {dungeon_name}",

@@ -71,9 +71,9 @@ texts = {
         "dungeon_win": "{user} a vaincu {dungeon_name} !",
         "dungeon_next_enemy": "Prochain ennemi :\n{enemy}",
         "dungeon_enemy_dead": "{enemy_name} est mort ! Vous progressez dans le donjon.",
-        "dungeon_no_change": "{fighter_name} reste en combat.",
-        "dungeon_change_too_slow": "Trop lent, {fighter_name} reste en combat.",
-        "dungeon_change_error": "Erreur, {fighter_name} reste en combat.",
+        "fighter_stay_in_fight": "{fighter_name} reste en combat.",
+        "fighter_change_too_slow": "Trop lent, {fighter_name} reste en combat.",
+        "fighter_change_error": "Erreur, {fighter_name} reste en combat.",
         "dungeon_highest_ranked": "<@{player_id}> - Niveau de Donjon le plus élevé vaincu : {max_dungeon}",
         "dungeon_not_ranked": "<@{player_id}> - n'est pas classé en Donjon.",
 
@@ -86,7 +86,6 @@ texts = {
         "challenge_declined": "Défi refusé.",
         "fight_cancel": "{user} a annulé le combat",
         "fight_giveup": "{user} a abandonné le combat",
-        #"timeout_choose_fighter": "Temps écoulé, choisissez plus vite la prochaine fois, {user}.",
         "challenge_too_late": "Trop tard ! Aucun combat entre {user1} et {user2}.",
         "fight_winner": "{winner} a gagné le combat !",
         "teamfight_winner": "{winner} a gagné le teamfight !",
@@ -115,8 +114,6 @@ texts = {
 
         #lootbox
         "lootbox_select": "Sélectionnez une lootbox à ouvrir. Vous obtiendrez un bully avec un niveau deux fois inférieur à celui de la box.",
-        # "lootbox_already_in_action": "Vous êtes déjà en action.",
-        # "lootbox_join_game": "Veuillez rejoindre le jeu d'abord !",
         "lootbox_require_dungeon": "{user}, vous devez battre le donjon de niveau {level} pour acheter cette lootbox",
         "lootbox_not_enough_money": "{user}, vous n'avez pas assez de {money_emoji} pour cette box [coût : {cout}{money_emoji}]",
         "lootbox_purchase_success": "{user} a acheté une lootbox et a obtenu... {bully} un {rarity}!",
@@ -137,54 +134,76 @@ texts = {
 
         #ruine
         "ruin_enter": "{user} entre dans une ruine mystérieuse [lvl : {level}]",
-        "ruin_enemy_intro": "Un ennemi se met en travers de votre chemin !\n{formatted_enemy}",
-        "ruin_enemy_defeated": "{enemy_name} est mort ! Vous progressez dans la ruine.",
+        "ruin_enemy_intro": "Un ennemi se met en travers de votre chemin !\n{enemy}",
+        "ruin_enemy_defeated": "{enemy} est mort ! Vous progressez dans la ruine.",
         "ruin_team_timeout": "Votre équipe a quitté la ruine. Choisissez plus vite la prochaine fois {user}.",
-        "ruin_cancelled": "{user} a annulé le combat et quitté la ruine",
-        "ruin_bully_dead": "Votre bully est mort ou n'existe pas.\nVotre équipe a quitté la ruine.",
+        "ruin_cancelled": "{user}, vous avez annulé le combat et quitté la ruine",
+        "ruin_bully_error": "Votre bully est mort ou n'existe pas.\nVotre équipe a quitté la ruine.",
         "ruin_victory": "Félicitations {user}, vous avez battu le boss!",
+        "elixir_of" : "Elixir - ",
+        "found_conso": "Vous avez trouvé un consommable : {name} !",
         "ruin_thread_error": "Une erreur s'est produite lors de la création du fil de discussion de la ruine.",
+        "found_treasure" : "Vous avez trouvé un **trésor**. Il contient **{gold}** {money_emoji}!",
+        "bully_is_dead" : "{bully} est mort !",
+        
+        "trap_strength_intro": "[STRENGTH] La salle est remplie de grosses pierres tranchantes. Quelqu'un doit créer un chemin en déplaçant ces grosses rochers.",
+        "trap_strength_success": "Votre bully a déplacé des rochers et a créé un chemin sûr pour tout le monde.",
+        "trap_strength_fail": "Déplacer ces rochers a laissé votre bully avec de nombreuses blessures et des saignements, mais le chemin est dégagé.",
+        
+        "trap_agility_intro": "[AGILITY] Pour progresser il faut grimper en haut d'un escalier en pierre en ruine. Quelqu'un doit grimper et attacher une corde en haut pour créer un chemin.",
+        "trap_agility_success": "Votre bully a grimpé parfaitement et a attaché une corde pour les autres.",
+        "trap_agility_fail": "En grimpant votre bully s'est blessé, mais la corde est finalement attachée pour les autres.",
+        
+        "trap_lethality_intro": "[LETHALITY] Une créature terrifiante dort dans la salle. Quelqu'un doit l'assassiner pour créer un chemin sûr.",
+        "trap_lethality_success": "Votre bully a poignardé la créature, qui est morte instantanément.",
+        "trap_lethality_fail": "Votre bully a poignardé la créature, mais elle n'est pas morte instantanément, et a blessé votre bully.",
+        
+        "trap_viciousness_intro": "[VICIOUSNESS] La salle est pleine de pièges. Quelqu'un doit les identifier pour trouver un chemin sûr.",
+        "trap_viciousness_success": "Votre bully a identifié tous les pièges et a trouvé un chemin sûr pour tout le monde.",
+        "trap_viciousness_fail": "Votre bully a été blessé par de nombreux pièges mais a fini par trouver un chemin sûr.",
         
         #shop
         "shop_dm_error": "Cette commande ne peut être utilisée que sur un serveur, pas en MP.",
         "shop_not_open": "Le shop n'est pas ouvert sur ce serveur. Demandez à un admin de l'ouvrir.",
         "shop_restocking": "Le shop se remplit. Veuillez patienter <{seconds} secondes>.",
-        "shop_closed_message": "```Le shop est fermé. À bientôt!```",
+        "shop_closed_message": "Le shop est fermé. À bientôt!",
         "shop_purchase_success": "{user} a acheté {name} pour {cost}{money_emoji}!",
+        "shop_bully_not_available" : "Ce bully n'est plus disponible (déso {user})",
+        "shop_not_enough_money" : "{user}, vous n'avez pas assez de {money_emoji} pour acheter {bully}. Coût : {cost}{money_emoji}",
+        "bully_in_shop" : "Bullies in the shop : ",
+        "price" : "Prix : {cost} {money_emoji}",
 
         #supply_bully
         # supply_bully - Snack Machine
-        "snack_bonus_select": "Sélectionnez votre stat bonus :",
+        "snack_bonus_select": "Sélectionnez votre stat **bonus** :",
         "snack_bonus_timeout": "Timeout lors du choix du bonus. Veuillez réessayer.",
-        "snack_malus_select": "Sélectionnez un malus :",
+        "snack_malus_select": "Sélectionnez une stat **malus** :",
         "snack_malus_timeout": "Timeout lors du choix d'un malus. Veuillez réessayer.",
-        "snack_value_prompt": "{user}, veuillez répondre avec un nombre correspondant au niveau du consommable souhaité :",
-        "snack_level_timeout": "Timeout lors de la saisie du niveau. Opération annulée.",
-        "snack_invalid_value": "La valeur saisie n'est pas un nombre entier valide. Opération annulée.",
-        "snack_purchase_confirmation": "Voulez-vous acheter : **{name}[{value}]** pour {price} {money_emoji} ?\nEffet : {effect}",
-        "snack_not_enough_money": "Vous n'avez pas assez de {money_emoji}.",
-        "snack_purchase_success": "Vous avez acheté **{name}[{value}]** pour {price} {money_emoji} !",
+        "snack_conso_not_find": "Aucun consommable correspondant n'a été trouvé pour ces choix.",
+
+        "conso_not_enough_money": "Vous n'avez pas assez de {money_emoji}.",
+        "conso_value_prompt": "{user}, veuillez répondre avec un nombre correspondant au niveau du consommable souhaité :",
+        "conso_level_timeout": "Timeout lors de la saisie du niveau. Opération annulée.",
+        "conso_invalid_value": "La valeur saisie n'est pas un nombre entier valide. Opération annulée.",
+        "conso_purchase_confirmation": "Voulez-vous acheter : **{name}[{value}]** pour {price} {money_emoji} ?\nEffet : {effect}",
+        "conso_purchase_success": "Vous avez acheté **{name}[{value}]** pour {price} {money_emoji} !",
 
         # supply_bully - Water Fountain
         "water_rarity_select": "Sélectionnez la **rareté** de l'eau XP :",
         "water_rarity_timeout": "Timeout lors du choix de la rareté. Veuillez réessayer.",
         "water_rarity_selected": "Rareté sélectionnée : **{rarity_name}**",
-        "water_value_prompt": "{user}, répondez avec un **nombre** correspondant au niveau du consommable souhaité.",
-        "water_value_timeout": "Timeout lors de la saisie du niveau. Opération annulée.",
-        "water_invalid_value": "La valeur saisie n'est pas un nombre entier valide. Opération annulée.",
-        "water_purchase_confirmation": "Voulez-vous acheter **{name} [{value}]** pour {price} {money_emoji} ?\nEffet : {effect}",
-        "water_not_enough_money": "Vous n'avez pas assez de {money_emoji}.",
-        "water_purchase_success": "Vous avez acheté **{name} [{value}]** pour {price} {money_emoji} !",
 
         # trades
         "trade_offer": "{user1} veut échanger avec {user2} !",
         "trade_timeout": "Trop tard ! Aucun échange entre {user1} et {user2}.",
         "trade_start": "L'échange commence",
         "trade_declined": "Échange refusé",
-        "trade_confirmation": "Les deux utilisateurs confirment-ils l'échange ?",
+        "trade_confirmation": "Les deux utilisateurs confirment-ils l'échange ? ({user1} et {user2})",
         "trade_confirmation_timeout": "La confirmation de l'échange a expiré.",
         "trade_completed": "Échange terminé avec succès !",
-        "trade_canceled": "Échange annulé."
+        "trade_canceled": "Échange annulé.",
+        "u_offer_b": "{user} propose : {btxt}",
+        "trade_impossible":"{user} can't receive {bully}[lvl:{bully_lvl}] because their max dungeon level is {max_dungeon}."
 
     },
     "en":{
@@ -205,7 +224,7 @@ texts = {
         "dg_greater_0" : "Dungeon level must be greater than 0.",
         "dg_lower_50": "Maximum dungeon level is 50.",
         "dg_pallier":"You must defeat the dungeon level {lvl_pallier} before exploring this dungeon.",
-        "ruin_greater_0 ": "Ruin level must be greater than 0.",
+        "ruin_greater_0": "Ruin level must be greater than 0.",
         "ruin_lower_50": "Maximum ruin level is 50.",
         "no_arena" : "No arena found for this server. Please create an arena first.",
         "cant_trade_self": "You can't trade with yourself.",
@@ -256,9 +275,9 @@ texts = {
         "dungeon_win": "{user} has beaten {dungeon_name}!",
         "dungeon_next_enemy": "Next enemy:\n{enemy}",
         "dungeon_enemy_dead": "{enemy_name} is dead! You progress in the dungeon.",
-        "dungeon_no_change": "{fighter_name} stays in fight.",
-        "dungeon_change_too_slow": "Too slow, {fighter_name} stays in fight.",
-        "dungeon_change_error": "Error, {fighter_name} stays in fight.",
+        "fighter_stay_in_fight": "{fighter_name} stays in fight.",
+        "fighter_change_too_slow": "Too slow, {fighter_name} stays in fight.",
+        "fighter_change_error": "Error, {fighter_name} stays in fight.",
         "dungeon_highest_ranked": "<@{player_id}> - Highest Dungeon Level Reached: {max_dungeon}",
         "dungeon_not_ranked": "<@{player_id}> - is not ranked in Dungeon.",
 
@@ -271,7 +290,6 @@ texts = {
         "challenge_declined": "Challenge declined",
         "fight_cancel": "{user} cancelled the fight",
         "fight_giveup" : "{user} gave up the fight",
-        #"timeout_choose_fighter": "Timeout, choose faster next time {user}.",
         "challenge_too_late": "Too late! No fight between {user1} and {user2}.",
         "fight_winner": "{winner} won the fight!",
         "teamfight_winner": "{winner} won the teamfight!",
@@ -300,8 +318,6 @@ texts = {
 
         #lootbox
         "lootbox_select": "Select a lootbox to open. You'll get a bully with a level 2 times smaller than the box level.",
-        # "lootbox_already_in_action": "You are already in an action.",
-        # "lootbox_join_game": "Please join the game first !",
         "lootbox_require_dungeon": "{user}, you must beat dungeon level {level} to buy this lootbox",
         "lootbox_not_enough_money": "{user}, you don't have enough {money_emoji} for this box [cost: {cout}{money_emoji}]",
         "lootbox_purchase_success": "{user} has purchased a lootbox and got... {bully} a {rarity}!",
@@ -322,13 +338,30 @@ texts = {
 
         #ruine
         "ruin_enter": "{user} enters a mysterious ruin [lvl: {level}]",
-        "ruin_enemy_intro": "An enemy stands in your way!\n{formatted_enemy}",
-        "ruin_enemy_defeated": "{enemy_name} is dead! You progress in the ruin.",
+        "ruin_enemy_intro": "An enemy stands in your way!\n{enemy}",
+        "ruin_enemy_defeated": "{enemy} is dead! You progress in the ruin.",
+        "ruin_bully_missing": "Your bully is dead or do not exist.\nYour team left the ruin.",
         "ruin_team_timeout": "Your team left the ruin. Choose faster next time {user}.",
-        "ruin_cancelled": "{user} cancelled the fight and left the ruin",
-        "ruin_bully_dead": "Your bully is dead or does not exist.\nYour team left the ruin.",
+        "ruin_cancelled": "{user},you have cancelled the fight and left the ruin",
+        "ruin_bully_error": "Your bully is dead or does not exist.\nYour team left the ruin.",
         "ruin_victory": "Congratulation {user}, you beat the boss!",
         "ruin_thread_error": "An error occurred while creating the ruin thread.",
+
+        "trap_strength_intro": "[STRENGTH] The room is filled with large, sharp stones. One must create a path by moving these large stones.",
+        "trap_strength_success": "Your bully moved rocks and created a safe path for everyone.",
+        "trap_strength_fail": "Moving these rocks has left your bully with numerous wounds and bleeding, but the path is cleared.",
+        
+        "trap_agility_intro": "[AGILITY] The door to the next room is at the top of a ruined stone staircase. One must climb and tie a rope on top to create a path.",
+        "trap_agility_success": "Your bully climbed perfectly and tied a rope on top.",
+        "trap_agility_fail": "Climbing has left your bully with numerous wounds and bleeding, but the rope is tied.",
+        
+        "trap_lethality_intro": "[LETHALITY] A terrifying creature is sleeping in the room. One must assassinate it to create a safe path.",
+        "trap_lethality_success": "Your bully stabbed the creature, which died instantly.",
+        "trap_lethality_fail": "Your bully stabbed the creature, but it didn't instantly die, and hurt your bully.",
+        
+        "trap_viciousness_intro": "[VICIOUSNESS] The room is full of traps. One must identify them and find a safe path.",
+        "trap_viciousness_success": "Your bully identified every trap and found a safe path for everyone.",
+        "trap_viciousness_fail": "Your bully was wounded by many traps but ended up finding a safe path.",
 
         #shop
         "shop_dm_error": "This command can only be used in a server, not in a DM.",
@@ -340,37 +373,86 @@ texts = {
         # supply_bully - Snack Machine
         "snack_bonus_select": "Select your **bonus** stat:",
         "snack_bonus_timeout": "Timeout during bonus selection. Please try again.",
-        "snack_malus_select": "Select malus:",
+        "snack_malus_select": "Select your **malus** stat:",
         "snack_malus_timeout": "Timeout during malus selection. Please try again.",
-        "snack_value_prompt": "{user}, please respond with a number corresponding to the desired consumable level:",
-        "snack_level_timeout": "Timeout during level input. Operation cancelled.",
-        "snack_invalid_value": "The value entered is not a valid integer. Operation cancelled.",
-        "snack_purchase_confirmation": "Do you want to purchase **{name}[{value}]** for {price}{money_emoji}? Effect: {effect}",
-        "snack_not_enough_money": "You don't have enough {money_emoji}.",
-        "snack_purchase_success": "You have purchased **{name}[{value}]** for {price} {money_emoji}!",
+        "snack_conso_not_find": "No consumable found.",
+        "conso_not_enough_money": "You don't have enough {money_emoji}.",
+        "conso_value_prompt": "{user}, please respond with a number corresponding to the desired consumable level:",
+        "conso_level_timeout": "Timeout during level input. Operation cancelled.",
+        "conso_invalid_value": "The value entered is not a valid integer. Operation cancelled.",
+        "conso_purchase_confirmation": "Do you want to purchase **{name}[{value}]** for {price}{money_emoji}?\nEffect: {effect}",
+        "conso_purchase_success": "You have purchased **{name}[{value}]** for {price} {money_emoji}!",
 
         # supply_bully - Water Fountain
         "water_rarity_select": "Select the **rarity** of the Water XP:",
         "water_rarity_timeout": "Timeout during rarity selection. Please try again.",
         "water_rarity_selected": "Rarity selected: **{rarity_name}**",
-        "water_value_prompt": "{user}, please reply with a **number** corresponding to the desired consumable level.",
-        "water_value_timeout": "Timeout during level input. Operation cancelled.",
-        "water_invalid_value": "The value entered is not a valid integer. Operation cancelled.",
-        "water_purchase_confirmation": "Do you want to purchase **{name} [{value}]** for {price} {money_emoji}? Effect: {effect}",
-        "water_not_enough_money": "You don't have enough {money_emoji}.",
-        "water_purchase_success": "You have purchased **{name} [{value}]** for {price} {money_emoji}!",
 
         # trades
         "trade_offer": "{user1} wants to trade with {user2}!",
         "trade_timeout": "Too late! No trade between {user1} and {user2}.",
         "trade_start": "The Trade begins",
         "trade_declined": "Trade declined",
-        "trade_confirmation": "Do both users confirm the trade?",
+        "trade_confirmation": "Do both users confirm the trade? ({user1} and {user2})",
         "trade_confirmation_timeout": "Trade confirmation timed out.",
         "trade_completed": "Trade completed successfully!",
-        "trade_canceled": "Trade canceled."
+        "trade_canceled": "Trade canceled.",
+        "u_offer_b": "{user} offers : {btxt}",
+        "trade_impossible":"{user} can't receive {bully}[lvl:{bully_lvl}] because their max dungeon level is {max_dungeon}."
     }
 }
 
 
+def getText(key:str):
+    return texts[lang][key]
+
+
+def verify_texts_keys() -> bool:
+    """
+    Verify if the keys in texts["fr"] and texts["en"] are the same.
+    Returns True if all keys match, False otherwise.
+    """
+    fr_keys = set(texts["fr"].keys())
+    en_keys = set(texts["en"].keys())
+    missing_in_en = fr_keys - en_keys
+    missing_in_fr = en_keys - fr_keys
+
+    if not missing_in_en and not missing_in_fr:
+        print("All keys match between 'fr' and 'en'.")
+        return True
+
+    if missing_in_en:
+        print("Keys missing in 'en':", missing_in_en)
+    if missing_in_fr:
+        print("Keys missing in 'fr':", missing_in_fr)
+    return False
+
+def verify_keys_format() -> bool:
+    import re
+    """
+    Verify if every key in both texts["fr"] and texts["en"] matches the format "my_key".
+    The keys must consist of only lowercase letters and underscores,
+    and cannot start or end with an underscore.
+    
+    Returns True if all keys match the format, False otherwise.
+    """
+    pattern = re.compile(r'^[a-z0-9](?:[a-z0-9_]*[a-z0-9])?$')
+    invalid_keys = []
+    
+    for lang_code in texts:
+        for key in texts[lang_code]:
+            if not pattern.fullmatch(key):
+                invalid_keys.append((lang_code, key))
+                
+    if not invalid_keys:
+        print("All keys match the required format.")
+        return True
+
+    for lang_code, key in invalid_keys:
+        print(f"Invalid key in '{lang_code}': {key}")
+    return False
+
+if __name__ == "__main__":
+    verify_texts_keys()
+    verify_keys_format()
 

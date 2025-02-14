@@ -14,7 +14,7 @@ import enum
 import buffs
 from fighting_bully import BuffFight
 from utils.embed import create_embed
-from all_texts import texts, lang
+from all_texts import getText
 
 CHOICE_TIMEOUT = 60
 CONSO_NUMBER_MAX = 10
@@ -104,7 +104,7 @@ class ConsumableAliment(Consumable):
     
     def get_effect(self) -> str:
         aliment = self.aliment.value
-        return texts[lang]["consumable_aliment_effect"].format(nerf=aliment.stat_nerf, buff=aliment.stat_buff, value=int(self.value))
+        return getText("consumable_aliment_effect").format(nerf=aliment.stat_nerf, buff=aliment.stat_buff, value=int(self.value))
         # return f"Debuff **{aliment.stat_nerf}** to buff **{aliment.stat_buff}** by up to {int(self.value)}."
     
 class ConsumableElixirBuff(Consumable):
@@ -150,7 +150,7 @@ class ConsumableWaterLvl(Consumable):
 
     def apply(self, b:Bully):
         if self.rarity != b.rarity:
-            raise ConsumableUseException(texts[lang]["consumable_water_rarity_error"].format(water_rarity=self.rarity.name, bully_rarity=b.rarity.name))
+            raise ConsumableUseException(getText("consumable_water_rarity_error").format(water_rarity=self.rarity.name, bully_rarity=b.rarity.name))
             # raise ConsumableUseException(f"This water is made for **{self.rarity.name}** bullies, not **{b.rarity.name}**")
         if b.lvl < b.max_level_reached and b.lvl < BULLY_MAX_LEVEL:
             b.lvl += self.val
@@ -161,7 +161,7 @@ class ConsumableWaterLvl(Consumable):
     #     return CText(txt)
 
     def get_effect(self) -> str:
-        return texts[lang]["consumable_water_effect"].format(name=self.name, rarity=self.rarity.name, value=self.val)
+        return getText("consumable_water_effect").format(name=self.name, rarity=self.rarity.name, value=self.val)
         # return (f"{self.name} : on use, a bully of rarity **{self.rarity.name}** will recover a maximum of **{self.val} levels**.")
 
 
@@ -183,16 +183,16 @@ async def add_conso_to_player(ctx: Context, player: 'player_info.Player', c:Cons
         channel_cible = ctx.channel
 
     if len(player.consumables) >= CONSO_NUMBER_MAX :
-        await channel_cible.send(texts[lang]["consumable_too_many_select"])
+        await channel_cible.send(getText("consumable_too_many_select"))
         # await channel_cible.send("You have to many consumables. Please select one consumable you own to replace with the new one.")
         await remove_consumable(ctx=ctx, user=ctx.author, player=player)
     
         if len(player.consumables) >= CONSO_NUMBER_MAX :
-            await channel_cible.send(texts[lang]["consumable_too_many_destroyed"])
+            await channel_cible.send(getText("consumable_too_many_destroyed"))
             # await channel_cible.send("You have too many consumables, the new one is destroyed.")
 
     if len(player.consumables) < CONSO_NUMBER_MAX :
-        await channel_cible.send(texts[lang]["consumable_added"].format(name=c.name))
+        await channel_cible.send(getText("consumable_added").format(name=c.name))
         # await channel_cible.send(f"The consumable: {c.name} has been added in your inventory.")
         player.consumables.append(c)
 
@@ -203,7 +203,7 @@ async def use_consumable(ctx: Context, user: discord.abc.User, player: 'player_i
     try :
         bully_selected = await interact_game.select_bully(ctx=ctx, user=user, player=player)
     except asyncio.exceptions.TimeoutError as e:
-        await ctx.send(texts[lang]["timeout_choose_faster"].format(user=user.name))
+        await ctx.send(getText("timeout_choose_faster").format(user=user.name))
         # await ctx.send(f"Timeout, choose faster next time {user.name}")
         return
     except interact_game.CancelChoiceException as e:
@@ -211,7 +211,7 @@ async def use_consumable(ctx: Context, user: discord.abc.User, player: 'player_i
     
     consumable_selected = await select_consumable(ctx=ctx, user=user, player=player, bully_selected=bully_selected, channel_cible=channel_cible)
     if consumable_selected is None:
-        await channel_cible.send(texts[lang]["consumable_no_selection"])
+        await channel_cible.send(getText("consumable_no_selection"))
         # await channel_cible.send(content="You didn't select any consumable.")
     else : 
         try :
@@ -219,7 +219,7 @@ async def use_consumable(ctx: Context, user: discord.abc.User, player: 'player_i
         except ConsumableUseException as e:
             await channel_cible.send(content=e.text)
             return
-        await channel_cible.send(content=texts[lang]["consumable_applied"].format(name=consumable_selected.name))
+        await channel_cible.send(content=getText("consumable_applied").format(name=consumable_selected.name))
         # await channel_cible.send(content=f"Consumable ({consumable_selected.name}) has been successfully applied!")
         player.consumables.remove(consumable_selected)
         await session.delete(consumable_selected)          
@@ -281,20 +281,20 @@ async def remove_consumable(ctx: Context, user: discord.abc.User, player: 'playe
 
 
 def embed_consumables(player: 'player_info.Player', user: discord.abc.User, *, select=False) -> discord.Embed:
-    title = texts[lang]["consumable_choose_title"] if select else texts[lang]["consumable_user_title"].format(user=user.display_name)
+    title = getText("consumable_choose_title") if select else getText("consumable_user_title").format(user=user.display_name)
     # title = "Choose a consumable" if select else f"{user.display_name}'s consumables"
     description_lines = []
 
     if not player.consumables:
-        description_lines.append(texts[lang]["consumable_none"])
+        description_lines.append(getText("consumable_none"))
         # description_lines.append("You have no consumables :(")
-        footnote = texts[lang]["consumable_do_ruin"] if not select else None
+        footnote = getText("consumable_do_ruin") if not select else None
         # footnote = "But you may get some from ruins!" if not select else None
     else:
         for i, c in enumerate(player.consumables):
             description_lines.append(f"**{i+1}. {c.name}**{c.get_effect()}")
 
-        footnote = None if select else texts[lang]["consumable_use_command"]
+        footnote = None if select else getText("consumable_use_command")
         # footnote = None if select else "Enter !!use_consumable to use one."
 
     thumbnail = user.avatar.url if not select and user.avatar is not None else None 

@@ -20,6 +20,7 @@ from dataclasses import dataclass, field, KW_ONLY
 
 from discord.ext.commands import Context, Bot
 import discord
+from all_texts import getText
 
 RUIN_CHOICE_TIMEOUT = 60
 THREAD_DELETE_AFTER = 60
@@ -55,38 +56,42 @@ class Trap :
         self.text_intro = ""
         self.text_reussite = ""
         self.text_echec = ""
-        if (self.stat_str == "strength"):
-            #trap force
-            self.text_intro_en = "**[STRENGTH]** The room is filled with large, sharp stones. One must create a path by moving these large stones."
-            self.text_reussite_en = "Your bully moved rocks and created a safe path for everyone."
-            self.text_echec_en = "Moving these rocks has left your bully with numerous wounds and bleeding, but the path is cleared."
-            self.text_intro = "**[STRENGTH]** La salle est remplie de grosses pierres tranchantes. Quelqu'un doit créer un chemin en déplaçant ces grosses rochers."
-            self.text_reussite = "Votre bully a déplacé des rochers et a créé un chemin sûr pour tout le monde."
-            self.text_echec = "Déplacer ces rochers a laissé votre bully avec de nombreuses blessures et des saignements, mais le chemin est dégagé."
-        elif (self.stat_str == "agility"):
-            #trap agility
-            self.text_intro_en = "**[AGILITY]** The door to the next room is at the top of a ruined stone starcase. One must climb and tie a rope on top to create a path"
-            self.text_reussite_en = "Your bully climbed perfectly and tied a rope on top."
-            self.text_echec_en = "Climbing has left your bully with numerous wounds and bleeding, but the rope is tied."
-            self.text_intro = "**[AGILITY]** Pour progresser il faut grimper en haut d'un escalier en pierre en ruine. Quelqu'un doit grimper et attacher une corde en haut pour créer un chemin."
-            self.text_reussite = "Votre bully a grimpé parfaitement et a attaché une corde pour les autres."
-            self.text_echec = "En grimpant votre bully s'est blessé, mais la corde est finalement attachée pour les autres."
-        elif (self.stat_str == "lethality"):
-            #trap lethality
-            self.text_intro_en = "**[LETHALITY]** A terrifying creature is sleeping in the room. One must assassinate it to create a safe path."
-            self.text_reussite_en = "Your bully stabbed the creature, which died instantly."
-            self.text_echec_en = "Your bully stabbed the creature, but it didn't instantly die, and hurt your bully."
-            self.text_intro = "**[LETHALITY]** Une créature terrifiante dort dans la salle. Quelqu'un doit l'assassiner pour créer un chemin sûr."
-            self.text_reussite = "Votre bully a poignardé la créature, qui est morte instantanément."
-            self.text_echec = "Votre bully a poignardé la créature, mais elle n'est pas morte instantanément, et a blessé votre bully."
-        elif (self.stat_str == "viciousness"):
-            #trap viciousness
-            self.text_intro_en = "**[VICIOUSNESS]** The room is full of traps. One must identify them and find a safe path."
-            self.text_reussite_en = "Your bully identify every traps and find a safe path for everyone."
-            self.text_echec_en = "Your bully was wounded by many traps but ended up finding a safe path."
-            self.text_intro = "**[VICIOUSNESS]** La salle est pleine de pièges. Quelqu'un doit les identifier pour trouver un chemin sûr."
-            self.text_reussite = "Votre bully a identifié tous les pièges et a trouvé un chemin sûr pour tout le monde."
-            self.text_echec = "Votre bully a été blessé par de nombreux pièges mais a fini par trouver un chemin sûr."
+
+        self.text_intro = getText(f"trap_{self.stat_str}_intro")
+        self.text_reussite = getText(f"trap_{self.stat_str}_success")
+        self.text_echec = getText(f"trap_{self.stat_str}_fail")
+        # if (self.stat_str == "strength"):
+        #     #trap force
+        #     self.text_intro_en = "**[STRENGTH]** The room is filled with large, sharp stones. One must create a path by moving these large stones."
+        #     self.text_reussite_en = "Your bully moved rocks and created a safe path for everyone."
+        #     self.text_echec_en = "Moving these rocks has left your bully with numerous wounds and bleeding, but the path is cleared."
+        #     self.text_intro = "**[STRENGTH]** La salle est remplie de grosses pierres tranchantes. Quelqu'un doit créer un chemin en déplaçant ces grosses rochers."
+        #     self.text_reussite = "Votre bully a déplacé des rochers et a créé un chemin sûr pour tout le monde."
+        #     self.text_echec = "Déplacer ces rochers a laissé votre bully avec de nombreuses blessures et des saignements, mais le chemin est dégagé."
+        # elif (self.stat_str == "agility"):
+        #     #trap agility
+        #     self.text_intro_en = "**[AGILITY]** The door to the next room is at the top of a ruined stone starcase. One must climb and tie a rope on top to create a path"
+        #     self.text_reussite_en = "Your bully climbed perfectly and tied a rope on top."
+        #     self.text_echec_en = "Climbing has left your bully with numerous wounds and bleeding, but the rope is tied."
+        #     self.text_intro = "**[AGILITY]** Pour progresser il faut grimper en haut d'un escalier en pierre en ruine. Quelqu'un doit grimper et attacher une corde en haut pour créer un chemin."
+        #     self.text_reussite = "Votre bully a grimpé parfaitement et a attaché une corde pour les autres."
+        #     self.text_echec = "En grimpant votre bully s'est blessé, mais la corde est finalement attachée pour les autres."
+        # elif (self.stat_str == "lethality"):
+        #     #trap lethality
+        #     self.text_intro_en = "**[LETHALITY]** A terrifying creature is sleeping in the room. One must assassinate it to create a safe path."
+        #     self.text_reussite_en = "Your bully stabbed the creature, which died instantly."
+        #     self.text_echec_en = "Your bully stabbed the creature, but it didn't instantly die, and hurt your bully."
+        #     self.text_intro = "**[LETHALITY]** Une créature terrifiante dort dans la salle. Quelqu'un doit l'assassiner pour créer un chemin sûr."
+        #     self.text_reussite = "Votre bully a poignardé la créature, qui est morte instantanément."
+        #     self.text_echec = "Votre bully a poignardé la créature, mais elle n'est pas morte instantanément, et a blessé votre bully."
+        # elif (self.stat_str == "viciousness"):
+        #     #trap viciousness
+        #     self.text_intro_en = "**[VICIOUSNESS]** The room is full of traps. One must identify them and find a safe path."
+        #     self.text_reussite_en = "Your bully identify every traps and find a safe path for everyone."
+        #     self.text_echec_en = "Your bully was wounded by many traps but ended up finding a safe path."
+        #     self.text_intro = "**[VICIOUSNESS]** La salle est pleine de pièges. Quelqu'un doit les identifier pour trouver un chemin sûr."
+        #     self.text_reussite = "Votre bully a identifié tous les pièges et a trouvé un chemin sûr pour tout le monde."
+        #     self.text_echec = "Votre bully a été blessé par de nombreux pièges mais a fini par trouver un chemin sûr."
 
     def clash(self, fighter: FightingBully) -> bool:
         stat_value = getattr(fighter.stats, self.stat_str)
@@ -111,7 +116,8 @@ class EnemyRoom():
         return EnemyRoom(enemy_fighter)
     
     async def interact(self, ruin: "Ruin") -> bool:
-        await ruin.thread.send(f"An enemy stands in your way! \n{bully.mise_en_forme_str(self.enemy.get_print())}")
+        await ruin.thread.send(getText("ruin_enemy_intro").format(enemy=bully.mise_en_forme_str(self.enemy.get_print())))
+        # await ruin.thread.send(f"An enemy stands in your way! \n{bully.mise_en_forme_str(self.enemy.get_print())}")
         while True:
             fighter = await self.fighter_choice(ruin)
             fight_won = await self.fight(ruin, fighter)
@@ -124,19 +130,17 @@ class EnemyRoom():
             fighting_bully_joueur, num_bully_j = await interact_game.player_choose_fighting_bully(ctx=ruin.ctx, fighting_bullies=ruin.fighters_joueur, user=ruin.user, channel_cible=ruin.thread, timeout=RUIN_CHOICE_TIMEOUT)
 
         except interact_game.CancelChoiceException:
-            #await ruin.thread.send(f"{ruin.user.name} cancelled the fight and left the ruin")
             raise
         except asyncio.exceptions.TimeoutError:
-            #await ruin.thread.send(f"Your team left the ruin. Choose faster next time {ruin.user.name}!") 
             raise #On propage l'exception
         except IndexError:
-            #await ruin.thread.send(f"[{ruin.user.mention}] -> you don't have that bully.\nYour team left the ruin.") 
             raise #On propage l'exception
         except Exception:
             raise #On propage l'exception
 
         if (fighting_bully_joueur.pv <= 0):
-            await ruin.thread.send(f"Your bully is dead or do not exist.\nYour team left the ruin.") 
+            await ruin.thread.send(getText("ruin_bully_missing"))
+            # await ruin.thread.send(f"Your bully is dead or do not exist.\nYour team left the ruin.") 
             raise IndexError
         
         return fighting_bully_joueur
@@ -145,11 +149,14 @@ class EnemyRoom():
         try :
             fighter, new_num_bully_j = await interact_game.player_choose_fighting_bully(ctx=ruin.ctx, fighting_bullies=ruin.fighters_joueur, user=ruin.user, channel_cible=ruin.thread, timeout=RUIN_CHOICE_TIMEOUT)
         except interact_game.CancelChoiceException:
-            await ruin.thread.send(f"{fighter.bully.name} stays in fight.")
+            await ruin.thread.send(getText("fighter_stay_in_fight").format(fighter_name=fighter.bully.name))
+            # await ruin.thread.send(f"{fighter.bully.name} stays in fight.")
         except asyncio.exceptions.TimeoutError:
-            await ruin.thread.send(f"Too slow, {fighter.bully.name} stays in fight.")
+            await ruin.thread.send(getText("fighter_change_too_slow").format(fighter_name=fighter.bully.name))
+            # await ruin.thread.send(f"Too slow, {fighter.bully.name} stays in fight.")
         except IndexError:
-            await ruin.thread.send(f"Error, {fighter.bully.name} stays in fight.")
+            await ruin.thread.send(getText("fighter_change_error").format(fighter_name=fighter.bully.name))
+            # await ruin.thread.send(f"Error, {fighter.bully.name} stays in fight.")
         return fighter
     
     async def fight(self, ruin: "Ruin", fighter: FightingBully) -> bool:
@@ -185,19 +192,18 @@ class EnemyRoom():
             #On calcule les récompenses, on les affiches et on les stock
             (exp_earned, gold_earned) = recapExpGold.exp_earned, recapExpGold.gold_earned
 
-            pretext = ""
             if (exp_earned > 0):
                 try:
                     bully_joueur.give_exp(exp_earned)
                 except LevelUpException as lvl_except:
                     await ruin.thread.send(f"{bully_joueur.name} {lvl_except.text}")
-                # pretext += f"{fighter.bully.name} earned {exp_earned} xp\n"
+                
             if (gold_earned > 0):
                 money.give_money(ruin.player, montant=gold_earned)
-                # pretext += f"{ruin.user.name} earned {gold_earned}{money.MONEY_EMOJI}\n"
 
             #On envoie le message de succès et on progress dans le dungeon
-            await ruin.thread.send(f"{pretext}{self.enemy.bully.name} is dead! You progress in the ruin.")
+            await ruin.thread.send(getText("ruin_enemy_defeated").format(enemy = self.enemy.bully.name))
+            # await ruin.thread.send(f"{self.enemy.bully.name} is dead! You progress in the ruin.")
             
         else : 
             #Le joueur à perdu
@@ -217,7 +223,8 @@ class ConsoRoom():
         if random.random() < 0.33:
             Buff = random.choice(BuffsLVL[math.floor(level/10)])
             buff_tag = Buff.__name__
-            conso = consumable.ConsumableElixirBuff("Elixir of " + buff_tag, buff_tag)
+            conso = consumable.ConsumableElixirBuff(getText("elixir_of") + buff_tag, buff_tag)
+            # conso = consumable.ConsumableElixirBuff("Elixir of " + buff_tag, buff_tag)
         else :
             valeur = round(level * rarity.coef_level_points) 
             aliment = random.choice(list(consumable.AlimentEnum))
@@ -225,7 +232,8 @@ class ConsoRoom():
         return ConsoRoom(conso)
     
     async def interact(self, ruin: "Ruin"):
-        await ruin.thread.send(f"You found an consumable item: {self.conso.name}")
+        await ruin.thread.send(getText("found_conso").format(name=self.conso.name))
+        # await ruin.thread.send(f"You found an consumable item: {self.conso.name}")
         await consumable.add_conso_to_player(ruin.ctx, ruin.player, self.conso, channel_cible=ruin.thread)
 
 
@@ -260,7 +268,8 @@ class TreasureRoom():
         return TreasureRoom(gold=gold)
 
     async def interact(self, ruin: "Ruin"):
-        await ruin.thread.send(f"You find a **treasure**. It contains **{self.gold}** {money.MONEY_EMOJI}!")
+        await ruin.thread.send(getText("found_treasure").format(gold=self.gold, money_emoji=money.MONEY_EMOJI))
+        # await ruin.thread.send(f"You find a **treasure**. It contains **{self.gold}** {money.MONEY_EMOJI}!")
         money.give_money(ruin.player, montant=self.gold)
 
 @dataclass
@@ -283,7 +292,8 @@ class TrapRoom():
             fighter.pv -= self.trap.damage
             if fighter.pv <= 0:
                 ruin.fighters_joueur.remove(fighter)
-                await ruin.thread.send(f"{fighter.bully.name} is dead.")
+                await ruin.thread.send(getText("bully_is_dead").format(bully=fighter.bully.name))
+                # await ruin.thread.send(f"{fighter.bully.name} is dead.")
         
         return
 
@@ -301,7 +311,8 @@ class TrapRoom():
             raise #On propage l'exception
 
         if (fighting_bully_joueur.pv <= 0):
-            await ruin.thread.send(f"Your bully is dead or do not exist.\nYour team left the ruin.") 
+            await ruin.thread.send(getText("ruin_bully_error"))
+            # await ruin.thread.send(f"Your bully is dead or do not exist.\nYour team left the ruin.") 
             raise IndexError
 
         return fighting_bully_joueur
@@ -375,7 +386,8 @@ class Ruin():
 
 
     async def enter(self) -> None:
-        message = await self.ctx.channel.send(f"{self.user.mention} enters a mysterious ruin [lvl : {self.level}]")
+        message = await self.ctx.channel.send(getText("ruin_enter").format(user=self.user.mention, level=self.level))
+        # message = await self.ctx.channel.send(f"{self.user.mention} enters a mysterious ruin [lvl : {self.level}]")
         try :
             self.thread = await self.ctx.channel.create_thread(name=f"Ruin - Level {self.level}", message=message) #type: ignore
         except Exception as e:
@@ -389,16 +401,18 @@ class Ruin():
             # Pop removes the last item
             while not await self.rooms.pop().interact(self):
                 pass
-
-            await self.thread.send(f"Congratulation {self.user}, you beat the boss!")
+            
+            await self.thread.send(getText("ruin_victory").format(user=self.user))
+            # await self.thread.send(f"Congratulation {self.user}, you beat the boss!")
         except interact_game.CancelChoiceException as e:
-            await self.thread.send(f"{self.ctx.author.name} cancelled the fight and left the ruin")
+            await self.thread.send(getText("ruin_cancelled").format(user=self.user.name))
+            # await self.thread.send(f"{self.user.name} cancelled the fight and left the ruin")
         except asyncio.exceptions.TimeoutError as e:
-            await self.thread.send(f"Your team left the ruin. Choose faster next time {self.ctx.author}.")
+            await self.thread.send(getText("ruin_team_timeout").format(user=self.user))
+            # await self.thread.send(f"Your team left the ruin. Choose faster next time {self.ctx.author}.")
         except IndexError as e:
-            await self.thread.send(
-                f"[{self.ctx.author}] -> You don't have this bully.\nYour team left the ruin."
-            )
+            await self.thread.send(getText("ruin_bully_error"))
+            # await self.thread.send(f"[{self.ctx.author}] -> You don't have this bully.\nYour team left the ruin.")
         else :
             if self.level > self.player.max_ruin:
                 self.player.max_ruin = self.level

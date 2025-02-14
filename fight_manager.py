@@ -23,13 +23,13 @@ FIGHT_MSG_TIME_UPDATE = 1.0
 
 TIMEOUT_START_ROUND = 30
 TIMEOUT_DELAIE_INCREASE_DAMAGE = 10
-from all_texts import texts, lang
+from all_texts import getText
 
 async def proposition_fight(ctx:Context, user_1:discord.abc.User, user_2:discord.abc.User, player_1: Player, player_2: Player, bot: Bot, for_fun = False):
-    text_challenge = texts[lang]["challenge_fight"].format(user_1.mention, user_2.mention)
+    text_challenge = getText("challenge_fight").format(user_1.mention, user_2.mention)
     # text_challenge = f"{user_1.mention} challenges {user_2.mention} !"
     if for_fun :
-        text_challenge = texts[lang]["challenge_fight_for_fun"].format(user_1.mention, user_2.mention)
+        text_challenge = getText("challenge_fight_for_fun").format(user_1.mention, user_2.mention)
         # text_challenge = f"{user_1.mention} challenges {user_2.mention} to a fun fight (no death, no xp)!"
 
     #On créer l'event qui sera set quand le bouton sera cliqué par user_2. La valeur du bouton (de la réponse) sera stocké dans var
@@ -44,7 +44,7 @@ async def proposition_fight(ctx:Context, user_1:discord.abc.User, user_2:discord
         try:
             await asyncio.wait_for(event.wait(), timeout=CHOICE_TIMEOUT)
         except asyncio.exceptions.TimeoutError as e:
-            await message.reply(texts[lang]["timeout_choose_fighter"].format(user_1, user_2))
+            await message.reply(getText("timeout_choose_fighter").format(user_1, user_2))
             # await message.reply(f"Too late! No fight between {user_1} and {user_2}")
             return
         #On récup le choix
@@ -55,10 +55,10 @@ async def proposition_fight(ctx:Context, user_1:discord.abc.User, user_2:discord
 
     #On affiche le choix de user_2
     if(challenge_accepte) : 
-        await message.reply(texts[lang]["challenge_accepted"])
+        await message.reply(getText("challenge_accepted"))
         # await message.reply("Challenge accepted!")
     else : 
-        await message.reply(texts[lang]["challenge_declined"])
+        await message.reply(getText("challenge_declined"))
         # await message.reply("Challenge declined")
         return
     
@@ -74,27 +74,27 @@ async def select_fighters(ctx: Context, user_1: discord.abc.User, user_2: discor
     try:
         bully_1 = await interact_game.select_bully(ctx, user_1, player_1, timeout = CHOICE_TIMEOUT)
         fighting_bully_1 = FightingBully.create_fighting_bully(bully_1)
-        if talkative : await ctx.channel.send(texts[lang]["challenge_selected_bully"].format(user=user_1.name, bully=bully_1.name, lvl=bully_1.lvl))
+        if talkative : await ctx.channel.send(getText("challenge_selected_bully").format(user=user_1.name, bully=bully_1.name, lvl=bully_1.lvl))
         # if talkative : await ctx.channel.send(f"{user_1.name} select {bully_1.name} (lvl:{bully_1.lvl})")
     except asyncio.exceptions.TimeoutError as e:
-        await ctx.send(texts[lang]["timeout_choose_faster"].format(user=user_1.name))
+        await ctx.send(getText("timeout_choose_faster").format(user=user_1.name))
         # await ctx.send(f"Timeout, choose faster next time {user_1.name}")
         raise e
     except interact_game.CancelChoiceException as e:
-        await ctx.send(texts[lang]["fight_cancel"].format(user=user_1.name))
+        await ctx.send(getText("fight_cancel").format(user=user_1.name))
         # await ctx.send(f"{user_1.name} cancelled the fight")
         raise e
     try:
         bully_2 = await interact_game.select_bully(ctx, user_2, player_2, timeout = CHOICE_TIMEOUT)
         fighting_bully_2 = FightingBully.create_fighting_bully(bully_2)
-        if talkative : await ctx.channel.send(texts[lang]["challenge_selected_bully"].format(user=user_2.name, bully=bully_2.name, lvl=bully_2.lvl))
+        if talkative : await ctx.channel.send(getText("challenge_selected_bully").format(user=user_2.name, bully=bully_2.name, lvl=bully_2.lvl))
         # if talkative : await ctx.channel.send(f"{user_2.name} select {bully_2.name} (lvl:{bully_2.lvl})")
     except asyncio.exceptions.TimeoutError as e:
-        await ctx.send(texts[lang]["fight_cancel"].format(user=user_2.name))
+        await ctx.send(getText("fight_cancel").format(user=user_2.name))
         # await ctx.send(f"Timeout, choose faster next time {user_2.name}")
         raise e
     except interact_game.CancelChoiceException as e:
-        await ctx.send(texts[lang]["fight_cancel"].format(user=user_2.name))
+        await ctx.send(getText("fight_cancel").format(user=user_2.name))
         # await ctx.send(f"{user_2.name} cancelled the fight")
         raise e
     
@@ -302,7 +302,7 @@ class Fight():
         else:
             raise Exception("aucun perdant?")
         
-        await self.channel_cible.send(texts[lang]["fight_winner"].format(winner=bully_gagnant.name))
+        await self.channel_cible.send(getText("fight_winner").format(winner=bully_gagnant.name))
         # await self.channel_cible.send(f"{bully_gagnant.name} won the fight!")
         if (not self.for_fun) :
             bully_gagnant.increment_win_loose(win=True)
@@ -324,13 +324,13 @@ class Fight():
                 except LevelUpException as lvl_except:
                     await self.channel_cible.send(f"{bully_gagnant.name} {lvl_except.text}")
                 
-                pretext += texts[lang]["gain"].format(name=bully_gagnant.name, reward = exp_earned) + "xp\n"
+                pretext += getText("gain").format(name=bully_gagnant.name, reward = exp_earned) + "xp\n"
                 # pretext += f"{bully_gagnant.name} earned {exp_earned} xp\n"
             if (gold_earned > 0):
                 player_gagnant = self.player_1 if bully_gagnant == self.fighter_1.bully else self.player_2
                 if user_gagnant is not None and player_gagnant is not None:
                     money.give_money(player_gagnant, montant=gold_earned)
-                    pretext += texts[lang]["gain"].format(name=bully_gagnant.name, reward = exp_earned) + f"{money.MONEY_EMOJI}\n"
+                    pretext += getText("gain").format(name=bully_gagnant.name, reward = exp_earned) + f"{money.MONEY_EMOJI}\n"
                     # pretext += f"{user_gagnant.name} earned {gold_earned}{money.MONEY_EMOJI}\n"
             
             txt = ""
@@ -397,10 +397,10 @@ class Fight():
         return text_1, text_2, text_mid
     
 async def proposition_team_fight(ctx:Context, user_1:discord.abc.User, user_2:discord.abc.User, player_1: Player, player_2: Player, for_fun = True):
-    text_challenge = texts[lang]["challenge_teamfight"].format(user1=user_1.mention, user2=user_2.mention)
+    text_challenge = getText("challenge_teamfight").format(user1=user_1.mention, user2=user_2.mention)
     # text_challenge = f"{user_1.mention} challenges {user_2.mention} in a teamfight!"
     if for_fun :
-        text_challenge = texts[lang]["challenge_teamfight_for_fun"].format(user1=user_1.mention, user2=user_2.mention)
+        text_challenge = getText("challenge_teamfight_for_fun").format(user1=user_1.mention, user2=user_2.mention)
         # text_challenge = f"{user_1.mention} challenges {user_2.mention} to a fun teamfight (no death, no xp)!"
 
     #On créer l'event qui sera set quand le bouton sera cliqué par user_2. La valeur du bouton (de la réponse) sera stocké dans var
@@ -414,7 +414,7 @@ async def proposition_team_fight(ctx:Context, user_1:discord.abc.User, user_2:di
         try:
             await asyncio.wait_for(event.wait(), timeout=CHOICE_TIMEOUT)
         except asyncio.exceptions.TimeoutError as e:
-            await message.reply(texts[lang]["challenge_too_late"].format(user1=user_1.mention, user2=user_2.mention))
+            await message.reply(getText("challenge_too_late").format(user1=user_1.mention, user2=user_2.mention))
             # await message.reply(f"Too late! No fight between {user_1} and {user_2}")
             return
         #On récup le choix
@@ -425,10 +425,10 @@ async def proposition_team_fight(ctx:Context, user_1:discord.abc.User, user_2:di
 
     #On affiche le choix de user_2
     if(challenge_accepte) : 
-        await message.reply(texts[lang]["challenge_accepted"])
+        await message.reply(getText("challenge_accepted"))
         # await message.reply("Challenge accepted!")
     else : 
-        await message.reply(texts[lang]["challenge_declined"])
+        await message.reply(getText("challenge_declined"))
         # await message.reply("Challenge declined")
         return
 
@@ -517,11 +517,11 @@ class TeamFight():
                 self.increase_swap()
 
         if len(self.team_1) > 0 :
-            await self.channel_cible.send(texts[lang]["teamfight_winner"].format(winner=self.user_1.name if self.user_1 is not None else 'Team 1'))
+            await self.channel_cible.send(getText("teamfight_winner").format(winner=self.user_1.name if self.user_1 is not None else 'Team 1'))
             # await self.channel_cible.send(f"{self.user_1.name if self.user_1 is not None else 'Team 1'} won the teamfight!")
             return True
         if len(self.team_2) > 0 :
-            await self.channel_cible.send(texts[lang]["teamfight_winner"].format(winner=self.user_2.name if self.user_2 is not None else 'Team 2'))
+            await self.channel_cible.send(getText("teamfight_winner").format(winner=self.user_2.name if self.user_2 is not None else 'Team 2'))
             # await self.ctx.send(f"{self.user_2.name if self.user_2 is not None else 'Team 2'} won the teamfight!")
             return False
         raise Exception("No winner found")
@@ -531,11 +531,11 @@ class TeamFight():
         try:
             f_bully, _ = await interact_game.player_choose_fighting_bully(ctx=self.ctx, fighting_bullies=team, user=user, timeout=CHOICE_TIMEOUT, channel_cible=self.channel_cible)
         except asyncio.exceptions.TimeoutError as e:
-            await self.channel_cible.send(texts[lang]["select_to_late_random"].format(user=user.name))
+            await self.channel_cible.send(getText("select_to_late_random").format(user=user.name))
             # await self.channel_cible.send(f"Too late, random bully selected for {user.name}")
             return team[0]
         except interact_game.CancelChoiceException as e:
-            await self.channel_cible.send(texts[lang]["fight_giveup"].format(user=user.name))
+            await self.channel_cible.send(getText("fight_giveup").format(user=user.name))
             # await self.channel_cible.send(f"{user.name} give up the fight")
             raise e
         return f_bully

@@ -26,10 +26,10 @@ TIMEOUT_DELAIE_INCREASE_DAMAGE = 10
 from all_texts import getText
 
 async def proposition_fight(ctx:Context, user_1:discord.abc.User, user_2:discord.abc.User, player_1: Player, player_2: Player, bot: Bot, for_fun = False):
-    text_challenge = getText("challenge_fight").format(user_1.mention, user_2.mention)
+    text_challenge = getText("challenge_fight").format(user1=user_1.mention, user2=user_2.mention)
     # text_challenge = f"{user_1.mention} challenges {user_2.mention} !"
     if for_fun :
-        text_challenge = getText("challenge_fight_for_fun").format(user_1.mention, user_2.mention)
+        text_challenge = getText("challenge_fight_for_fun").format(user1=user_1.mention, user2=user_2.mention)
         # text_challenge = f"{user_1.mention} challenges {user_2.mention} to a fun fight (no death, no xp)!"
 
     #On créer l'event qui sera set quand le bouton sera cliqué par user_2. La valeur du bouton (de la réponse) sera stocké dans var
@@ -44,7 +44,7 @@ async def proposition_fight(ctx:Context, user_1:discord.abc.User, user_2:discord
         try:
             await asyncio.wait_for(event.wait(), timeout=CHOICE_TIMEOUT)
         except asyncio.exceptions.TimeoutError as e:
-            await message.reply(getText("timeout_choose_fighter").format(user_1, user_2))
+            await message.reply(getText("challenge_too_late").format(user1=user_1, user2=user_2))
             # await message.reply(f"Too late! No fight between {user_1} and {user_2}")
             return
         #On récup le choix

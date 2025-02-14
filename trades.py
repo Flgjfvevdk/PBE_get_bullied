@@ -9,12 +9,12 @@ from utils.color_str import CText
 import asyncio
 from typing import Optional, Dict
 from all_texts import getText
+from utils.locks import PlayerLock
 
 CHOICE_TIMEOUT = 30
 
 async def trade_offer(ctx:Context, user_1:discord.abc.User, user_2:discord.abc.User, player_1: Player, player_2: Player):
     text = getText("trade_offer").format(user1=user_1.mention, user2=user_2.mention)
-    # text = f"{user_1.mention} want to trade with {user_2.mention} !"
     event = asyncio.Event()
     var:Dict[str, bool] = {"choix" : False}
 
@@ -27,7 +27,6 @@ async def trade_offer(ctx:Context, user_1:discord.abc.User, user_2:discord.abc.U
             await asyncio.wait_for(event.wait(), timeout=CHOICE_TIMEOUT)
         except asyncio.exceptions.TimeoutError as e:
             await message.reply(getText("trade_timeout").format(user1=user_1.mention, user2=user_2.mention))
-            # await message.reply(f"Too late! No trade between {user_1} and {user_2}")
             return
         #On récup le choix
         (trade_accepte):bool = var["choix"]
@@ -36,27 +35,36 @@ async def trade_offer(ctx:Context, user_1:discord.abc.User, user_2:discord.abc.U
         (trade_accepte) = True
 
     #On affiche le choix de user_2
-    if((trade_accepte)) : 
-        await message.reply(getText("trade_start"))
-        # await message.reply("The Trade begin")
-    else : 
+    if(not trade_accepte) : 
         await message.reply(getText("trade_declined"))
-        # await message.reply("Trade declined")
         return
     
-    bully_1 = await interact_game.select_bully(ctx, user_1, player_1, timeout=CHOICE_TIMEOUT)
-    bully_2 = await interact_game.select_bully(ctx, user_2, player_2, timeout=CHOICE_TIMEOUT)
-    await ctx.channel.send(trade_str(user_1, user_2, bully_1, bully_2))
+    await message.edit(view=None)
+    lock1 = PlayerLock(user_1.id)
+    if not lock1.check():
+        await message.reply(getText("other_is_in_action").format(user=user_1))
+        return
+    lock2 = PlayerLock(user_2.id)
+    if not lock2.check():
+        await message.reply(getText("other_is_in_action").format(user=user_2))
+        return
     
-    # Is trade possible ?
-    if bully_1.lvl > player_2.max_dungeon + 1 :
-        await ctx.send(getText("trade_impossible").format(user=user_2.name, bully=bully_1.name, lvl=bully_1.lvl, max_dungeon=player_2.max_dungeon))
-        # await ctx.channel.send(f"{user_2.name} can't receive {bully_1.name}[lvl:{bully_1.lvl}] because their max dungeon level is {player_2.max_dungeon}.")
-        return
-    if bully_2.lvl > player_1.max_dungeon + 1 :
-        await ctx.send(getText("trade_impossible").format(user=user_1.name, bully=bully_2.name, lvl=bully_2.lvl, max_dungeon=player_1.max_dungeon))
-        # await ctx.channel.send(f"{user_1.name} can't receive {bully_2.name}[lvl:{bully_2.lvl}] because their max dungeon level is {player_1.max_dungeon}.")
-        return
+    with lock1, lock2:
+        await message.reply(getText("trade_start"))
+
+        bully_1 = await interact_game.select_bully(ctx, user_1, player_1, timeout=CHOICE_TIMEOUT)
+        bully_2 = await interact_game.select_bully(ctx, user_2, player_2, timeout=CHOICE_TIMEOUT)
+        await ctx.channel.send(trade_str(user_1, user_2, bully_1, bully_2))
+        
+        # Is trade possible ?
+        if bully_1.lvl > player_2.max_dungeon + 1 :
+            await ctx.send(getText("trade_impossible").format(user=user_2.name, bully=bully_1.name, lvl=bully_1.lvl, max_dungeon=player_2.max_dungeon))
+            # await ctx.channel.send(f"{user_2.name} can't receive {bully_1.name}[lvl:{bully_1.lvl}] because their max dungeon level is {player_2.max_dungeon}.")
+            return
+        if bully_2.lvl > player_1.max_dungeon + 1 :
+            await ctx.send(getText("trade_impossible").format(user=user_1.name, bully=bully_2.name, lvl=bully_2.lvl, max_dungeon=player_1.max_dungeon))
+            # await ctx.channel.send(f"{user_1.name} can't receive {bully_2.name}[lvl:{bully_2.lvl}] because their max dungeon level is {player_1.max_dungeon}.")
+            return
 
     # Confirm trade
     event_confirm_1 = asyncio.Event()

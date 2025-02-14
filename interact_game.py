@@ -253,9 +253,7 @@ async def print_bullies(ctx: Context, player: Player, compact_print=False, print
         channel_cible = ctx.channel
 
     text = getText("your_bullies")
-    # text = "Your bullies:"
     split_txt = []
-    # images: list[Path] = []
     images: dict[int, Path] = {}
 
     player_bullies = player.get_equipe()
@@ -267,10 +265,8 @@ async def print_bullies(ctx: Context, player: Player, compact_print=False, print
             image_path = b.image_file_path
             image_path_str = str(image_path).replace("\\", "/")
             if image_path is not None and os.path.isfile(image_path_str):
-                # images.append(Path(image_path_str))
                 images[b.id] = Path(image_path_str)
             else : 
-                # images.append(bully.BULLY_DEFAULT_PATH_IMAGE)
                 images[b.id] = bully.BULLY_DEFAULT_PATH_IMAGE
         
     try:
@@ -303,10 +299,6 @@ async def print_bullies(ctx: Context, player: Player, compact_print=False, print
         text_info = bully_selected.str_all_infos()
         if print_images:
             if images:
-                
-                # file = discord.File(images[bully_selected.id])
-                # await message.reply(content=bully.mise_en_forme_str(text_info), file=file)
-
                 filename = str(images[bully_selected.id])
                 print("filename is ", filename)
                 file = discord.File(images[bully_selected.id], filename=filename)

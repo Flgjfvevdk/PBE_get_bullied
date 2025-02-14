@@ -58,19 +58,12 @@ async def print_reserve(ctx: Context, user: discord.abc.User, player: Player, bo
         channel_cible = ctx.channel
 
     text = getText("reserve_bullies_info").format(user=user)
-    # text = f"{user}, your bullies in reserve:"
-    images: list[Path] = []
+    split_txt = []
 
     for b in player.get_reserve():
         text += "\n___________\n"
         text += b.get_print(compact_print=compact_print)
-        if print_images:
-            image_path = b.image_file_path
-            image_path_str = str(image_path).replace("\\", "/")
-            if image_path is not None and os.path.isfile(image_path_str):
-                images.append(Path(image_path_str))
-            else : 
-                images.append(bully.BULLY_DEFAULT_PATH_IMAGE)
+        split_txt.append(bully.mise_en_forme_str(b.get_print(compact_print=compact_print)))
         
     text = bully.mise_en_forme_str(text)
 
@@ -80,17 +73,13 @@ async def print_reserve(ctx: Context, user: discord.abc.User, player: Player, bo
     view = interact_game.ViewChoice(user=user, event=event, list_choix=[0,1,2], 
                     list_choix_name=[getText("label_send_reserve"), getText("label_send_team"), getText("label_switch_team_reserve")], variable_pointer=var)
 
-    if print_images and images:
-        files = [discord.File(image) for image in images]
-        message_reserve = await channel_cible.send(content=text, files=files, view=view)
-    else:
-        message_reserve = await channel_cible.send(text, view=view)
+    from utils.embed import create_embed
+    message_reserve = await channel_cible.send(embed=create_embed("Your bullies in reserve", split_txt, columns=1, str_between_element=""), view=view)
 
     try:
         #On attend une réponse (et on retourne une erreur si nécessaire avec le timeout)
         await asyncio.wait_for(event.wait(), timeout=TIMEOUT_RESERVE_MODIF)
 
-        #On sélectionne le bully et on crée un FightingBully
         int_selected = var["choix"]
         if(int_selected is None) : 
             raise interact_game.CancelChoiceException("Cancel")
@@ -98,7 +87,6 @@ async def print_reserve(ctx: Context, user: discord.abc.User, player: Player, bo
         lock = PlayerLock(user.id)
         if not lock.check():
             await ctx.reply(getText("already_in_action"))
-            # await ctx.send("You are already in an action.")
             return
         with lock:
             try:
@@ -114,11 +102,10 @@ async def print_reserve(ctx: Context, user: discord.abc.User, player: Player, bo
                     bully_team.in_reserve = True
                     bully_reserve.in_reserve = False
                     await channel_cible.send(getText("reserve_switch_bullies").format(bully1=bully_team.name, bully2=bully_reserve.name))
-                    # await channel_cible.send(f"{bully_team.name} and {bully_reserve.name} switched")  
+                await message_reserve.delete()
                 await session.commit()
             except IndexError as e:
                 await channel_cible.send(getText("empty_team_or_reserve"))
-                # await channel_cible.send(f"Your team or reserve is empty")  
             except Exception as e:
                 await message_reserve.edit(view=None)
         
@@ -126,3 +113,4 @@ async def print_reserve(ctx: Context, user: discord.abc.User, player: Player, bo
         await message_reserve.edit(view=None)
     
     return
+

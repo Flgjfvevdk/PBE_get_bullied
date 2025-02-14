@@ -12,7 +12,7 @@ texts = {
                     "Vous avez {total_money} {money_emoji}"),
         "bank": "Vous avez {money} {money_emoji}",
         "already_in_action": "Vous êtes déjà en interaction.",
-        "other_is_in_action" : "{other} est déjà en interaction.",
+        "other_is_in_action" : "{user} est déjà en interaction.",
         "thanks" : "Merci à tous ceux qui participent à ce jeu ! (admin : Flgjfvevdk)",
         "cant_self_tf" :"Vous ne pouvez pas vous team challenge vous-même.",
         "missing_argument" :"Erreur : Argument requis manquant `{arg}`.",
@@ -167,7 +167,7 @@ texts = {
         "shop_not_open": "Le shop n'est pas ouvert sur ce serveur. Demandez à un admin de l'ouvrir.",
         "shop_restocking": "Le shop se remplit. Veuillez patienter <{seconds} secondes>.",
         "shop_closed_message": "Le shop est fermé. À bientôt!",
-        "shop_purchase_success": "{user} a acheté {name} pour {cost}{money_emoji}!",
+        "shop_purchase_success": "{user} a acheté {bully} pour {cost}{money_emoji}!",
         "shop_bully_not_available" : "Ce bully n'est plus disponible (déso {user})",
         "shop_not_enough_money" : "{user}, vous n'avez pas assez de {money_emoji} pour acheter {bully}. Coût : {cost}{money_emoji}",
         "bully_in_shop" : "Bullies dans le shop : ",
@@ -203,7 +203,7 @@ texts = {
         "trade_completed": "Échange terminé avec succès !",
         "trade_canceled": "Échange annulé.",
         "u_offer_b": "{user} propose : {btxt}",
-        "trade_impossible":"{user} can't receive {bully}[lvl:{bully_lvl}] because their max dungeon level is {max_dungeon}."
+        "trade_impossible":"{user} ne peux pas recevoir {bully}[lvl:{lvl}] car son plus grand donjon vaincu est niveau : {max_dungeon}."
 
     },
     "en":{
@@ -216,7 +216,7 @@ texts = {
                    "You have {total_money} {money_emoji}"),
         "bank": "You have {money} {money_emoji}",
         "already_in_action": "You are already in an interaction.",
-        "other_is_in_action" : "{other} is already in an interaction.",
+        "other_is_in_action" : "{user} is already in an interaction.",
         "thanks":"Thanks to everyone who takes part in this game! (admin : Flgjfvevdk)",
         "cant_self_tf":"You can't team challenge yourself.",
         "missing_argument":"Error: Missing required argument `{arg}`.",
@@ -371,7 +371,7 @@ texts = {
         "shop_not_open": "The shop is not open in this server. Ask an admin to open it.",
         "shop_restocking": "The shop is restocking. Please wait <{seconds} seconds>.",
         "shop_closed_message": "Shop is closed. See you again!",
-        "shop_purchase_success": "{user} has purchased {name} for {cost}{money_emoji}!",
+        "shop_purchase_success": "{user} has purchased {bully} for {cost}{money_emoji}!",
         "shop_bully_not_available" : "This bully is no longer available (sorry {user})",
         "shop_not_enough_money" : "{user}, you don't have enough {money_emoji} to buy {bully}. Cost: {cost}{money_emoji}",
         "bully_in_shop" : "Bullies in shop: ",
@@ -405,7 +405,7 @@ texts = {
         "trade_completed": "Trade completed successfully!",
         "trade_canceled": "Trade canceled.",
         "u_offer_b": "{user} offers : {btxt}",
-        "trade_impossible":"{user} can't receive {bully}[lvl:{bully_lvl}] because their max dungeon level is {max_dungeon}."
+        "trade_impossible":"{user} can't receive {bully}[lvl:{lvl}] because their max dungeon level is {max_dungeon}."
     }
 }
 

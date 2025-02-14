@@ -254,7 +254,7 @@ async def challenge(ctx: Context, opponent:discord.Member):
         return
     lock2 = PlayerLock(opponent.id)
     if not lock2.check():
-        await ctx.send(getText("other_is_in_action").format(other=opponent))
+        await ctx.send(getText("other_is_in_action").format(user=opponent))
         # await ctx.channel.send(f"Sorry, but {opponent} is already busy!")
         return
     
@@ -267,7 +267,6 @@ async def challenge(ctx: Context, opponent:discord.Member):
                 return
             if p2 is None:
                 await ctx.reply(getText("other_hasnt_joined").format(other=opponent))
-                #await ctx.reply(f"{opponent} has not joined the game.")
                 return
             await fight_manager.proposition_fight(ctx, user, opponent, p1, p2, bot)
             await session.commit()
@@ -285,7 +284,7 @@ async def fun_challenge(ctx: Context, opponent:discord.Member):
         return
     lock2 = PlayerLock(opponent.id)
     if not lock2.check():
-        await ctx.send(getText("other_is_in_action").format(other=opponent))
+        await ctx.send(getText("other_is_in_action").format(user=opponent))
         # await ctx.channel.send(f"Sorry, but {opponent} is already busy!")
         return
 
@@ -319,7 +318,7 @@ async def team_challenge(ctx: Context, opponent:discord.Member):
         return
     lock2 = PlayerLock(opponent.id)
     if not lock2.check():
-        await ctx.send(getText("other_is_in_action").format(other=opponent))
+        await ctx.send(getText("other_is_in_action").format(user=opponent))
         # await ctx.channel.send(f"Sorry, but {opponent} is already busy!")
         return
 
@@ -337,8 +336,6 @@ async def team_challenge(ctx: Context, opponent:discord.Member):
             await fight_manager.proposition_team_fight(ctx, user_1=user, user_2=opponent, player_1=p1, player_2=p2, for_fun=True)
 
     return
-
-
 
 
     
@@ -489,33 +486,21 @@ async def trade(ctx: Context, other:discord.Member):
     user = ctx.author
     if user == other:
         await ctx.send(getText("cant_trade_self"))
-        # await ctx.send("You can't trade with yourself.")
         return
 
-    lock1 = PlayerLock(user.id)
-    if not lock1.check():
-        await ctx.send(getText("already_in_action"))
-        # await ctx.send("You are already in an action.")
-        return
-    lock2 = PlayerLock(other.id)
-    if not lock2.check():
-        await ctx.send(getText("other_is_in_action").format(other=other))
-        # await ctx.channel.send(f"Sorry, but {other} is already busy!")
-        return
     
-    with lock1, lock2:
-        async with database.new_session() as session:
-            p1 = await session.get(Player, user.id)
-            p2 = await session.get(Player, other.id)
-            if p1 is None:
-                await ctx.reply(TEXT_JOIN_THE_GAME)
-                return
-            if p2 is None:
-                await ctx.reply(getText("other_hasnt_joined").format(other=other))
-                # await ctx.reply(f"{other} has not joined the game.")
-                return
-            await trades.trade_offer(ctx, user, other, p1, p2)
-            await session.commit()
+    async with database.new_session() as session:
+        p1 = await session.get(Player, user.id)
+        p2 = await session.get(Player, other.id)
+        if p1 is None:
+            await ctx.reply(TEXT_JOIN_THE_GAME)
+            return
+        if p2 is None:
+            await ctx.reply(getText("other_hasnt_joined").format(other=other))
+            # await ctx.reply(f"{other} has not joined the game.")
+            return
+        await trades.trade_offer(ctx, user, other, p1, p2)
+        await session.commit()
 
     return
 

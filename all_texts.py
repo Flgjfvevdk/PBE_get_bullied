@@ -122,10 +122,10 @@ texts = {
         "reserve_bullies_info": "{user}, vos bullies en réserve :",
         "reserve_max_bullies": "Vous ne pouvez pas avoir plus de {max_reserve} bullies  dans votre réserve.",
         "new_bully_reserve": "Vous avez un nouveau bully en réserve : {bully}",
-        "bullie_moved": "{bully} a été déplacé(e) vers votre {target}.",
+        "bully_moved": "{bully} a été déplacé vers votre {target}.",
         "team_full": "Votre {target} est déjà pleine.",
         "empty_team_or_reserve": "Votre équipe ou votre réserve est vide",
-        "active_team": "équipe active",
+        "active_team" : "équipe active",
         "reserve" : "réserve",
         "label_send_reserve" :"Envoyer un bully en réserve",
         "label_send_team" : "Envoyer un bully dans votre équipe", 
@@ -141,7 +141,7 @@ texts = {
         "ruin_bully_error": "Votre bully est mort ou n'existe pas.\nVotre équipe a quitté la ruine.",
         "ruin_victory": "Félicitations {user}, vous avez battu le boss!",
         "elixir_of" : "Elixir - ",
-        "found_conso": "Vous avez trouvé un consommable : {name} !",
+        "found_conso" : "Vous avez trouvé un consommable : {name} !",
         "ruin_thread_error": "Une erreur s'est produite lors de la création du fil de discussion de la ruine.",
         "found_treasure" : "Vous avez trouvé un **trésor**. Il contient **{gold}** {money_emoji}!",
         "bully_is_dead" : "{bully} est mort !",
@@ -170,7 +170,7 @@ texts = {
         "shop_purchase_success": "{user} a acheté {name} pour {cost}{money_emoji}!",
         "shop_bully_not_available" : "Ce bully n'est plus disponible (déso {user})",
         "shop_not_enough_money" : "{user}, vous n'avez pas assez de {money_emoji} pour acheter {bully}. Coût : {cost}{money_emoji}",
-        "bully_in_shop" : "Bullies in the shop : ",
+        "bully_in_shop" : "Bullies dans le shop : ",
         "price" : "Prix : {cost} {money_emoji}",
 
         #supply_bully
@@ -303,7 +303,7 @@ texts = {
         "welcome_adventure": "Welcome to the adventure! (!!tuto)",
         "invite_join_game": "{user}, do you want to join the game?",
         "referral_reward" : "{user}, you have invited {nb} friends ! You deserve a prize (ask for it :wink:)",
-        "max_bullies_reached": "You cannot have more than {max_bullies} bullies!",
+        "max_bullies_reached": "{user}, you cannot have more than {max_bullies} bullies!",
         "new_bully_msg": "You have a new bully: {bully}",
         "choose_bully": "{user}, choose a bully:",
         "selected_bully": "{user} selects {bully}",
@@ -326,7 +326,7 @@ texts = {
         "reserve_bullies_info": "{user}, your bullies in reserve:",
         "reserve_max_bullies": "You cannot have more than {max_reserve} bullies in your reserve.",
         "new_bully_reserve": "You have a new bully in reserve: {bully}",
-        "bullie_moved": "{name} has been moved to your {target}.",
+        "bully_moved": "{bully} has been moved to your {target}.",
         "team_full": "Your {target} is already full.",
         "empty_team_or_reserve": "Your team or reserve is empty",
         "active_team" : "active team",
@@ -339,13 +339,16 @@ texts = {
         #ruine
         "ruin_enter": "{user} enters a mysterious ruin [lvl: {level}]",
         "ruin_enemy_intro": "An enemy stands in your way!\n{enemy}",
-        "ruin_enemy_defeated": "{enemy} is dead! You progress in the ruin.",
-        "ruin_bully_missing": "Your bully is dead or do not exist.\nYour team left the ruin.",
+        "ruin_enemy_defeated": "{enemy} est mort ! Vous progressez dans la ruine.",
         "ruin_team_timeout": "Your team left the ruin. Choose faster next time {user}.",
-        "ruin_cancelled": "{user},you have cancelled the fight and left the ruin",
-        "ruin_bully_error": "Your bully is dead or does not exist.\nYour team left the ruin.",
+        "ruin_cancelled": "{user}, you have cancelled the fight and left the ruin",
+        "ruin_bully_error": "Your bully is dead or do not exist.\nYour team left the ruin.",
         "ruin_victory": "Congratulation {user}, you beat the boss!",
+        "elixir_of" : "Elixir - ",
+        "found_conso" : "You found a consumable: {name}!",
         "ruin_thread_error": "An error occurred while creating the ruin thread.",
+        "found_treasure" : "You found a **treasure**. It contains **{gold}** {money_emoji}!",
+        "bully_is_dead" : "{bully} is dead!",
 
         "trap_strength_intro": "[STRENGTH] The room is filled with large, sharp stones. One must create a path by moving these large stones.",
         "trap_strength_success": "Your bully moved rocks and created a safe path for everyone.",
@@ -367,8 +370,12 @@ texts = {
         "shop_dm_error": "This command can only be used in a server, not in a DM.",
         "shop_not_open": "The shop is not open in this server. Ask an admin to open it.",
         "shop_restocking": "The shop is restocking. Please wait <{seconds} seconds>.",
-        "shop_closed_message": "```Shop is closed. See you again!```",
+        "shop_closed_message": "Shop is closed. See you again!",
         "shop_purchase_success": "{user} has purchased {name} for {cost}{money_emoji}!",
+        "shop_bully_not_available" : "This bully is no longer available (sorry {user})",
+        "shop_not_enough_money" : "{user}, you don't have enough {money_emoji} to buy {bully}. Cost: {cost}{money_emoji}",
+        "bully_in_shop" : "Bullies in shop: ",
+        "price" : "Price: {cost} {money_emoji}",
 
         # supply_bully - Snack Machine
         "snack_bonus_select": "Select your **bonus** stat:",
@@ -452,7 +459,42 @@ def verify_keys_format() -> bool:
         print(f"Invalid key in '{lang_code}': {key}")
     return False
 
+
+
+def verify_keys_placeholders() -> bool:
+    import re
+    """
+    Verify if the keys in texts["fr"] and texts["en"] have the same placeholders.
+    Returns True if all keys match, False otherwise.
+    """
+    placeholder_pattern = re.compile(r'{[^}]*}')
+    
+    fr_keys = set(texts["fr"].keys())
+    en_keys = set(texts["en"].keys())
+    common_keys = fr_keys & en_keys
+    
+    mismatched_keys = []
+    
+    for key in common_keys:
+        fr_placeholders = set(placeholder_pattern.findall(texts["fr"][key]))
+        en_placeholders = set(placeholder_pattern.findall(texts["en"][key]))
+        
+        if fr_placeholders != en_placeholders:
+            mismatched_keys.append(key)
+    
+    if not mismatched_keys:
+        print("All keys have matching placeholders between 'fr' and 'en'.")
+        return True
+    
+    for key in mismatched_keys:
+        print(f"Placeholders mismatch in key '{key}':")
+        print(f"  fr: {texts['fr'][key]}")
+        print(f"  en: {texts['en'][key]}")
+    
+    return False
+
 if __name__ == "__main__":
     verify_texts_keys()
     verify_keys_format()
+    verify_keys_placeholders()
 

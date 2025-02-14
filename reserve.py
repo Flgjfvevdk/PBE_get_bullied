@@ -44,7 +44,7 @@ async def switch_reserve(ctx: Context, player: Player, b: Bully, go_reserve:bool
     if nb_empty_space > 0:
         #On fait le switch
         b.in_reserve = go_reserve
-        await channel_cible.send(getText("bullie_moved").format(bully=b.name, target=(getText("reserve") if go_reserve else getText("active_team"))))
+        await channel_cible.send(getText("bully_moved").format(bully=b.name, target=(getText("reserve") if go_reserve else getText("active_team"))))
         # await channel_cible.send(f"{b.name} have been moved in your {'reserve' if go_reserve else 'active team'}")  
 
     else :

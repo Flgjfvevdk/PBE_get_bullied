@@ -139,7 +139,7 @@ class EnemyRoom():
             raise #On propage l'exception
 
         if (fighting_bully_joueur.pv <= 0):
-            await ruin.thread.send(getText("ruin_bully_missing"))
+            await ruin.thread.send(getText("ruin_bully_error"))
             # await ruin.thread.send(f"Your bully is dead or do not exist.\nYour team left the ruin.") 
             raise IndexError
         

@@ -147,7 +147,7 @@ async def handle_shop_click(ctx:Context, variable_pointer:Dict[str, Bully | disc
                 return
 
             if(interact_game.nb_bully_in_team(player) >= interact_game.BULLY_NUMBER_MAX):
-                await ctx.send(getText("max_bullies_reached").format(max_bullies=interact_game.BULLY_NUMBER_MAX))
+                await ctx.send(getText("max_bullies_reached").format(user = user.name, max_bullies=interact_game.BULLY_NUMBER_MAX))
                 # await ctx.channel.send(f"You can't have more than {interact_game.BULLY_NUMBER_MAX} bullies at the same time")
                 return
             

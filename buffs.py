@@ -297,6 +297,17 @@ class WarmUp(BuffFight):
                 fighter.stats.viciousness *= 2
         return
 
+class Martyr(BuffFight):
+    description:str = "Diminue ses stats pour diminuer d'autant celle de l'adversaire."
+    category:CategoryBuff = CategoryBuff.LVL_4
+    def __init__(self, fighter:FightingBully):
+        super().__init__(fighter)
+        self.debuff_coef = 0.95
+    def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
+        malus = {stat: getattr(fighter.stats, stat) * (1 - self.debuff_coef) for stat in ['strength', 'agility', 'lethality', 'viciousness']}
+        for stat, malus_value in malus.items():
+            setattr(fighter.stats, stat, min(getattr(fighter.stats, stat), max(1, getattr(fighter.stats, stat) - malus_value)))
+            setattr(opponent.stats, stat, min(getattr(opponent.stats, stat), max(1, getattr(opponent.stats, stat) - malus_value)))
 #41-50
 class Venomous(BuffFight):
     description:str = "Ses coups critiques empoisonnent son adversaire."
@@ -537,20 +548,49 @@ class Friendship(BuffFight):
     description_en:str = "All your friends love you."
     category:CategoryBuff = CategoryBuff.SPECIAL
 
-# class Gambler(BuffFight):
-#     description:str = "À chaque kill, obtient un buff positif aléatoire."
-#     description_en:str = "Get a random positive buff after each kill."
-#     category:CategoryBuff = CategoryBuff.SPECIAL
-#     def __init__(self, fighter: FightingBully):
-#         super().__init__(fighter)
-#         self.already_kill:list[FightingBully] = []
-#         self.possible_buffs = [name_to_buffs_class[name] for name in name_to_buffs_class.keys() if name_to_buffs_class[name].category in [CategoryBuff.LVL_1, CategoryBuff.LVL_2, CategoryBuff.LVL_3, CategoryBuff.LVL_4, CategoryBuff.LVL_5]]
-    
-#     def on_death(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
-#         if opponent.pv <= 0 and opponent not in self.already_kill:
-#             fighter.buffs.append(random.choice(self.possible_buffs)(fighter=fighter))
-#             self.already_kill.append(opponent)
+class Gambler(BuffFight):
+    description:str = "Gagne 1 pièce à chaque fois que l'attaquant alterne. 5 pièces => 1 effet aléatoire positif."
+    description_en:str = "Gain 1 coin when the attacker changes. 5 coins => 1 random positive effect."
+    category:CategoryBuff = CategoryBuff.UNIQUE
+    price_buff = 5
+    def __init__(self, fighter:FightingBully):
+        super().__init__(fighter)
+        self.coins = 0
+        self.buff_value = fighter.bully.lvl**2 * 0.07
+        self.update_description()
+        
+    def apply_heal(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
+        if not recap_round.is_success_agility : 
+            self.coins += 1
+            self.update_description()
+        if (self.coins >= self.price_buff):
+            self.coins -= self.price_buff
+            text_effect = self.trigger_random_effect(fighter)
+            self.display_effect_description(text_effect)
+            return 1,0
+        return 0,0
 
+    def trigger_random_effect(self, fighter: FightingBully) -> str:
+        effects = [
+            ('STRENGTH', lambda: setattr(fighter.stats, 'strength', fighter.stats.strength + self.buff_value)),
+            ('AGILITY', lambda: setattr(fighter.stats, 'agility', fighter.stats.agility + self.buff_value)),
+            ('LETHALITY', lambda: setattr(fighter.stats, 'lethality', fighter.stats.lethality + self.buff_value)),
+            ('VICIOUSNESS', lambda: setattr(fighter.stats, 'viciousness', fighter.stats.viciousness + self.buff_value)),
+            ('HP', lambda: setattr(fighter, 'pv', min(fighter.pv + 1, fighter.bully.max_pv)))
+        ]
+        text_effect = ""
+        for _ in range(3):
+            param, effect = random.choice(effects)
+            effect()
+            text_effect += param + " | "
+        return text_effect
+
+    def display_effect_description(self, text_effect:str):
+        self.description = f"{text_effect}"
+
+    def update_description(self):
+        self.description = f"{self.coins} pièce{'s' if self.coins>1 else ''}. 5 pièces => 1 effet aléatoire positif."
+   
 class Dragon(BuffFight):
     description:str = "Obtient tous les buffs Dragons"
     description_en:str = ""
@@ -566,6 +606,13 @@ class ShadowMaster(BuffFight):
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
         fighter.buffs = [ShadowEater(fighter=fighter), ProtectiveShadow(fighter=fighter)]
+
+class TrueSlime(BuffFight):
+    description:str = "Obtient tous les buffs Slimes"
+    category:CategoryBuff = CategoryBuff.UNIQUE
+    def __init__(self, fighter:FightingBully):
+        super().__init__(fighter)
+        fighter.buffs = [SlimyPunch(fighter=fighter), SlimyBody(fighter=fighter), RoyalSlimyBody(fighter=fighter)]
 
 class Adaptation(BuffFight):
     description:str = "Level up jusqu'à atteindre le level de son adversaire."

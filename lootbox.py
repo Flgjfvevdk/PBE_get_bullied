@@ -21,18 +21,30 @@ from all_texts import getText
 
 CHOICE_TIMEOUT = 20
 RARITY_DROP_CHANCES = [0, 35, 45, 15, 5, 0] #Mettre 0 en proba d'avoir unique
-PRIX_BASE = 80
+PRIX_BASE = 150
+
+BUFFS_TAG_POSSIBLES:dict[str,float] = {
+    "NoBuff" : 0.6,
+    "IronSkin" : 0.1,
+    "SlimyPunch" : 0.1,
+    "RootOfEvil" : 0.1,
+    "Overdrive" : 0.1,
+    "LastWhisper" : 0.1,
+    "WarmUp" : 0.1,
+    "PainSufferer":0.1,
+    "Gambler":0.1
+}
 
 
 def get_cout(level) ->int:
     cout = int(math.sqrt(level) * PRIX_BASE)
     return cout
 
-def loot_bully(level) -> Bully:
+def loot_bully(level:int) -> Bully:
     name = interact_game.generate_name()
     rarity = random.choices(list(bully.Rarity), weights=RARITY_DROP_CHANCES)[0]
     b = Bully(name=name, rarity=rarity)
-    lvl_bully = int((level+1)/2)
+    lvl_bully = random.randint(round(4/10*level), round(8/10*level))
     for k in range(1, lvl_bully):
         b.level_up_one()
 
@@ -41,7 +53,6 @@ def loot_bully(level) -> Bully:
 
 async def shop_lootbox(ctx: Context, user: discord.abc.User):
     text = getText("lootbox_select")
-    # text = f"Select a lootbox to open. You'll get a bully with a level 2 times smaller than the box level."
     event = asyncio.Event()
     var:Dict[str, int | None] = {"choix" : None}
     level_choix = [1, 5, 10, 20, 30, 40, 50]
@@ -66,7 +77,6 @@ async def open_lootbox(ctx: Context, user: discord.abc.User, level:int):
     lock = PlayerLock(user.id)
     if not lock.check():
         await ctx.reply(getText("already_in_action"))
-        # await ctx.send("You are already in an action.")
         return
     with lock:
         async with database.new_session() as session:
@@ -74,13 +84,11 @@ async def open_lootbox(ctx: Context, user: discord.abc.User, level:int):
 
             if player is None:
                 await ctx.reply(getText("join"))
-                # await ctx.send("Please join the game first !")
                 return
             
             max_dungeon_lvl:int = player.max_dungeon
             if level > max_dungeon_lvl and level > 1:
                 await ctx.send(getText("lootbox_require_dungeon").format(user = user.name, level=level))
-                # await ctx.send(f"{user.name}, you must beat dungeon level {level} to buy this lootbox")
                 return
 
             cout = get_cout(level=level)

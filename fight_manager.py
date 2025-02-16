@@ -308,8 +308,8 @@ class Fight():
             bully_gagnant.increment_win_loose(win=True)
             bully_perdant.increment_win_loose(win=False)
 
-            if (user_gagnant is None ):
-                (exp_earned, gold_earned) = (0.0, 0)
+            if (user_gagnant is None):
+                (exp_earned, gold_earned) = (0, 0)
             else : 
                 (exp_earned, gold_earned) = reward_win_fight(bully_gagnant, bully_perdant)
                 exp_earned *= fighting_bully_perdant.exp_coef

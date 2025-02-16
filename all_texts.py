@@ -113,7 +113,7 @@ texts = {
         "you_receive_gold" : "Vous avez reçu des {money_emoji} ! (+{value}}{money_emoji})",
 
         #lootbox
-        "lootbox_select": "Sélectionnez une lootbox à ouvrir. Vous obtiendrez un bully avec un niveau deux fois inférieur à celui de la box.",
+        "lootbox_select": "Sélectionnez une lootbox à ouvrir. Bully level = [40-80]%% du level de la box",
         "lootbox_require_dungeon": "{user}, vous devez battre le donjon de niveau {level} pour acheter cette lootbox",
         "lootbox_not_enough_money": "{user}, vous n'avez pas assez de {money_emoji} pour cette box [coût : {cout}{money_emoji}]",
         "lootbox_purchase_success": "{user} a acheté une lootbox et a obtenu... {bully} un {rarity}!",
@@ -317,7 +317,7 @@ texts = {
         "you_receive_gold" : "You have received {money_emoji} ! (+{value}}{money_emoji}).",
 
         #lootbox
-        "lootbox_select": "Select a lootbox to open. You'll get a bully with a level 2 times smaller than the box level.",
+        "lootbox_select": "Select a lootbox to open. Bully level = [40-80]%% of the box level.",
         "lootbox_require_dungeon": "{user}, you must beat dungeon level {level} to buy this lootbox",
         "lootbox_not_enough_money": "{user}, you don't have enough {money_emoji} for this box [cost: {cout}{money_emoji}]",
         "lootbox_purchase_success": "{user} has purchased a lootbox and got... {bully} a {rarity}!",

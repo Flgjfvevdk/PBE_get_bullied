@@ -25,19 +25,19 @@ PRIX_BASE = 150
 
 BUFFS_TAG_POSSIBLES:dict[str,float] = {
     "NoBuff" : 0.6,
-    "IronSkin" : 0.1,
-    "SlimyPunch" : 0.1,
-    "RootOfEvil" : 0.1,
-    "Overdrive" : 0.1,
-    "LastWhisper" : 0.1,
-    "WarmUp" : 0.1,
-    "PainSufferer":0.1,
-    "Gambler":0.1
+    "IronSkin" : 0.05,
+    "SlimyPunch" : 0.05,
+    "RootOfEvil" : 0.05,
+    "Overdrive" : 0.07,
+    "LastWhisper" : 0.07,
+    "WarmUp" : 0.05,
+    "PainSufferer":0.05,
+    "Gambler":0.01
 }
 
 
 def get_cout(level) ->int:
-    cout = int(math.sqrt(level) * PRIX_BASE)
+    cout = int(level**0.7 * PRIX_BASE)
     return cout
 
 def loot_bully(level:int) -> Bully:
@@ -47,6 +47,9 @@ def loot_bully(level:int) -> Bully:
     lvl_bully = random.randint(round(4/10*level), round(8/10*level))
     for k in range(1, lvl_bully):
         b.level_up_one()
+    random_buff_tag = random.choices(list(BUFFS_TAG_POSSIBLES.keys()), weights=list(BUFFS_TAG_POSSIBLES.values()))[0]
+    if random_buff_tag != "NoBuff":
+        b.buff_fight_tag = random_buff_tag
 
     return b
 
@@ -105,7 +108,8 @@ async def open_lootbox(ctx: Context, user: discord.abc.User, level:int):
             money.give_money(player, - cout)
             b:Bully = loot_bully(level)
             player.bullies.append(b)
-            text_lootbox = bully.mise_en_forme_str(getText("lootbox_purchase_success").format(user = user.name, bully = b.name, rarity = b.rarity.name))
+            text_ajout_buff = getText("lootbox_buff").format(buff_tag=b.buff_fight_tag) if b.buff_fight_tag != "NoBuff" else ""
+            text_lootbox = bully.mise_en_forme_str(getText("lootbox_purchase_success").format(user = user.name, bully = b.name, rarity = b.rarity.name) + text_ajout_buff)
             # text_lootbox = bully.mise_en_forme_str(f"{user.name} has purchased a lootbox and got ... {b.name} a {b.rarity.name}!")
             await ctx.channel.send(text_lootbox)
             await session.commit()

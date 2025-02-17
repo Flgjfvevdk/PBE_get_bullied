@@ -300,7 +300,6 @@ async def print_bullies(ctx: Context, player: Player, compact_print=False, print
         if print_images:
             if images:
                 filename = str(images[bully_selected.id])
-                print("filename is ", filename)
                 file = discord.File(images[bully_selected.id], filename=filename)
                 await message.reply(embed=create_embed(title="",  description_lines=[bully.mise_en_forme_str(text_info)]), file=file)
             else:
@@ -480,7 +479,7 @@ async def suicide_bully(ctx: Context, user: discord.abc.User, player: Player, bo
             raise CancelChoiceException("No selected bully")
 
         #On envoie les infos sur le bully choisit
-        await message_choose_suicide.edit(content=getText("suicide_kill"))
+        await message_choose_suicide.edit(content=getText("suicide_kill").format(user = user, bully = bully_selected.name))
         # await message_choose_suicide.edit(content=f"{user} kills {bully_selected.name}")
         await bully_selected.kill()
         money.give_money(player, montant=int(bully_selected.gold_give_when_die()))

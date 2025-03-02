@@ -22,9 +22,21 @@ The `env.example` file needs to be renamed `.env` and contain the following fiel
 ### Game Configuration
 For the moment, no configuration is available.
 
-## Roadmap
-
-Some is available (in french) in the [TODO](./TODO.md) file
+## Todo
+- [ ] Faire une liste de taches
+- [ ] thread pour les 1v1 Joueurs (team fight)
+- [ ] sélectionner que les images de bully parfaite
+- [ ] les bully qui perdent autant de level que leur nombre de brutal loose (true loses)
+- [ ] systèmes d'xp combat entre 2 joueurs à modifier
+- [ ] faire le système du tournoi du dimanche
+- [ ] modifs les buffs qui donnenent + X*LVL (faire des LVL^2)
+- [ ] Tester tous les boss (notamment le boss level 50)
+- [ ] buff boss level 50 (shadow ?)
+- [ ] voir buff devil pocket watch (dmg que en cas de parade ? Pulvérise Le boss Ombre ?)
+- [ ] Reward gold à revoir ?
+- [ ] Quand les 2 meurts en m^me temps, J1 gagne toujours ?
+____ Bonus ____
+- [ ] faire un donjo spécial dnd (beholder, hibours, tiamat ... ?)
 
 TBD.
 

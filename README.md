@@ -23,7 +23,7 @@ The `env.example` file needs to be renamed `.env` and contain the following fiel
 For the moment, no configuration is available.
 
 ## Todo
-- [ ] Faire une liste de taches
+- [x] Faire une liste de taches
 - [ ] thread pour les 1v1 Joueurs (team fight)
 - [ ] sélectionner que les images de bully parfaite
 - [ ] les bully qui perdent autant de level que leur nombre de brutal loose (true loses)

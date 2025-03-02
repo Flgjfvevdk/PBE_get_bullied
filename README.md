@@ -35,8 +35,9 @@ For the moment, no configuration is available.
 - [ ] voir buff devil pocket watch (dmg que en cas de parade ? Pulvérise Le boss Ombre ?)
 - [ ] Reward gold à revoir ?
 - [ ] Quand les 2 meurts en m^me temps, J1 gagne toujours ?
+
 ____ Bonus ____
-- [ ] faire un donjo spécial dnd (beholder, hibours, tiamat ... ?)
+- [ ] faire un donjon spécial dnd (beholder, hibours, tiamat ... ?)
 
 TBD.
 

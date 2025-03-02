@@ -250,12 +250,10 @@ async def challenge(ctx: Context, opponent:discord.Member):
     lock1 = PlayerLock(user.id)
     if not lock1.check():
         await ctx.send(getText("already_in_action"))
-        #await ctx.send("You are already in an action.")
         return
     lock2 = PlayerLock(opponent.id)
     if not lock2.check():
         await ctx.send(getText("other_is_in_action").format(user=opponent))
-        # await ctx.channel.send(f"Sorry, but {opponent} is already busy!")
         return
     
     with lock1, lock2:
@@ -331,7 +329,6 @@ async def team_challenge(ctx: Context, opponent:discord.Member):
                 return
             if p2 is None:
                 await ctx.reply(getText("other_hasnt_joined").format(other=opponent))
-                # await ctx.reply(f"{opponent} has not joined the game.")
                 return
             await fight_manager.proposition_team_fight(ctx, user_1=user, user_2=opponent, player_1=p1, player_2=p2, for_fun=True)
 
@@ -366,7 +363,6 @@ async def explore_dungeon(ctx: Context, level:int|str):
     lock = PlayerLock(user.id)
     if not lock.check():
         await ctx.send(getText("already_in_action"))
-        # await ctx.send("You are already in an action.")
         return
 
     with lock:
@@ -380,7 +376,6 @@ async def explore_dungeon(ctx: Context, level:int|str):
             if (level - 10 > pallier_boss_vaincu) and level not in donjon.special_dg_name_number.keys():
                 pallier_minimum = math.floor((level-1)/10)*10
                 await ctx.send(getText("dg_pallier").format(lvl_pallier=pallier_minimum))
-                # await ctx.channel.send(f"You must defeat the dungeon level {pallier_minimum} before exploring this dungeon.")
                 return
 
             try :

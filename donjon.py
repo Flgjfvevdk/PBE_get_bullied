@@ -208,7 +208,6 @@ class Dungeon():
 
     async def enter(self) -> None:
         message = await self.ctx.channel.send(getText("dungeon_enter").format(user=self.ctx.author.mention, dungeon_name=self.name))
-        # message = await self.ctx.channel.send(f"{self.ctx.author.mention} enters the {self.name}")
         try :
             self.thread = await self.ctx.channel.create_thread(name=f"{self.name}", message=message) #type: ignore
         except Exception as e:
@@ -223,13 +222,10 @@ class Dungeon():
 
         except interact_game.CancelChoiceException as e:
             await self.thread.send(getText("dungeon_cancel").format(user=self.ctx.author.mention))
-            # await self.thread.send(f"{self.ctx.author.name} cancelled the fight and left the dungeon")
         except asyncio.exceptions.TimeoutError as e:
             await self.thread.send(getText("dungeon_team_left_timeout").format(user=self.ctx.author))
-            # await self.thread.send(f"Your team left the dungeon. Choose faster next time {self.ctx.author}.")
         except IndexError as e:
             await self.thread.send(getText("dungeon_team_left"))
-            # await self.thread.send(f"Your team left the dungeon.")
         except Exception as e:
             print(e)
 
@@ -237,7 +233,6 @@ class Dungeon():
         else:
             #On est plus dans le combat, le joueur à vaincu le donjon
             txt_w = getText("dungeon_win").format(user=self.ctx.author.mention, dungeon_name=self.name)
-            # txt_w = f"{self.ctx.author.name} has beaten the {self.name}!"
             await self.ctx.channel.send(txt_w)
             await self.thread.send(txt_w)
 
@@ -265,7 +260,6 @@ class Dungeon():
         text_enemy_coming = f"{fighting_bully_enemy.get_print()}"
 
         await self.thread.send(getText("dungeon_next_enemy").format(enemy=bully.mise_en_forme_str(text_enemy_coming)))
-        # await self.thread.send(f"Next enemy :\n{bully.mise_en_forme_str(text_enemy_coming)}") 
         
         fighting_bully_joueur, num_bully_j = await interact_game.player_choose_fighting_bully(ctx=self.ctx, fighting_bullies=self.fighters_joueur, user=self.ctx.author, channel_cible=self.thread, timeout=DUNGEON_CHOICE_TIMEOUT)
 
@@ -302,7 +296,6 @@ class Dungeon():
                 
             #On envoie le message de succès et on progress dans le dungeon
             await self.thread.send(getText("dungeon_enemy_dead").format(enemy_name=fighting_bully_enemy.bully.name))
-            # await self.thread.send(f"{fighting_bully_enemy.bully.name} is dead! You progress in the dungeon.")
             self.current_floor += 1
 
         else : 
@@ -316,13 +309,10 @@ class Dungeon():
 
         except interact_game.CancelChoiceException:
             await self.thread.send(getText("fighter_stay_in_fight").format(fighter_name=fighter.bully.name))
-            # await self.thread.send(f"{fighter.bully.name} stays in fight.")
         except asyncio.exceptions.TimeoutError:
             await self.thread.send(getText("fighter_change_too_slow").format(fighter_name=fighter.bully.name))
-            # await self.thread.send(f"Too slow, {fighter.bully.name} stays in fight.")
         except IndexError:
             await self.thread.send(getText("fighter_change_error").format(fighter_name=fighter.bully.name))
-            # await self.thread.send(f"Error, {fighter.bully.name} stays in fight.")
         return fighter
     
     def reset_stats_bullies(self) -> None:
@@ -350,10 +340,8 @@ async def str_leaderboard_donjon(session: AsyncSession) -> str:
     for joueur in classement_joueurs:
         if joueur.max_dungeon > 0:
             text_classement+= getText("dungeon_highest_ranked").format(player_id=joueur.id, max_dungeon=joueur.max_dungeon) + "\n"
-            # text_classement+= f"<@{joueur.id}> - Highest Dungeon Level Reached: {joueur.max_dungeon}\n"
         else:
             text_classement += getText("dungeon_not_ranked").format(player_id=joueur.id) + "\n"
-            # text_classement+= f"<@{joueur.id}> is not ranked.\n"
 
     return text_classement
 

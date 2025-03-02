@@ -42,11 +42,11 @@ async def trade_offer(ctx:Context, user_1:discord.abc.User, user_2:discord.abc.U
     await message.edit(view=None)
     lock1 = PlayerLock(user_1.id)
     if not lock1.check():
-        await message.reply(getText("other_is_in_action").format(user=user_1))
+        await message.reply(getText("other_is_in_action").format(user=user_1.name))
         return
     lock2 = PlayerLock(user_2.id)
     if not lock2.check():
-        await message.reply(getText("other_is_in_action").format(user=user_2))
+        await message.reply(getText("other_is_in_action").format(user=user_2.name))
         return
     
     with lock1, lock2:

@@ -57,7 +57,7 @@ async def print_reserve(ctx: Context, user: discord.abc.User, player: Player, bo
     if(channel_cible==None):
         channel_cible = ctx.channel
 
-    text = getText("reserve_bullies_info").format(user=user)
+    text = getText("reserve_bullies_info").format(user=user.name)
     split_txt = []
 
     for b in player.get_reserve():

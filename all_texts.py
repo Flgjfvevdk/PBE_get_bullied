@@ -88,10 +88,11 @@ texts = {
         "fight_giveup": "{user} a abandonné le combat",
         "challenge_too_late": "Trop tard ! Aucun combat entre {user1} et {user2}.",
         "fight_winner": "{winner} a gagné le combat !",
-        "teamfight_winner": "{winner} a gagné le teamfight !",
+        "teamfight_winner": "{winner} a gagné le teamfight contre {loser}!",
         "challenge_selected_bully":"{user} a selectionné {bully} (lvl : {lvl})",
         "gain": "{name} a gagné {reward}",
         "select_to_late_random":"Trop tard, un bully aléatoire a été sélectionné pour {user}.",
+        "title_challenge": "{user1} vs {user2}",
 
         #interact_game
         "already_joined_game": "Vous avez déjà rejoint le jeu !",
@@ -290,13 +291,14 @@ texts = {
         "challenge_accepted": "Challenge accepted!",
         "challenge_declined": "Challenge declined",
         "fight_cancel": "{user} cancelled the fight",
-        "fight_giveup" : "{user} gave up the fight",
+        "fight_giveup": "{user} gave up the fight",
         "challenge_too_late": "Too late! No fight between {user1} and {user2}.",
         "fight_winner": "{winner} won the fight!",
-        "teamfight_winner": "{winner} won the teamfight!",
+        "teamfight_winner": "{winner} won the teamfight against {loser}!",
         "challenge_selected_bully":"{user} select {bully} (lvl : {lvl})",
         "gain": "{name} earned {reward}",
         "select_to_late_random":"Too late, a random bully has been selected for {user}.",
+        "title_challenge": "{user1} vs {user2}",
 
         #interact_game
         "already_joined_game": "You have already joined the game!",

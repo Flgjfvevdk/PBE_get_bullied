@@ -204,7 +204,7 @@ async def invite_join(ctx: Context, parrain:Player, user:discord.Member|discord.
                 if (parrain.nb_referrals == NB_REFERRAL_REWARD):
                     await ctx.send(getText("referral_reward").format(user=ctx.author.mention, nb=NB_REFERRAL_REWARD))
                     # await ctx.send(f"{ctx.author.mention} you have invited {NB_REFERRAL_REWARD} friends ! You deserve a prize (ask for it :wink: )") 
-                await ctx.send(getText("other_join").format(user=user))
+                await ctx.send(getText("other_join").format(user=user.name))
                 # await ctx.send(f"{user} has joined the game!")
                 await session.commit()
             except IntegrityError:
@@ -402,7 +402,7 @@ async def select_bully(ctx: Context, user: discord.abc.User, player: Player, cha
         raise CancelChoiceException("No selected bully")
 
     #On envoie les infos sur le bully choisit
-    await channel_cible.send(getText("selected_bully").format(user=user, bully=bully_selected.name))
+    await channel_cible.send(getText("selected_bully").format(user=user.name, bully=bully_selected.name))
     # await channel_cible.send(f"{user} selects {bully_selected.name}") 
     return bully_selected
 
@@ -417,7 +417,7 @@ async def player_choose_fighting_bully(ctx:Context, fighting_bullies:list[Fighti
         raise IndexError
 
     #Demande au joueur de choisir son combattant
-    message_choose_fighter = await channel_cible.send(getText("choose_fighter").format(user=user))
+    message_choose_fighter = await channel_cible.send(getText("choose_fighter").format(user=user.name))
     # message_choose_fighter = await channel_cible.send(f"{user} choose your fighter : ") 
 
     #On init les variables
@@ -444,7 +444,7 @@ async def player_choose_fighting_bully(ctx:Context, fighting_bullies:list[Fighti
     else : 
         raise CancelChoiceException("No selected bully")
 
-    await channel_cible.send(getText("selected_bully").format(user=user, bully=bully_selected.name))
+    await channel_cible.send(getText("selected_bully").format(user=user.name, bully=bully_selected.name))
     # await channel_cible.send(f"{user} select {bully_selected.name}.") 
     return fighting_bully, bully_number
 
@@ -486,7 +486,7 @@ async def suicide_bully(ctx: Context, user: discord.abc.User, player: Player, bo
         await ctx.send(getText("you_receive_gold").format(value = int(bully_selected.gold_give_when_die()), money_emoji = money.MONEY_EMOJI))
         # await ctx.send(f"Vous avez reçu des {money.MONEY_EMOJI} ! (+{int(bully_selected.gold_give_when_die())}{money.MONEY_EMOJI})")
     except Exception as e:
-        await message_choose_suicide.edit(content=getText("no_suicide").format(user=user))
+        await message_choose_suicide.edit(content=getText("no_suicide").format(user=user.name))
         # await message_choose_suicide.edit(content=f"{user} didn't kill any bullies")
     finally:
         await message_bullies.delete()

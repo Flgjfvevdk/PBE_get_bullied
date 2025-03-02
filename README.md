@@ -24,7 +24,7 @@ For the moment, no configuration is available.
 
 ## Todo
 - [x] Faire une liste de taches
-- [ ] thread pour les 1v1 Joueurs (team fight)
+- [x] thread pour les 1v1 Joueurs (team fight)
 - [ ] sélectionner que les images de bully parfaite
 - [ ] les bully qui perdent autant de level que leur nombre de brutal loose (true loses)
 - [ ] systèmes d'xp combat entre 2 joueurs à modifier

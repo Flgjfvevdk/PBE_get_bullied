@@ -26,7 +26,7 @@ For the moment, no configuration is available.
 - [x] Faire une liste de taches
 - [x] thread pour les 1v1 Joueurs (team fight)
 - [ ] sélectionner que les images de bully parfaite
-- [ ] les bully qui perdent autant de level que leur nombre de brutal loose (true loses)
+- [x] les bully qui perdent autant de level que leur nombre de brutal loose (true loses)
 - [ ] systèmes d'xp combat entre 2 joueurs à modifier
 - [ ] faire le système du tournoi du dimanche
 - [ ] modifs les buffs qui donnenent + X*LVL (faire des LVL^2)

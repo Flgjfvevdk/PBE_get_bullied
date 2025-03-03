@@ -181,10 +181,9 @@ async def buy_lootbox(ctx: Context):
         return
     await lootbox.shop_lootbox(ctx, user=user)
 
-@bot.command(aliases=['ty', 'sayty', 'credits'])
-async def say_thanks(ctx: Context):
-    await ctx.send(getText("thanks"))
-    # await ctx.send("Thanks to everyone who takes part in this game!")
+@bot.command(aliases=['credit'])
+async def credits(ctx: Context):
+    await ctx.send(getText("credits"))
 
 @bot.command(aliases=['sacrifice', 'kill'])
 @decorators.categories("Bully")
@@ -214,31 +213,31 @@ async def suicide(ctx: Context):
 async def tuto(ctx: Context):
     await ctx.channel.send(tuto_text.tuto)
 @bot.command(aliases=['tuto_b'])
-@decorators.categories("Tuto", "bully")
+@decorators.categories("Tuto", "Bully")
 async def tuto_bully(ctx: Context):
     await ctx.channel.send(tuto_text.tuto_bully)
 @bot.command(aliases=['tuto_f'])
-@decorators.categories("Tuto", "bully")
+@decorators.categories("Tuto", "Bully")
 async def tuto_fight(ctx: Context):
     await ctx.channel.send(tuto_text.tuto_fight)
 @bot.command(aliases=['tuto_d', 'tuto_donjon'])
-@decorators.categories("Tuto", "fight")
+@decorators.categories("Tuto", "Fight")
 async def tuto_dungeon(ctx: Context):
     await ctx.channel.send(tuto_text.tuto_dungeon)
 @bot.command(aliases=['tuto_r', 'tuto_ruine'])
-@decorators.categories("Tuto", "fight")
+@decorators.categories("Tuto", "Fight")
 async def tuto_ruin(ctx: Context):
     await ctx.channel.send(tuto_text.tuto_ruin)
 @bot.command(aliases=['tuto_s'])
-@decorators.categories("Tuto", "money")
+@decorators.categories("Tuto", "Money")
 async def tuto_shop(ctx: Context):
     await ctx.channel.send(tuto_text.tuto_shop)
 @bot.command(aliases=['tuto_lb', 'tuto_l'])
-@decorators.categories("Tuto", "money")
+@decorators.categories("Tuto", "Money")
 async def tuto_lootbox(ctx: Context):
     await ctx.channel.send(tuto_text.tuto_lootbox)
 @bot.command(aliases=['tuto_bf', 'tuto_buff', 'list_buff', 'list_buffs', 'buffs', 'buff', 'info_buff', 'info_buffs', 'infos_buff', 'infos_buffs'])
-@decorators.categories("Tuto", "bully")
+@decorators.categories("Tuto", "Bully")
 async def tuto_buffs(ctx: Context):
     txt = ""
     import inspect, buffs, fighting_bully
@@ -906,7 +905,7 @@ async def custom_help(ctx: Context):
                     dict_text[category] = ""
                 dict_text[category] += command_info
     
-    dict_text.pop("admin", None)
+    dict_text.pop("Admin", None)
     #all the key are organized in alphabetic order : 
     dict_text = dict(sorted(dict_text.items(), key=lambda item: item[0]))
     await paginate_dict(ctx, dict_text, max_chars=700)

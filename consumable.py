@@ -184,16 +184,13 @@ async def add_conso_to_player(ctx: Context, player: 'player_info.Player', c:Cons
 
     if len(player.consumables) >= CONSO_NUMBER_MAX :
         await channel_cible.send(getText("consumable_too_many_select"))
-        # await channel_cible.send("You have to many consumables. Please select one consumable you own to replace with the new one.")
         await remove_consumable(ctx=ctx, user=ctx.author, player=player)
     
         if len(player.consumables) >= CONSO_NUMBER_MAX :
             await channel_cible.send(getText("consumable_too_many_destroyed"))
-            # await channel_cible.send("You have too many consumables, the new one is destroyed.")
 
     if len(player.consumables) < CONSO_NUMBER_MAX :
         await channel_cible.send(getText("consumable_added").format(name=c.name))
-        # await channel_cible.send(f"The consumable: {c.name} has been added in your inventory.")
         player.consumables.append(c)
 
 async def use_consumable(ctx: Context, user: discord.abc.User, player: 'player_info.Player', session:AsyncSession, bot: Bot, channel_cible=None) :
@@ -204,7 +201,6 @@ async def use_consumable(ctx: Context, user: discord.abc.User, player: 'player_i
         bully_selected = await interact_game.select_bully(ctx=ctx, user=user, player=player)
     except asyncio.exceptions.TimeoutError as e:
         await ctx.send(getText("timeout_choose_faster").format(user=user.name))
-        # await ctx.send(f"Timeout, choose faster next time {user.name}")
         return
     except interact_game.CancelChoiceException as e:
         return
@@ -212,7 +208,6 @@ async def use_consumable(ctx: Context, user: discord.abc.User, player: 'player_i
     consumable_selected = await select_consumable(ctx=ctx, user=user, player=player, bully_selected=bully_selected, channel_cible=channel_cible)
     if consumable_selected is None:
         await channel_cible.send(getText("consumable_no_selection"))
-        # await channel_cible.send(content="You didn't select any consumable.")
     else : 
         try :
             consumable_selected.apply(bully_selected)
@@ -220,7 +215,6 @@ async def use_consumable(ctx: Context, user: discord.abc.User, player: 'player_i
             await channel_cible.send(content=e.text)
             return
         await channel_cible.send(content=getText("consumable_applied").format(name=consumable_selected.name))
-        # await channel_cible.send(content=f"Consumable ({consumable_selected.name}) has been successfully applied!")
         player.consumables.remove(consumable_selected)
         await session.delete(consumable_selected)          
 
@@ -282,20 +276,16 @@ async def remove_consumable(ctx: Context, user: discord.abc.User, player: 'playe
 
 def embed_consumables(player: 'player_info.Player', user: discord.abc.User, *, select=False) -> discord.Embed:
     title = getText("consumable_choose_title") if select else getText("consumable_user_title").format(user=user.display_name)
-    # title = "Choose a consumable" if select else f"{user.display_name}'s consumables"
     description_lines = []
 
     if not player.consumables:
         description_lines.append(getText("consumable_none"))
-        # description_lines.append("You have no consumables :(")
         footnote = getText("consumable_do_ruin") if not select else None
-        # footnote = "But you may get some from ruins!" if not select else None
     else:
         for i, c in enumerate(player.consumables):
             description_lines.append(f"**{i+1}. {c.name}**{c.get_effect()}")
 
         footnote = None if select else getText("consumable_use_command")
-        # footnote = None if select else "Enter !!use_consumable to use one."
 
     thumbnail = user.avatar.url if not select and user.avatar is not None else None 
     columns = 2 if len(description_lines) > 5 else 1  # Two-column format if many consumables

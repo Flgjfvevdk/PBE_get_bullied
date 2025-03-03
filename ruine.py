@@ -223,8 +223,7 @@ class ConsoRoom():
         if random.random() < 0.33:
             Buff = random.choice(BuffsLVL[math.floor(level/10)])
             buff_tag = Buff.__name__
-            conso = consumable.ConsumableElixirBuff(getText("elixir_of") + buff_tag, buff_tag)
-            # conso = consumable.ConsumableElixirBuff("Elixir of " + buff_tag, buff_tag)
+            conso = consumable.ConsumableElixirBuff(getText("elixir_of").format(elixir = buff_tag), buff_tag)
         else :
             valeur = round(level * rarity.coef_level_points) 
             aliment = random.choice(list(consumable.AlimentEnum))

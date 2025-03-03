@@ -2,9 +2,10 @@ import discord
 from discord.ext.commands import Context
 from utils.color_str import CText
 
+TIMEOUT = 30
 
 class PaginatorView(discord.ui.View):
-    def __init__(self, pages:list[discord.Embed], timeout=60):
+    def __init__(self, pages:list[discord.Embed], timeout=TIMEOUT):
         super().__init__(timeout=timeout)
         self.pages = pages
         for p in self.pages:
@@ -92,14 +93,16 @@ def create_embeds_from_dict(dict_text:dict[str,str], max_chars=800)->list[discor
 
     return pages
 
-async def paginate_dict(ctx:Context, dict_text:dict[str, str]):
+async def paginate_dict(ctx:Context, dict_text:dict[str, str], max_chars=800):
     # Créer les pages (embeds) à partir de la map
-    pages = create_embeds_from_dict(dict_text)
+    pages = create_embeds_from_dict(dict_text, max_chars=max_chars)
 
     if len(pages) > 1:
         # Créer la vue de pagination et envoyer le premier embed
         view = PaginatorView(pages)
         await view.send_initial_message(ctx)
+    elif len(pages) == 0:
+        raise ValueError("No pages to paginate !")
     else:
         # Si une seule page, pas besoin de pagination
         await ctx.send(embed=pages[0])

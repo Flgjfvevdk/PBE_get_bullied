@@ -142,7 +142,7 @@ texts = {
         "ruin_cancelled": "{user}, vous avez annulé le combat et quitté la ruine",
         "ruin_bully_error": "Votre bully est mort ou n'existe pas.\nVotre équipe a quitté la ruine.",
         "ruin_victory": "Félicitations {user}, vous avez battu le boss!",
-        "elixir_of" : "Elixir - ",
+        "elixir_of" : "Elixir - {elixir}",
         "found_conso" : "Vous avez trouvé un consommable : {name} !",
         "ruin_thread_error": "Une erreur s'est produite lors de la création du fil de discussion de la ruine.",
         "found_treasure" : "Vous avez trouvé un **trésor**. Il contient **{gold}** {money_emoji}!",
@@ -191,6 +191,7 @@ texts = {
         "conso_purchase_success": "Vous avez acheté **{name}[{value}]** pour {price} {money_emoji} !",
 
         # supply_bully - Water Fountain
+        "water_name": "Eau XP - {rarity} - {value} LVL",
         "water_rarity_select": "Sélectionnez la **rareté** de l'eau XP :",
         "water_rarity_timeout": "Timeout lors du choix de la rareté. Veuillez réessayer.",
         "water_rarity_selected": "Rareté sélectionnée : **{rarity_name}**",
@@ -348,7 +349,7 @@ texts = {
         "ruin_cancelled": "{user}, you have cancelled the fight and left the ruin",
         "ruin_bully_error": "Your bully is dead or do not exist.\nYour team left the ruin.",
         "ruin_victory": "Congratulation {user}, you beat the boss!",
-        "elixir_of" : "Elixir - ",
+        "elixir_of" : "Elixir - {elixir}",
         "found_conso" : "You found a consumable: {name}!",
         "ruin_thread_error": "An error occurred while creating the ruin thread.",
         "found_treasure" : "You found a **treasure**. It contains **{gold}** {money_emoji}!",
@@ -395,6 +396,7 @@ texts = {
         "conso_purchase_success": "You have purchased **{name}[{value}]** for {price} {money_emoji}!",
 
         # supply_bully - Water Fountain
+        "water_name": "Water XP - {rarity} - {value} LVL",
         "water_rarity_select": "Select the **rarity** of the Water XP:",
         "water_rarity_timeout": "Timeout during rarity selection. Please try again.",
         "water_rarity_selected": "Rarity selected: **{rarity_name}**",

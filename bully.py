@@ -386,9 +386,10 @@ class Bully(Base):
                 self.decrease_stat_with_seed(nb_level_points=self.lvl, valeur=self.rarity.coef_level_points)
             self.lvl -= 1
         
-    def loose_level_death(self)->int:
-        lvl_loss = max(1, math.floor(self.lvl/5))
-        lvl_loss = min(lvl_loss, self.lvl - 1)
+    def loose_level_death(self) -> int:
+        # lvl_loss = max(1, math.floor(self.lvl/5))
+        # lvl_loss = min(lvl_loss, self.lvl - 1)
+        lvl_loss = min(10, max(1, self.nb_loose_true_fight))
         self.decrease_lvl(lvl_loss)
         return lvl_loss
 

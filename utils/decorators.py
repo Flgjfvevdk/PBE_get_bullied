@@ -35,7 +35,13 @@ def author_is_free(f):
 def pbe_only():
     async def predicate(ctx: commands.Context):
         return os.getenv("TESTING") or ctx.me.display_name.startswith("PBE")
-    return commands.check(predicate)
+    return commands.check(predicate) #type: ignore
         
-
+def categories(*category_names):
+    def decorator(func):
+        if not hasattr(func, 'categories'):
+            func.categories = []
+        func.categories.extend(category_names)
+        return func
+    return decorator
             

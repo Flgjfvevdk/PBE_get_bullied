@@ -84,7 +84,6 @@ async def run_snack_machine(ctx: Context, bot:Bot, session: AsyncSession, user: 
     # --- 3. Récupération ou demande de la valeur du consommable ---
     if value is None:
         await ctx.send(getText("conso_value_prompt").format(user=user.mention))
-        # await ctx.send(f"{user.mention}, veuillez répondre avec un nombre correspondant au niveau du consommable souhaité:")
         try:
             reply_msg = await bot.wait_for(
                 "message",
@@ -93,14 +92,14 @@ async def run_snack_machine(ctx: Context, bot:Bot, session: AsyncSession, user: 
             )
         except asyncio.TimeoutError:
             await ctx.send(getText("conso_level_timeout"))
-            # await ctx.send("Timeout lors de la saisie du niveau. Opération annulée.")
             return
 
         try:
             value = int(reply_msg.content)
+            if value <= 0:
+                raise ValueError
         except ValueError:
-            await ctx.send(getText("conso_invalid_value"))
-            # await ctx.send("La valeur saisie n'est pas un nombre entier valide. Opération annulée.")
+            await reply_msg.reply(getText("conso_invalid_value"))
             return
 
     # --- 4. Création du consommable ---
@@ -182,7 +181,6 @@ async def run_water_fountain(ctx: Context, bot: Bot, session: AsyncSession, user
 
     rarity_name = rarity_choice["choix"]
     await message_rarity.edit(content=getText("water_rarity_selected").format(rarity_name=rarity_name))
-    # await message_rarity.edit(content=f"Rarity selected: **{rarity_name}**", view=None)
     if rarity_name is None:
         return
     rarity = Rarity[rarity_name.upper()]  # Conversion en énumération
@@ -190,8 +188,7 @@ async def run_water_fountain(ctx: Context, bot: Bot, session: AsyncSession, user
     # --- 2. Sélection de la valeur du consommable ---
     if value is None:
         message_request = await ctx.send(getText("conso_value_prompt").format(user=user.mention))
-        # message_request = await ctx.send(f"{user.mention}, répondez à ce message avec un **nombre** correspondant au niveau du consommable souhaité.")
-
+        
         try:
             reply_msg = await bot.wait_for(
                 "message",
@@ -201,7 +198,6 @@ async def run_water_fountain(ctx: Context, bot: Bot, session: AsyncSession, user
         except asyncio.TimeoutError:
             await message_request.delete()
             await ctx.send(getText("conso_level_timeout"))
-            # await ctx.send("Timeout lors de la saisie du niveau. Opération annulée.")
             return
 
         try:
@@ -209,14 +205,14 @@ async def run_water_fountain(ctx: Context, bot: Bot, session: AsyncSession, user
             if value <= 0:
                 raise ValueError
         except ValueError:
-            await ctx.send(getText("conso_invalid_value"))
-            # await ctx.send("La valeur saisie n'est pas un nombre entier valide. Opération annulée.")
+            await reply_msg.reply(getText("conso_invalid_value"))
             return
 
         await message_request.delete()
 
     # --- 3. Création du consommable ---
-    water_conso = ConsumableWaterLvl(f"Water {rarity_name}", value, rarity)
+    water_conso = ConsumableWaterLvl(getText("water_name").format(rarity=rarity_name, value=value), value, rarity)
+    # water_conso = ConsumableWaterLvl(f"Water {rarity_name}", value, rarity)
 
     # --- 4. Confirmation de l'achat ---
     price = value * COST_LVL_RARITY[rarity]
@@ -225,7 +221,6 @@ async def run_water_fountain(ctx: Context, bot: Bot, session: AsyncSession, user
 
     message_confirm = await ctx.send(
         content=getText("conso_purchase_confirmation").format(name=water_conso.name, value=water_conso.val, price=price, money_emoji=money.MONEY_EMOJI, effect=water_conso.get_effect()),
-        # content=f"Voulez-vous acheter **{water_conso.name} [{water_conso.val}]** pour {price} {money.MONEY_EMOJI} ?\nEffet: {water_conso.get_effect()}",
         view=ViewYesNo(user=user, event=event_confirm, variable_pointer=var_confirm)
     )
 
@@ -241,14 +236,12 @@ async def run_water_fountain(ctx: Context, bot: Bot, session: AsyncSession, user
     # --- 5. Vérification et achat ---
     if money.get_money_user(player) < price:
         await message_confirm.edit(content=getText("conso_not_enough_money").format(money_emoji=money.MONEY_EMOJI), view=None)
-        # await message_confirm.edit(content=f"You don't have enough {money.MONEY_EMOJI}", view=None)
         return
 
     money.give_money(player, -price)
     player.consumables.append(water_conso)
     await message_confirm.edit(content=getText("conso_purchase_success").format(name=water_conso.name, value=water_conso.val, price=price, money_emoji=money.MONEY_EMOJI)
                                , view=None)
-    # await message_confirm.edit(content=f"Vous avez acheté **{water_conso.name} [{water_conso.val}]** pour {price} {money.MONEY_EMOJI} !", view=None)
     await session.commit()
 
 

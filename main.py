@@ -85,12 +85,14 @@ async def check_add_bot_database(bot: Bot) -> None:
 @bot.command()
 @decorators.categories("Game")
 async def join(ctx: Context):
+    """Pour rejoindre le jeu"""
     async with database.new_session() as session:
         await interact_game.join_game(ctx, user=ctx.author, session=session)
 
 @bot.command(aliases=['parrain', 'referral', 'parrainage'])
 @decorators.categories("Game")
 async def invite(ctx: Context, user:discord.Member):
+    """Pour inviter un amis à rejoindre le jeu"""
     async with database.new_session() as session:
         player_parrain = await session.get(Player, ctx.author.id)
         if player_parrain is None:
@@ -105,6 +107,7 @@ async def invite(ctx: Context, user:discord.Member):
 @bot.command(aliases=['py', 'pay'])
 @decorators.categories("Money")
 async def payday(ctx: Context):
+    """Pour recevoir des 🩹"""
     async with database.new_session() as session:
         player = await session.get(Player, ctx.author.id)
         if player is None:
@@ -135,6 +138,7 @@ async def payday(ctx: Context):
 @bot.command(aliases=['money'])
 @decorators.categories("Money")
 async def bank(ctx: Context):
+    """Afficher ses ressources"""
     async with database.new_session() as session:
         player = await session.get(Player, ctx.author.id)
         if player is None:
@@ -147,34 +151,28 @@ async def bank(ctx: Context):
 
 @bot.command(aliases=['patch', 'update'])
 async def patchnote(ctx: Context):
+    """Nouvelle mise à jour récente"""
     await ctx.channel.send(tuto_text.patchnote)
 
 @bot.command(aliases=['leader', 'rank'])
 @decorators.categories("Game")
 async def leaderboard(ctx: Context):
+    """Affiche le classement des joueurs en fonction du donjon maximum terminé."""
     async with database.new_session() as session:
         lb = Embed(title="Leaderbord Donjon", description=await donjon.str_leaderboard_donjon(session))
         await ctx.channel.send(embed=lb)
     
-@bot.command()
-@decorators.categories("Game")
-async def commands_list(ctx: Context):
-    command_list = ""
-    for command in bot.commands:
-        if decorators.is_admin in command.checks or decorators.pbe_only in command.checks:
-            continue
-        aliases = ", ".join(command.aliases) if command.aliases else "No aliases"
-        command_list += f"**{command.name}**: {aliases}\n"
-    await ctx.send(f"Commandes:\n{command_list}")
 
 @bot.command(aliases=['shop', 'ps'])
 @decorators.categories("Money")
 async def print_shop(ctx: Context):
+    """Affiche le shop de ce server"""
     await shop.print_shop(ctx, bot)
 
 @bot.command(aliases=['lootbox', 'lb'])
 @decorators.categories("Money")
 async def buy_lootbox(ctx: Context):
+    """Pour acheter une lootbox"""
     user = ctx.author
     if not PlayerLock(user.id).check():
         await ctx.reply(getText("already_in_action"))
@@ -183,11 +181,13 @@ async def buy_lootbox(ctx: Context):
 
 @bot.command(aliases=['credit'])
 async def credits(ctx: Context):
+    """Affiche les crédits"""
     await ctx.send(getText("credits"))
 
-@bot.command(aliases=['sacrifice', 'kill'])
+@bot.command(aliases=['suicide', 'kill'])
 @decorators.categories("Bully")
-async def suicide(ctx: Context):
+async def sacrifice(ctx: Context):
+    """Élimine un bully de son club"""
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
@@ -211,34 +211,42 @@ async def suicide(ctx: Context):
 @bot.command()
 @decorators.categories("Tuto")
 async def tuto(ctx: Context):
+    """Affiche un tutoriel général. Faites le si vous êtes perdu !"""
     await ctx.channel.send(tuto_text.tuto)
 @bot.command(aliases=['tuto_b'])
 @decorators.categories("Tuto", "Bully")
 async def tuto_bully(ctx: Context):
+    """Affiche un tutoriel concernant le fonctionnemet des bullies"""
     await ctx.channel.send(tuto_text.tuto_bully)
 @bot.command(aliases=['tuto_f'])
 @decorators.categories("Tuto", "Bully")
 async def tuto_fight(ctx: Context):
+    """Affiche un tutoriel concernant les combats"""
     await ctx.channel.send(tuto_text.tuto_fight)
 @bot.command(aliases=['tuto_d', 'tuto_donjon'])
 @decorators.categories("Tuto", "Fight")
 async def tuto_dungeon(ctx: Context):
+    """Affiche un tutoriel concernant les donjons"""
     await ctx.channel.send(tuto_text.tuto_dungeon)
 @bot.command(aliases=['tuto_r', 'tuto_ruine'])
 @decorators.categories("Tuto", "Fight")
 async def tuto_ruin(ctx: Context):
+    """Affiche un tutoriel concernant les ruines"""
     await ctx.channel.send(tuto_text.tuto_ruin)
 @bot.command(aliases=['tuto_s'])
 @decorators.categories("Tuto", "Money")
 async def tuto_shop(ctx: Context):
+    """Affiche un tutoriel concernant le shop"""
     await ctx.channel.send(tuto_text.tuto_shop)
 @bot.command(aliases=['tuto_lb', 'tuto_l'])
 @decorators.categories("Tuto", "Money")
 async def tuto_lootbox(ctx: Context):
+    """Affiche un tutoriel concernant les lootbox"""
     await ctx.channel.send(tuto_text.tuto_lootbox)
-@bot.command(aliases=['tuto_bf', 'tuto_buff', 'list_buff', 'list_buffs', 'buffs', 'buff', 'info_buff', 'info_buffs', 'infos_buff', 'infos_buffs'])
+@bot.command(aliases=['tuto_buff', 'list_buff', 'list_buffs', 'buffs', 'buff'])
 @decorators.categories("Tuto", "Bully")
 async def tuto_buffs(ctx: Context):
+    """Affiche la liste des buffs"""
     txt = ""
     import inspect, buffs, fighting_bully
     dict_text:dict[str, str] = {"Buffs Positifs":"", "Buffs Négatifs":""}
@@ -251,7 +259,6 @@ async def tuto_buffs(ctx: Context):
             continue
         dict_text[key] += f"{buffClass.__name__} : {buffClass.description}\n"
 
-    
     await paginate_dict(ctx, dict_text=dict_text)
 
 
@@ -261,6 +268,7 @@ async def tuto_buffs(ctx: Context):
 @bot.command(aliases=['ch', 'fight'])
 @decorators.categories("Fight")
 async def challenge(ctx: Context, opponent:discord.Member):
+    """Pour provoquer un joueur en duel à mort, bully vs bully"""
     user = ctx.author
 
     lock1 = PlayerLock(user.id)
@@ -290,6 +298,7 @@ async def challenge(ctx: Context, opponent:discord.Member):
 @bot.command(aliases=['fch', 'fun_fight'])
 @decorators.categories("Fight")
 async def fun_challenge(ctx: Context, opponent:discord.Member):
+    """Pour provoquer un joueur en duel amical, bully vs bully"""
     user = ctx.author
     
     lock1 = PlayerLock(user.id)
@@ -320,6 +329,7 @@ async def fun_challenge(ctx: Context, opponent:discord.Member):
 @bot.command(aliases=['tch', 'teamfight', 'team_fight'])
 @decorators.categories("Fight")
 async def team_challenge(ctx: Context, opponent:discord.Member):
+    """Pour provoquer un joueur en combat (amical) TEAM vs TEAM"""
     user = ctx.author
 
     if user == opponent:
@@ -352,11 +362,11 @@ async def team_challenge(ctx: Context, opponent:discord.Member):
 
     return
 
-
     
 @bot.command(aliases=['dungeon', 'donjon', 'dj', 'dg'])
 @decorators.categories("Fight")
 async def explore_dungeon(ctx: Context, level:int|str):
+    """Pour explorer un donjon. Très utile pour xp rapidement"""
     if isinstance(level, str):
         for dg_tags in donjon.special_dg_name_number.values():
             if level in dg_tags:
@@ -366,8 +376,7 @@ async def explore_dungeon(ctx: Context, level:int|str):
             await ctx.send(getText("dg_error_param"))
             # await ctx.channel.send("Dungeon level must be a number (or a specific keyword).")
             return
-        
-
+    
     if(level <= 0) :
         await ctx.send(getText("dg_greater_0"))
         # await ctx.channel.send("Dungeon level must be greater than 0.")
@@ -407,6 +416,7 @@ async def explore_dungeon(ctx: Context, level:int|str):
 @bot.command(aliases=['ruin', 'ruine'])
 @decorators.categories("Fight")
 async def explore_ruin(ctx: Context, level:int):
+    """Pour explorer une ruine. Très utile pour obtenir des items et de la monnaie"""
     if(level <= 0) :
         await ctx.send(getText("ruin_greater_0"))
         # await ctx.channel.send("Ruin level must be greater than 0")
@@ -449,6 +459,7 @@ async def challenge_error(ctx: Context, error: commands.CommandError):
 @bot.command(aliases=['arene'])
 @decorators.categories("Fight")
 async def arena(ctx: Context):
+    """Pour afficher l'arène"""
     if ctx.guild is None:
         return
 
@@ -476,6 +487,7 @@ async def arena(ctx: Context):
 @bot.command(aliases=['print', 'pr', 'bullies', 'team', 'equipe', 'bully'])
 @decorators.categories("Bully")
 async def club(ctx: Context, user:Optional[discord.User |discord.Member] = None):
+    """Affiche les bullies d'un joueur"""
     if(user is None):
         user = ctx.author
     async with database.new_session() as session:
@@ -488,6 +500,7 @@ async def club(ctx: Context, user:Optional[discord.User |discord.Member] = None)
 @bot.command(aliases=['reserve'])
 @decorators.categories("Bully")
 async def print_reserve(ctx: Context, user:Optional[discord.User |discord.Member] = None):
+    """Affiche les bullies de la réserve d'un joueur"""
     if(user is None):
         user = ctx.author
     async with database.new_session() as session:
@@ -500,12 +513,12 @@ async def print_reserve(ctx: Context, user:Optional[discord.User |discord.Member
 @bot.command(aliases=['exchange', 'trade_offer'])
 @decorators.categories("Bully")
 async def trade(ctx: Context, other:discord.Member):
+    """Pour faire un échange de bullies"""
     user = ctx.author
     if user == other:
         await ctx.send(getText("cant_trade_self"))
         return
-
-    
+ 
     async with database.new_session() as session:
         p1 = await session.get(Player, user.id)
         p2 = await session.get(Player, other.id)
@@ -525,6 +538,7 @@ async def trade(ctx: Context, other:discord.Member):
 @bot.command(aliases=['h'])
 @decorators.categories("Bully")
 async def hire(ctx: Context):
+    """Pour engager un NOBODY"""
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
@@ -544,6 +558,7 @@ async def hire(ctx: Context):
 @bot.command(aliases=['h_all', 'hall', 'hh'])
 @decorators.categories("Bully")
 async def hire_all(ctx: Context):
+    """Pour remplir son club de NOBODY"""
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
@@ -587,6 +602,7 @@ async def kill_all(ctx: Context):
 @bot.command(aliases=['use_c', 'use_conso', 'use_consumables'])
 @decorators.categories("Consumable")
 async def use_consumable(ctx: Context):
+    """Pour utiliser un consommable"""
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
@@ -605,6 +621,7 @@ async def use_consumable(ctx: Context):
 @bot.command(aliases=['show_consumable', 'consumable', 'print_consumable', 'consumables', 'print_consumables', 'print_c'])
 @decorators.categories("Consumable")
 async def show_consumables(ctx: Context):
+    """Pour afficher vos consommables"""
     user = ctx.author
 
     async with database.new_session() as session:
@@ -621,6 +638,7 @@ async def show_consumables(ctx: Context):
 @bot.command(aliases=['sm', 'snack', 'smachine', 'snackmachine'])
 @decorators.categories("Consumable")
 async def snack_machine(ctx: Context, value:int|None = None):
+    """Pour acheter un consommable snack (modifie les stats)"""
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
@@ -638,7 +656,7 @@ async def snack_machine(ctx: Context, value:int|None = None):
 @bot.command(aliases=['wf', 'water', 'wfountain', 'fontaine', 'waterfountain'])
 @decorators.categories("Consumable")
 async def water_fountain(ctx: Context, level: int | None = None):
-    """Commande pour acheter un consommable Water XP."""
+    """Pour acheter un consommable eau XP."""
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():

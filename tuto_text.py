@@ -2,12 +2,7 @@ import shop
 import lootbox
 
 patchnote="```\n\
-- NOUVEAU : Les donjons ont été changé (Des types d'ennemies, plus d'adversaire mais moins de pv)\n\
-- Les raretés des ennemies dans les ruines ont été changé\n\
-- Les portes du donjon level 50 sont ouvertes ...\n\
-- NOUVEAU : La réserve vous permez de stocker des bully en dehors de votre équipe (!!reserve).\n\
-- NOUVEAU : Les teamfights ! Faites combattre votre équipe contre celle d'un autre joueur (no death) (!!teamfight @adversaire).\n\
-- NOUVEAU : Les consommables (!!consommable). Permet de modifier les stats de vos bullies.\n\
+- Get bullied est enfin là !\
 ```"
 
 tuto = "\

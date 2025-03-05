@@ -111,7 +111,7 @@ texts = {
         "no_suicide": "{user} n'a pas sacrifié de bully",
         "your_bullies": "Vos bullies :",
         "you_have_no_bully" : "{user}, vous n'avez aucun bully.",
-        "you_receive_gold" : "Vous avez reçu des {money_emoji} ! (+{value}}{money_emoji})",
+        "you_receive_gold" : "Vous avez reçu des {money_emoji} ! (+{value}){money_emoji})",
 
         #lootbox
         "lootbox_select": "Sélectionnez une lootbox à ouvrir. Bully level = [40-80]% du level de la box",
@@ -206,7 +206,11 @@ texts = {
         "trade_completed": "Échange terminé avec succès !",
         "trade_canceled": "Échange annulé.",
         "u_offer_b": "{user} propose : {btxt}",
-        "trade_impossible":"{user} ne peux pas recevoir {bully}[lvl:{lvl}] car son plus grand donjon vaincu est niveau : {max_dungeon}."
+        "trade_impossible":"{user} ne peux pas recevoir {bully}[lvl:{lvl}] car son plus grand donjon vaincu est niveau : {max_dungeon}.",
+
+        #tournament
+        "tournament_end": "```Le tournoi est terminé ! Résultats : \n{results}```",
+        "tournament_recap_fight": "{user1} VS {user2} : {winner} a gagné"
 
     },
     "en":{
@@ -318,7 +322,7 @@ texts = {
         "no_suicide": "{user} didn't kill any bullies",
         "your_bullies": "Your bullies:",
         "you_have_no_bully" : "{user}, you do not have any bullies!",
-        "you_receive_gold" : "You have received {money_emoji} ! (+{value}}{money_emoji}).",
+        "you_receive_gold" : "You have received {money_emoji} ! (+{value}){money_emoji}).",
 
         #lootbox
         "lootbox_select": "Select a lootbox to open. Bully level = [40-80]%% of the box level.",
@@ -411,7 +415,11 @@ texts = {
         "trade_completed": "Trade completed successfully!",
         "trade_canceled": "Trade canceled.",
         "u_offer_b": "{user} offers : {btxt}",
-        "trade_impossible":"{user} can't receive {bully}[lvl:{lvl}] because their max dungeon level is {max_dungeon}."
+        "trade_impossible":"{user} can't receive {bully}[lvl:{lvl}] because their max dungeon level is {max_dungeon}.",
+
+        #tournament
+        "tournament_end": "```The tournament is over! Results: \n{results}```",
+        "tournament_recap_fight": "{user1} VS {user2} : {winner} won"
     }
 }
 

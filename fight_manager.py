@@ -16,6 +16,8 @@ from typing import Optional, Dict
 from dataclasses import replace
 import utils.color_str  as color_str
 from utils.color_str import CText
+from utils.delete_tread import del_thread
+from tournament import tournaments
 
 CHOICE_TIMEOUT = 30
 RECAP_MAX_EMOJI = 15
@@ -153,6 +155,7 @@ class Fight():
 
     async def start_fight(self):
         await self.apply_buff_before_fight()
+        await self.channel_cible.send("``` ```")
         await self.setup_message()
         await asyncio.sleep(FIGHT_MSG_TIME_UPDATE)
 
@@ -435,8 +438,7 @@ async def proposition_team_fight(ctx:Context, user_1:discord.abc.User, user_2:di
         teamfight.setup_teams()
         await teamfight.start_teamfight()
     finally:
-        await asyncio.sleep(DELAIE_DELETE_THREAD_FIGHT)
-        await thread_challenge.delete()
+        await del_thread(thread=thread_challenge, time_bfr_close=DELAIE_DELETE_THREAD_FIGHT)
     return
 
 class TeamFight():
@@ -484,7 +486,7 @@ class TeamFight():
         else :
             raise Warning("Team 2 failed to setup")
 
-    async def start_teamfight(self):
+    async def start_teamfight(self) -> bool:
         fighter_1:FightingBully | None = None
         fighter_2:FightingBully | None = None
 
@@ -517,23 +519,8 @@ class TeamFight():
                 fighter_2 = None
                 self.increase_swap()
 
-        if len(self.team_1) > 0 :
-            winner = self.user_1.name if self.user_1 is not None else 'Team 1'
-            loser = self.user_2.name if self.user_2 is not None else 'Team 2'
-            txt_end = getText("teamfight_winner").format(winner=winner, loser=loser)
-            await self.channel_cible.send(txt_end)
-            if self.ctx.channel != self.channel_cible :
-                await self.ctx.channel.send(txt_end)
-            return True
-        if len(self.team_2) > 0 :
-            winner = self.user_2.name if self.user_2 is not None else 'Team 2'
-            loser = self.user_1.name if self.user_1 is not None else 'Team 1'
-            txt_end = getText("teamfight_winner").format(winner=winner, loser=loser)
-            await self.channel_cible.send(txt_end)
-            if self.ctx.channel != self.channel_cible :
-                await self.ctx.channel.send(txt_end)
-            return False
-        raise Exception("No winner found")
+        return await self.end_teamfight()
+
     async def select_next_fighter(self, user:discord.abc.User|None, player:Player|None, team:list[FightingBully]) -> FightingBully:
         if user is None or player is None :
             return team[0]
@@ -546,6 +533,34 @@ class TeamFight():
             await self.channel_cible.send(getText("fight_giveup").format(user=user.name))
             raise e
         return f_bully
+
+    async def end_teamfight(self) -> bool:
+        async def announce_winner(winner_name:str, loser_name:str, winner_player:Player|None):
+            txt_end = getText("teamfight_winner").format(winner=winner_name, loser=loser_name)
+            await self.channel_cible.send(txt_end)
+            if self.ctx.channel != self.channel_cible:
+                await self.ctx.channel.send(txt_end)
+            if self.player_1 is not None and self.player_2 is not None and self.ctx.guild is not None and winner_player is not None:
+                id_server = self.ctx.guild.id
+                if id_server in tournaments:
+                    
+                    tournaments[id_server].register_teamfight_result(player_id1=self.player_1.id
+                                                    , player_id2=self.player_2.id
+                                                    , winner_id=winner_player.id
+                                                    , channel=self.ctx.channel)
+
+        if len(self.team_1) > 0:
+            winner = self.user_1.name if self.user_1 is not None else 'Team 1'
+            loser = self.user_2.name if self.user_2 is not None else 'Team 2'
+            await announce_winner(winner, loser, self.player_1)
+            return True
+
+        if len(self.team_2) > 0:
+            winner = self.user_2.name if self.user_2 is not None else 'Team 2'
+            loser = self.user_1.name if self.user_1 is not None else 'Team 1'
+            await announce_winner(winner, loser, self.player_2)
+            return False
+        raise Exception("No winner found")
 
     def increase_swap(self):
         if self.can_swap :

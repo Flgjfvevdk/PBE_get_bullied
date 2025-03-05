@@ -264,13 +264,13 @@ class Overdrive(BuffFight):
     category:CategoryBuff = CategoryBuff.LVL_4
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
-        bonus = fighter.bully.lvl**2 * 0.5
+        bonus = fighter.bully.lvl**2 * 0.25
         fighter.stats.strength += bonus
         fighter.stats.agility += bonus
         fighter.stats.lethality += bonus
         fighter.stats.viciousness += bonus
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
-        malus = fighter.bully.lvl**2 * 0.04
+        malus = fighter.bully.lvl**2 * 0.02
         fighter.stats.strength = max(1, fighter.stats.strength - malus)
         fighter.stats.agility = max(1, fighter.stats.agility - malus)
         fighter.stats.lethality = max(1, fighter.stats.lethality - malus)

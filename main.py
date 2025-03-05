@@ -2,6 +2,8 @@
 import math
 from dotenv import load_dotenv
 
+from utils.discord_servers import save_server
+
 load_dotenv()
 
 import os
@@ -18,7 +20,6 @@ import fight_manager
 import donjon
 import ruine
 import money
-import keys
 import shop
 import bully
 import utils.database as database
@@ -29,6 +30,7 @@ import tuto_text
 import lootbox
 import consumable
 import trades
+import tournament
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -66,9 +68,10 @@ bot = GetBulliedBot(command_prefix = "$$", intents=intents)
 async def on_ready():
     print(f'{bot.user} is now running !')
     await shop.init_shop()
-    await keys.init_keys_restock()
+    # await keys.init_keys_restock()
     await check_add_bot_database(bot)
     await arena_system.update_arenas(bot)
+    await tournament.init_tournaments(bot)
 
 @bot.event
 async def on_command_error(ctx: Context, error):
@@ -334,8 +337,7 @@ async def team_challenge(ctx: Context, opponent:discord.Member):
 
     if user == opponent:
         await ctx.send(getText("cant_self_tf"))
-        # await ctx.send("You can't team challenge yourself.")
-        return
+        # return
     
     lock1 = PlayerLock(user.id)
     if not lock1.check():
@@ -730,7 +732,7 @@ async def admin_add_server_to_list(ctx: Context):
     server_id = ctx.guild.id
     if server_id not in shop_servers_id:
         shop_servers_id.append(server_id)
-        shop.save_shop_server(shop_servers_id)
+        save_server(shop_servers_id)
         await ctx.send(f'Server {ctx.guild.name} has been saved!')
     else:
         await ctx.send(f'Server {ctx.guild.name} is already saved.')

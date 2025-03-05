@@ -22,7 +22,7 @@ import discord
 from discord.ext import tasks
 from discord.ext.commands import Context, Bot
 from all_texts import getText 
-
+from utils.discord_servers import load_servers
 
 RARITY_DROP_CHANCES = [0, 30, 40, 21, 9, 0] #Mettre 0 en proba d'avoir unique
 RARITY_PRICES = [10, 80, 200, 600, 1400]
@@ -37,7 +37,6 @@ SHOP_CLOSE_WAIT_TIME = 1
 #Si c'est à True, alors la commande shop n'affiche pas le shop mais un message qui demande d'attendre.
 is_shop_restocking = False
 
-SHOP_SERVER_FILENAME = 'discord_servers.json'
 
 
 # Les bullies disponibles
@@ -171,17 +170,9 @@ async def handle_shop_click(ctx:Context, variable_pointer:Dict[str, Bully | disc
             await session.commit()
 
 # Charger les serveurs sauvegardés depuis le fichier
-def load_shop_servers():
-    try:
-        with open(SHOP_SERVER_FILENAME, 'r') as f:
-            shop_servers_id = json.load(f)
-    except FileNotFoundError:
-        shop_servers_id = []
-    return shop_servers_id
-
-def save_shop_server(servers):
-    with open(SHOP_SERVER_FILENAME, 'w') as f:
-        json.dump(servers, f, indent=4)
+def load_shop_servers() -> List[int]:
+    return load_servers()
+    
 
 def new_bully_shop() -> Bully:
     rarity = random.choices(list(bully.Rarity), weights=RARITY_DROP_CHANCES)[0]

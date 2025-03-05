@@ -15,6 +15,7 @@ from fight_manager import RecapExpGold, Fight, InterruptionCombat, reward_win_fi
 from dataclasses import dataclass, field, KW_ONLY, replace
 
 from typing import List
+from utils.delete_tread import del_thread
 
 from discord.ext.commands import Context, Bot
 from discord.abc import User
@@ -321,11 +322,7 @@ class Dungeon():
 
     async def exit(self, time_bfr_close: int) -> None:
         try :
-            async def delete_thread():
-                await self.thread.leave() # leave the thread and stop responding to any more message here.
-                await asyncio.sleep(time_bfr_close)
-                await self.thread.delete()
-            asyncio.create_task(delete_thread())
+            await del_thread(self.thread, time_bfr_close)
         except Exception as e:
             print(e)
 

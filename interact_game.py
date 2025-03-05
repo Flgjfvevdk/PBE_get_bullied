@@ -459,7 +459,6 @@ async def suicide_bully(ctx: Context, user: discord.abc.User, player: Player, bo
 
     #Demande au joueur de choisir son bully
     message_choose_suicide = await channel_cible.send(getText("choose_suicide").format(user = user))
-    # message_choose_suicide = await channel_cible.send(f"{user} choose a bully to suicide : ") 
 
     #On init les variables
     event = asyncio.Event()
@@ -480,14 +479,12 @@ async def suicide_bully(ctx: Context, user: discord.abc.User, player: Player, bo
 
         #On envoie les infos sur le bully choisit
         await message_choose_suicide.edit(content=getText("suicide_kill").format(user = user, bully = bully_selected.name))
-        # await message_choose_suicide.edit(content=f"{user} kills {bully_selected.name}")
         await bully_selected.kill()
-        money.give_money(player, montant=int(bully_selected.gold_give_when_die()))
-        await ctx.send(getText("you_receive_gold").format(value = int(bully_selected.gold_give_when_die()), money_emoji = money.MONEY_EMOJI))
-        # await ctx.send(f"Vous avez reçu des {money.MONEY_EMOJI} ! (+{int(bully_selected.gold_give_when_die())}{money.MONEY_EMOJI})")
+        montant : int = int(bully_selected.gold_give_when_die())
+        money.give_money(player, montant= montant)
+        await ctx.send(getText("you_receive_gold").format(value = montant, money_emoji = money.MONEY_EMOJI))
     except Exception as e:
         await message_choose_suicide.edit(content=getText("no_suicide").format(user=user.name))
-        # await message_choose_suicide.edit(content=f"{user} didn't kill any bullies")
     finally:
         await message_bullies.delete()
    

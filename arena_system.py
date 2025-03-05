@@ -18,6 +18,7 @@ import json
 from discord.ext.commands import Bot, Context
 import utils.database as database
 from player_info import Player
+from utils.delete_tread import del_thread
 from utils.locks import ArenaLock, PlayerLock
 from all_texts import getText
 
@@ -26,6 +27,8 @@ MAX_ARENA_TEAMS = 3
 PRICE_ENTER = 100
 REWARD_WIN_RANK = [300, 200, 120] #Il gagne une proportion de cette somme en fonction de son rang
 BONUS_PAYDAY_CHAMPION = [2, 1.5, 1.2]
+
+DELETE_THREAD_TIME = 20
 
 class Arena(Base):
     __tablename__ = "arena"
@@ -120,10 +123,8 @@ class ArenaFight:
         txt_arena = await self.arena.get_print(self.session, self.bot)
         event = asyncio.Event()
         txt_demande = "\n" + getText("arena_ask_enter").format(user=self.user.mention, price = PRICE_ENTER, money_emoji = money.MONEY_EMOJI) + "\n"
-        # txt_demande = f"\n{self.user.mention}, voulez-vous entrer dans l'arène ? (Prix = {PRICE_ENTER} {money.MONEY_EMOJI})\n"
         message = await self.ctx.channel.send(content=txt_arena+txt_demande, 
                                 view=interact_game.ViewClickBool(user=self.user, event=event, label=getText("arena_label").format(price = PRICE_ENTER), emoji="⚔️"))
-        # message = await self.ctx.channel.send(content=txt_arena+txt_demande, view=interact_game.ViewClickBool(user=self.user, event=event, label=f"Enter The Arena (and pay {PRICE_ENTER})", emoji="⚔️"))
         try:
             await asyncio.wait_for(event.wait(), timeout=CHOICE_TIMEOUT)
         except asyncio.exceptions.TimeoutError as e:
@@ -133,13 +134,11 @@ class ArenaFight:
         lock = PlayerLock(self.user.id)
         if not lock.check():
             await self.ctx.send(getText("already_in_action"))
-            # await self.ctx.send("You are already in an action.")
             return
         
         with lock :
             if self.player.money < PRICE_ENTER:
                 await self.ctx.send(getText("arena_no_money").format(user=self.user.name, price = PRICE_ENTER, money_emoji = money.MONEY_EMOJI))
-                # await self.ctx.send(f"{self.user.name}, you do not have enough {money.MONEY_EMOJI} to enter the arena (Price = {PRICE_ENTER})")
                 await message.edit(content = txt_arena, view=None)
                 return
             
@@ -153,7 +152,6 @@ class ArenaFight:
             self.add_champion_buff(enemy_teamfighters)
             setup_buffs_team(enemy_teamfighters, is_team_buff_active=True)
             await self.thread.send(getText("arena_next_teamfight").format(teamfighters=str_teamfighters_complete(self.user, enemy_teamfighters)))
-            # await self.thread.send(f"Next teamfight against : \n{str_teamfighters_complete(self.user, enemy_teamfighters)}")
 
             teamfight = TeamFight(ctx=self.ctx, user_1=self.user, user_2=None, player_1=self.player, player_2=None, can_swap=True, channel_cible=self.thread)
             teamfight.setup_teams(team_1=self.player_teamfighters, team_2=enemy_teamfighters)
@@ -180,11 +178,10 @@ class ArenaFight:
                 reward = REWARD_WIN_RANK[rank - 1] if rank <= len(REWARD_WIN_RANK) else 0
                 money.give_money(self.player, reward)
                 await self.ctx.send(getText("arena_reached_rank").format(user=self.user.mention, rank=rank, reward=reward, money_emoji = money.MONEY_EMOJI))
-                # await self.ctx.send(f"{self.user.mention}, you have reached rank {rank} in the arena! (reward : {reward} {money.MONEY_EMOJI})")
             else:
                 await self.ctx.send(getText("arena_no_improve_rank").format(user=self.user.mention))
-                # await self.ctx.send(f"{self.user.mention}, you did not improve your rank in the arena.")
-            await self.thread.delete()
+            
+            await del_thread(self.thread, DELETE_THREAD_TIME)
             money.give_money(self.player, -PRICE_ENTER)
             await self.session.commit()
     

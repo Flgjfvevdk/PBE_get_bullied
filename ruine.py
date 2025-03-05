@@ -21,6 +21,7 @@ from dataclasses import dataclass, field, KW_ONLY
 from discord.ext.commands import Context, Bot
 import discord
 from all_texts import getText
+from utils.delete_tread import del_thread
 
 RUIN_CHOICE_TIMEOUT = 60
 THREAD_DELETE_AFTER = 60
@@ -232,7 +233,6 @@ class ConsoRoom():
     
     async def interact(self, ruin: "Ruin"):
         await ruin.thread.send(getText("found_conso").format(name=self.conso.name))
-        # await ruin.thread.send(f"You found an consumable item: {self.conso.name}")
         await consumable.add_conso_to_player(ruin.ctx, ruin.player, self.conso, channel_cible=ruin.thread)
 
 
@@ -424,10 +424,7 @@ class Ruin():
 
     async def exit(self, time_bfr_close_thread=THREAD_DELETE_AFTER) -> None:
         try:
-            async def delete_thread():
-                await asyncio.sleep(time_bfr_close_thread)
-                await self.thread.delete()
-            asyncio.create_task(delete_thread())
+            await del_thread(self.thread, time_bfr_close_thread)
         except Exception as e:
             print(e)
         

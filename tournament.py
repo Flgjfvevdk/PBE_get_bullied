@@ -1,7 +1,7 @@
 import random
 import discord
 import asyncio
-from typing import Dict, Tuple
+from typing import Callable, Dict, Tuple
 from collections import OrderedDict
 from bully import Rarity
 from consumable import AlimentEnum, Consumable, ConsumableAliment, ConsumableElixirBuff, force_add_conso
@@ -13,6 +13,7 @@ from datetime import datetime, timedelta, timezone
 from discord.ext.commands import Bot
 from all_texts import getText
 
+from utils import database
 from utils.discord_servers import load_servers
 
 TEST_PHASE = True
@@ -78,16 +79,18 @@ class Tournament:
         txt = ""
 
         performance = self.compute_performance()
-        print("super")
+        
         if performance:
             best_player_id, best_score = next(iter(performance.items()))
             best_player_name = (await self.bot.fetch_user(best_player_id)).name
-            best_player = await self.bot.fetch_user(best_player_id)
-            reward_function = get_reward(best_score)
-            if reward_function is not None:
-                await reward_function(best_player)
+            async with database.new_session() as session:
+                best_player = await session.get(Player, best_player_id)
+                if best_player is not None:
+                    get_reward(best_score, best_player)
+                    await session.commit()
+                
             txt += getText("tournament_winner").format(user=best_player_name, score=best_score) + "\n"
-        print("non")
+        
         for fight, winner in self.results.items():
             username1 = (await self.bot.fetch_user(fight[0])).name if fight[0] not in saved_id_to_names else saved_id_to_names[fight[0]]
             saved_id_to_names[fight[0]] = username1
@@ -95,7 +98,7 @@ class Tournament:
             saved_id_to_names[fight[1]] = username2
             winnername = saved_id_to_names[winner]
             txt += getText("tournament_recap_fight").format(user1=username1, user2=username2, winner=winnername) + "\n"
-        print("uhefggfye")
+        
         if self.channel_annonce is not None:
             await self.channel_annonce.send(getText("tournament_end").format(results = txt))
         else : 
@@ -118,15 +121,12 @@ class Tournament:
         next_day = now_utc + timedelta(days=1)
         next_day_start = datetime(next_day.year, next_day.month, next_day.day, tzinfo=timezone.utc)
         seconds_until_next_day = (next_day_start - now_utc).total_seconds()
-        if TEST_PHASE : seconds_until_next_day = 10
-        print("ouais")
+        if TEST_PHASE : seconds_until_next_day = 40
         await asyncio.sleep(seconds_until_next_day)
-        print("non")
         await self.end_tournament()
     
 def is_sunday_utc():
     if TEST_PHASE : 
-        print("ici")
         return True
     # Get the current time in UTC
     now_utc = datetime.now(timezone.utc)
@@ -149,30 +149,71 @@ def create_random_snack(value:int)->ConsumableAliment:
 def create_water(value:int, rarity:Rarity)->Water:
     return Water(getText("water_name").format(rarity=rarity.name, value = value), value, rarity)
 def create_random_elixir(category_level:int)->ConsumableElixirBuff:
-    from ruine import BuffsLVL
-    Buff = random.choice(BuffsLVL[category_level])
+    from buffs import BuffsLVL
+    Buff = random.choice(BuffsLVL[category_level-1])
     buff_tag = Buff.__name__
     return ConsumableElixirBuff(getText("elixir_of").format(elixir = buff_tag), buff_tag)
 async def force_add_multiple(player:Player, consos:list[Consumable]):
     for conso in consos:
         await force_add_conso(player, conso)
 
-REWARD_TABLE = {
-    2: [lambda player: give_money(player, 200), lambda player: force_add_conso(player, create_random_elixir(1))],
-    4: [lambda player: give_money(player, 750), lambda player: force_add_conso(player, create_random_elixir(2)), lambda player: force_add_conso(player, create_water(2, Rarity.SUBLIME))],
-    6: [lambda player: force_add_conso(player, create_water(7, Rarity.TOXIC)), lambda player: force_add_conso(player, create_water(6, Rarity.MONSTER)), lambda player: give_money(player, 1000)],
-    8: [lambda player: force_add_conso(player, create_random_elixir(3)), lambda player: force_add_conso(player, create_water(7, Rarity.DEVASTATOR)), lambda player: force_add_conso(player, create_water(5, Rarity.SUBLIME))],
-    10: [lambda player: force_add_multiple(player, [create_water(10, Rarity.DEVASTATOR), create_water(10, Rarity.MONSTER)]), lambda player: force_add_multiple(player, [create_water(10, Rarity.SUBLIME), create_water(10, Rarity.TOXIC)])],
-    12: [lambda player: force_add_conso(player, create_random_elixir(4)), lambda player: give_money(player, 5000), lambda player: force_add_conso(player, create_water(12, Rarity.SUBLIME))],
-    14: [lambda player: force_add_conso(player, create_water(35, Rarity.TOXIC)), lambda player: force_add_conso(player, create_water(30, Rarity.MONSTER)), lambda player: force_add_conso(player, create_water(25, Rarity.DEVASTATOR)), lambda player: force_add_conso(player, create_water(20, Rarity.SUBLIME))],
-    16: [lambda player: force_add_conso(player, create_random_elixir(5)), lambda player: force_add_conso(player, create_water(24, Rarity.SUBLIME)), lambda player: force_add_conso(player, create_water(36, Rarity.DEVASTATOR))],
-    18: [lambda player: give_money(player, 10000), lambda player: force_add_conso(player, create_water(5, Rarity.DEVASTATOR)), lambda player: force_add_multiple(player, [create_water(10, Rarity.TOXIC), create_water(10, Rarity.MONSTER), create_water(10, Rarity.SUBLIME)]), lambda player: force_add_multiple(player, [create_random_elixir(5), create_random_snack(100)])],
-    20: [lambda player: force_add_conso(player, create_water(50, Rarity.SUBLIME)), lambda player: force_add_multiple(player, [create_water(50, Rarity.DEVASTATOR), create_water(50, Rarity.MONSTER)]), lambda player: force_add_multiple(player, [create_water(25, Rarity.DEVASTATOR), create_water(25, Rarity.MONSTER), create_water(25, Rarity.TOXIC)]), lambda player: force_add_multiple(player, [create_random_elixir(5), create_water(15, Rarity.SUBLIME)])]
+
+from abc import ABC, abstractmethod
+
+class Reward(ABC):
+    # @abstractmethod
+    # def __str__(self) -> str:
+    #     pass
+    @abstractmethod
+    def grant(self, player: Player) -> None:
+        pass
+
+class RewardMoney(Reward):
+    amount: int
+    def __init__(self, amount: int) -> None:
+        self.amount = amount 
+    # def __str__(self):
+    #     return f"{self.amount}$"
+    def grant(self, player: Player) -> None:
+        give_money(player, montant=self.amount)
+
+class RewardConsumable(Reward):
+    lambda_consumable: Callable[[],Consumable]
+    def __init__(self, lambda_consumable: Callable[[],Consumable]) -> None:
+        self.lambda_consumable = lambda_consumable 
+    # def __str__(self):
+    #     return f"{self.consumable}"
+    def grant(self, player: Player) -> None:
+        player.consumables.append(self.lambda_consumable())
+
+class RewardMultipleConsumables(Reward):
+    lambdas_consumables: Callable[[], list[Consumable]]
+    def __init__(self, lambdas_consumables: Callable[[], list[Consumable]] ) -> None:
+        self.lambdas_consumables = lambdas_consumables
+    # def __str__(self):
+    #     return ", ".join(str(consumable) for consumable in self.consumables)
+    def grant(self, player: Player) -> None:
+        for consumable in self.lambdas_consumables():
+            player.consumables.append(consumable)
+
+REWARD_TABLE:dict[int, list[Reward]] = {
+    2: [RewardMoney(200), RewardConsumable(lambda : create_random_elixir(1))],
+    4: [RewardMoney(750), RewardConsumable(lambda : create_random_elixir(2)), RewardConsumable(lambda : create_water(2, Rarity.SUBLIME))],
+    6: [RewardConsumable(lambda : create_water(7, Rarity.TOXIC)), RewardConsumable(lambda : create_water(6, Rarity.MONSTER)), RewardMoney(1000)],
+    8: [RewardConsumable(lambda : create_random_elixir(3)), RewardConsumable(lambda : create_water(7, Rarity.DEVASTATOR)), RewardConsumable(lambda : create_water(5, Rarity.SUBLIME))],
+    10: [RewardMultipleConsumables(lambda : [create_water(10, Rarity.DEVASTATOR), create_water(10, Rarity.MONSTER)]), RewardMultipleConsumables(lambda : [create_water(10, Rarity.SUBLIME), create_water(10, Rarity.TOXIC)])],
+    12: [RewardConsumable(lambda : create_random_elixir(4)), RewardMoney(5000), RewardConsumable(lambda : create_water(12, Rarity.SUBLIME))],
+    14: [RewardConsumable(lambda : create_water(35, Rarity.TOXIC)), RewardConsumable(lambda : create_water(30, Rarity.MONSTER)), RewardConsumable(lambda : create_water(25, Rarity.DEVASTATOR)), RewardConsumable(lambda : create_water(20, Rarity.SUBLIME))],
+    16: [RewardConsumable(lambda : create_random_elixir(5)), RewardConsumable(lambda : create_water(24, Rarity.SUBLIME)), RewardConsumable(lambda : create_water(36, Rarity.DEVASTATOR))],
+    18: [RewardMoney(10000), RewardConsumable(lambda : create_water(5, Rarity.DEVASTATOR)), RewardMultipleConsumables(lambda : [create_water(10, Rarity.TOXIC), create_water(10, Rarity.MONSTER), create_water(10, Rarity.SUBLIME)]), RewardMultipleConsumables(lambda : [create_random_elixir(5), create_random_snack(100)])],
+    20: [RewardConsumable(lambda : create_water(50, Rarity.SUBLIME)), RewardMultipleConsumables(lambda : [create_water(50, Rarity.DEVASTATOR), create_water(50, Rarity.MONSTER)]), RewardMultipleConsumables(lambda : [create_water(25, Rarity.DEVASTATOR), create_water(25, Rarity.MONSTER), create_water(25, Rarity.TOXIC)]), RewardMultipleConsumables(lambda : [create_random_elixir(5), create_water(15, Rarity.SUBLIME)])]
 }
 
 
-def get_reward(score: int):
-    for score_threshold in sorted(REWARD_TABLE.keys(), reverse=True):
-        if score >= score_threshold:
-            return random.choice(REWARD_TABLE[score_threshold])
+def get_reward(score: int, player: Player):
+    score_index = max((k for k in REWARD_TABLE.keys() if k <= score), default = None)
+    if score_index is not None:
+        reward = random.choice(REWARD_TABLE[score_index])
+        reward.grant(player)
+        return reward
     return None

@@ -982,13 +982,20 @@ class PerfectSkin(BuffFight):
 
 
 import inspect, buffs
-classes = [member[1] for member in inspect.getmembers(buffs) if inspect.isclass(member[1])]
+# classes = [member[1] for member in inspect.getmembers(buffs) if inspect.isclass(member[1])]
+classes = BuffFight.__subclasses__()
 name_to_buffs_class:dict[str, type[BuffFight]] = {}
 for buffClass in classes :
     if issubclass(buffClass, BuffFight):
         if buffClass != BuffFight:
             name_to_buffs_class[buffClass.__name__] = buffClass
 
+
+#On load les buffs récupérable
+BuffsLVL:list[list[type[BuffFight]]] = [[], [], [], [], []]
+for buffClass in classes:
+    if buffClass.category.value in [1, 2, 3, 4, 5] :
+        BuffsLVL[buffClass.category.value - 1].append(buffClass)
 
 
 

@@ -35,10 +35,7 @@ fighter_rarities_lvl:dict[int, list[bully.Rarity]] = {k:[bully.Rarity.TOXIC] for
 
 #On load les buffs récupérable
 classes = [member[1] for member in inspect.getmembers(buffs) if inspect.isclass(member[1])]
-BuffsLVL:list[list[type[BuffFight]]] = [[], [], [], [], []]
-for buffClass in classes:
-    if issubclass(buffClass, BuffFight) and buffClass.category.value in [1, 2, 3, 4, 5] :
-        BuffsLVL[buffClass.category.value - 1].append(buffClass)
+
 
 class Trap :
     def __init__(self, level: int, rarity: Rarity, stat_index: int|None = None, damage = 4):
@@ -222,7 +219,7 @@ class ConsoRoom():
     @staticmethod
     def generate(level: int, rarity: Rarity) -> "ConsoRoom":
         if random.random() < 0.33:
-            Buff = random.choice(BuffsLVL[math.floor(level/10)])
+            Buff = random.choice(buffs.BuffsLVL[math.floor(level/10)])
             buff_tag = Buff.__name__
             conso = consumable.ConsumableElixirBuff(getText("elixir_of").format(elixir = buff_tag), buff_tag)
         else :

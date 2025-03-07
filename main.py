@@ -620,7 +620,7 @@ async def use_consumable(ctx: Context):
             await consumable.use_consumable(ctx=ctx, user=user, player=player, session=session, bot=bot)
             await session.commit()
 
-@bot.command(aliases=['show_consumable', 'consumable', 'print_consumable', 'consumables', 'print_consumables', 'print_c'])
+@bot.command(aliases=['show_c', 'consumable', 'conso', 'print_c'])
 @decorators.categories("Consumable")
 async def show_consumables(ctx: Context):
     """Pour afficher vos consommables"""
@@ -655,7 +655,7 @@ async def snack_machine(ctx: Context, value:int|None = None):
 
             await run_snack_machine(ctx, bot, session, user, player = player, value = value)
 
-@bot.command(aliases=['wf', 'water', 'wfountain', 'fontaine', 'waterfountain'])
+@bot.command(aliases=['wf', 'water', 'fontaine', 'waterfountain', 'eau'])
 @decorators.categories("Consumable")
 async def water_fountain(ctx: Context, level: int | None = None):
     """Pour acheter un consommable eau XP."""
@@ -866,7 +866,7 @@ async def add_elixir(ctx: Context, buff_name : str, cible_user:Optional[discord.
 @bot.command()
 @decorators.is_admin()
 @decorators.categories("Admin")
-async def del_c(ctx: Context):
+async def del_all_c(ctx: Context):
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():

@@ -386,7 +386,6 @@ class Ruin():
 
     async def enter(self) -> None:
         message = await self.ctx.channel.send(getText("ruin_enter").format(user=self.user.mention, level=self.level))
-        # message = await self.ctx.channel.send(f"{self.user.mention} enters a mysterious ruin [lvl : {self.level}]")
         try :
             self.thread = await self.ctx.channel.create_thread(name=f"Ruin - Level {self.level}", message=message) #type: ignore
         except Exception as e:
@@ -402,16 +401,12 @@ class Ruin():
                 pass
             
             await self.thread.send(getText("ruin_victory").format(user=self.user))
-            # await self.thread.send(f"Congratulation {self.user}, you beat the boss!")
         except interact_game.CancelChoiceException as e:
             await self.thread.send(getText("ruin_cancelled").format(user=self.user.name))
-            # await self.thread.send(f"{self.user.name} cancelled the fight and left the ruin")
         except asyncio.exceptions.TimeoutError as e:
             await self.thread.send(getText("ruin_team_timeout").format(user=self.user))
-            # await self.thread.send(f"Your team left the ruin. Choose faster next time {self.ctx.author}.")
         except IndexError as e:
             await self.thread.send(getText("ruin_bully_error"))
-            # await self.thread.send(f"[{self.ctx.author}] -> You don't have this bully.\nYour team left the ruin.")
         else :
             if self.level > self.player.max_ruin:
                 self.player.max_ruin = self.level

@@ -210,7 +210,8 @@ texts = {
 
         #tournament
         "tournament_end": "```Le tournoi est terminé ! Résultats : \n{results}```",
-        "tournament_recap_fight": "{user1} VS {user2} : {winner} a gagné"
+        "tournament_recap_fight": "{user1} VS {user2} : {winner} a gagné",
+        "tournament_winner": "{user} est le vainqueur du tournoi avec un score de {score}."
 
     },
     "en":{
@@ -419,7 +420,8 @@ texts = {
 
         #tournament
         "tournament_end": "```The tournament is over! Results: \n{results}```",
-        "tournament_recap_fight": "{user1} VS {user2} : {winner} won"
+        "tournament_recap_fight": "{user1} VS {user2} : {winner} won",
+        "tournament_winner": "{user} is the winner or the Sunday tournament with a score of {score}."
     }
 }
 

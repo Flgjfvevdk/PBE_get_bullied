@@ -182,14 +182,14 @@ async def add_conso_to_player(ctx: Context, player: 'player_info.Player', c:Cons
     if(channel_cible==None):
         channel_cible = ctx.channel
 
-    if len(player.consumables) >= CONSO_NUMBER_MAX :
+    if len(player.consumables) >= CONSO_NUMBER_MAX:
         await channel_cible.send(getText("consumable_too_many_select"))
         await remove_consumable(ctx=ctx, user=ctx.author, player=player)
     
-        if len(player.consumables) >= CONSO_NUMBER_MAX :
+        if len(player.consumables) >= CONSO_NUMBER_MAX:
             await channel_cible.send(getText("consumable_too_many_destroyed"))
 
-    if len(player.consumables) < CONSO_NUMBER_MAX :
+    if len(player.consumables) < CONSO_NUMBER_MAX:
         await channel_cible.send(getText("consumable_added").format(name=c.name))
         player.consumables.append(c)
 
@@ -259,7 +259,9 @@ async def remove_consumable(ctx: Context, user: discord.abc.User, player: 'playe
         if session is not None:
             await session.delete(consumable_selected)
 
-
+async def force_add_conso(player: 'player_info.Player', c:Consumable) -> None:
+    print("on est ici et oui ui")
+    player.consumables.append(c)
 
 # def str_consumables(player: 'player_info.Player') -> CText:
 #     if len(player.consumables) <= 0:

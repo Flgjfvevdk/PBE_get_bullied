@@ -62,6 +62,7 @@ texts = {
         "consumable_choose_title": "Choisissez un consommable",
         "consumable_user_title": "Consommables de {user}",
         "consumable_use_command": "!!use_consumable pour en utiliser un",
+        "consumable_removed" : "Le consommable {name} a été retiré de votre inventaire.",
 
         #dungeon
         "dungeon_enter": "{user} entre dans {dungeon_name}",
@@ -211,7 +212,8 @@ texts = {
         #tournament
         "tournament_end": "```Le tournoi est terminé ! Résultats : \n{results}```",
         "tournament_recap_fight": "{user1} VS {user2} : {winner} a gagné",
-        "tournament_winner": "{user} est le vainqueur du tournoi avec un score de {score}."
+        "tournament_winner": "{user} est le vainqueur du tournoi avec un score de {score}.",
+        "tournament_player_score": "{user} : {score} points"
 
     },
     "en":{
@@ -274,6 +276,7 @@ texts = {
         "consumable_choose_title": "Choose a consumable",
         "consumable_user_title": "{user}'s consumables",
         "consumable_use_command": "!!use_consumable to use one.",
+        "consumable_removed" : "The consumable {name} has been removed from your inventory.",
 
         #dungeon
         "dungeon_enter": "{user} enters {dungeon_name}",
@@ -421,7 +424,8 @@ texts = {
         #tournament
         "tournament_end": "```The tournament is over! Results: \n{results}```",
         "tournament_recap_fight": "{user1} VS {user2} : {winner} won",
-        "tournament_winner": "{user} is the winner or the Sunday tournament with a score of {score}."
+        "tournament_winner": "{user} is the winner or the Sunday tournament with a score of {score}.",
+        "tournament_player_score": "{user} : {score} points"
     }
 }
 

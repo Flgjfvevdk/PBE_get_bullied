@@ -16,7 +16,7 @@ from all_texts import getText
 from utils import database
 from utils.discord_servers import load_servers
 
-TEST_PHASE = True
+TEST_PHASE = False
 
 class Tournament:
     def __init__(self, bot:Bot, channel_annonce : discord.abc.Messageable|None):
@@ -81,23 +81,26 @@ class Tournament:
         performance = self.compute_performance()
         
         if performance:
+            async with database.new_session() as session:
+                ranking_txt = ""
+                previous_score_index = float('inf')
+                for player_id, score in performance.items():
+                    score:int = round(min(score, previous_score_index - 1))
+                    if score > 0 :
+                        player = await session.get(Player, player_id)
+                        if player is not None:
+                            score_index = get_reward(score, player)
+                            previous_score_index = score_index
+                    else : 
+                        break
+                    ranking_txt += getText("tournament_player_score").format(user=(await self.bot.fetch_user(player_id)).name, score=score) + "\n"
+                    
+                await session.commit()
+                
             best_player_id, best_score = next(iter(performance.items()))
             best_player_name = (await self.bot.fetch_user(best_player_id)).name
-            async with database.new_session() as session:
-                best_player = await session.get(Player, best_player_id)
-                if best_player is not None:
-                    get_reward(best_score, best_player)
-                    await session.commit()
-                
             txt += getText("tournament_winner").format(user=best_player_name, score=best_score) + "\n"
-        
-        for fight, winner in self.results.items():
-            username1 = (await self.bot.fetch_user(fight[0])).name if fight[0] not in saved_id_to_names else saved_id_to_names[fight[0]]
-            saved_id_to_names[fight[0]] = username1
-            username2 = (await self.bot.fetch_user(fight[1])).name if fight[1] not in saved_id_to_names else saved_id_to_names[fight[1]]
-            saved_id_to_names[fight[1]] = username2
-            winnername = saved_id_to_names[winner]
-            txt += getText("tournament_recap_fight").format(user1=username1, user2=username2, winner=winnername) + "\n"
+            txt += ranking_txt
         
         if self.channel_annonce is not None:
             await self.channel_annonce.send(getText("tournament_end").format(results = txt))
@@ -121,7 +124,7 @@ class Tournament:
         next_day = now_utc + timedelta(days=1)
         next_day_start = datetime(next_day.year, next_day.month, next_day.day, tzinfo=timezone.utc)
         seconds_until_next_day = (next_day_start - now_utc).total_seconds()
-        if TEST_PHASE : seconds_until_next_day = 40
+        if TEST_PHASE : seconds_until_next_day = 2
         await asyncio.sleep(seconds_until_next_day)
         await self.end_tournament()
     
@@ -210,10 +213,10 @@ REWARD_TABLE:dict[int, list[Reward]] = {
 }
 
 
-def get_reward(score: int, player: Player):
+def get_reward(score: int, player: Player) -> int:
     score_index = max((k for k in REWARD_TABLE.keys() if k <= score), default = None)
     if score_index is not None:
         reward = random.choice(REWARD_TABLE[score_index])
         reward.grant(player)
-        return reward
-    return None
+        return score_index
+    return 0

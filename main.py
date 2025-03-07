@@ -634,6 +634,25 @@ async def show_consumables(ctx: Context):
         embed = consumable.embed_consumables(player,user)
         await ctx.channel.send(embed=embed)
 
+@bot.command(aliases=['del_c', 'delete_conso', 'remove_conso'])
+@decorators.categories("Consumable")
+async def del_conso(ctx: Context):
+    """Pour supprimer un consommable"""
+    user = ctx.author
+    lock = PlayerLock(user.id)
+    if not lock.check():
+        await ctx.send(getText("already_in_action"))
+        return
+
+    with lock:
+        async with database.new_session() as session:
+            player = await session.get(Player, ctx.author.id)
+            if player is None:
+                await ctx.reply(TEXT_JOIN_THE_GAME)
+                return
+
+            await consumable.remove_consumable(ctx, user, player)
+            await session.commit()
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 # Les commandes pour les supply_bully : 

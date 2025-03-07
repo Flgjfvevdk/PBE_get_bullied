@@ -248,19 +248,17 @@ async def select_consumable(ctx: Context, user: discord.abc.User, player: 'playe
     await message_consumable_choix.delete()
     return selected_consumable
 
-async def remove_consumable(ctx: Context, user: discord.abc.User, player: 'player_info.Player', channel_cible=None, timeout = CHOICE_TIMEOUT) -> None : 
+async def remove_consumable(ctx: Context, user: discord.abc.User, player: 'player_info.Player', channel_cible=None, timeout:float = CHOICE_TIMEOUT) -> None : 
     if(channel_cible == None):
         channel_cible = ctx.channel
 
     consumable_selected = await select_consumable(ctx=ctx, user=user, player=player, channel_cible=channel_cible)
     if consumable_selected is not None:
         player.consumables.remove(consumable_selected)
-        session = async_object_session(consumable_selected)
-        if session is not None:
-            await session.delete(consumable_selected)
+        await ctx.send(getText("consumable_removed").format(name=consumable_selected.name))
+        
 
 async def force_add_conso(player: 'player_info.Player', c:Consumable) -> None:
-    print("on est ici et oui ui")
     player.consumables.append(c)
 
 # def str_consumables(player: 'player_info.Player') -> CText:

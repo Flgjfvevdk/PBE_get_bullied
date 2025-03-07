@@ -986,9 +986,9 @@ import inspect, buffs
 classes = BuffFight.__subclasses__()
 name_to_buffs_class:dict[str, type[BuffFight]] = {}
 for buffClass in classes :
-    if issubclass(buffClass, BuffFight):
-        if buffClass != BuffFight:
-            name_to_buffs_class[buffClass.__name__] = buffClass
+    # if issubclass(buffClass, BuffFight):
+    if buffClass != BuffFight:
+        name_to_buffs_class[buffClass.__name__] = buffClass
 
 
 #On load les buffs récupérable

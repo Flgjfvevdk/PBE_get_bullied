@@ -17,7 +17,7 @@ class Rage(BuffFight):
         super().__init__(fighter)
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
         if fighter == recap_round.defender and recap_round.damage_receive_defender > 0:
-            fighter.stats.strength += fighter.bully.lvl * 0.4
+            fighter.stats.strength += fighter.bully.lvl**2 * 0.02
         return 
     
 class LosingWeight(BuffFight):
@@ -28,7 +28,7 @@ class LosingWeight(BuffFight):
         super().__init__(fighter)
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
         if fighter == recap_round.defender and recap_round.damage_receive_defender > 0:
-            fighter.stats.agility += fighter.bully.lvl * 0.4
+            fighter.stats.agility += fighter.bully.lvl**2 * 0.02
         return 
     
 class AngerIssue(BuffFight):
@@ -39,7 +39,7 @@ class AngerIssue(BuffFight):
         super().__init__(fighter)
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
         if fighter == recap_round.defender and recap_round.damage_receive_defender > 0:
-            fighter.stats.lethality += fighter.bully.lvl * 0.4
+            fighter.stats.lethality += fighter.bully.lvl**2 * 0.02
         return 
 
 class Brutal(BuffFight):
@@ -77,7 +77,7 @@ class SlimyPunch(BuffFight):
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if fighter == recap_round.attacker and not recap_round.is_success_block:
             if (opponent.stats.agility > 1):
-                opponent.stats.agility *= 0.92
+                opponent.stats.agility *= 0.96
                 opponent.stats.agility = max(1, opponent.stats.agility)
         return 
     
@@ -158,6 +158,7 @@ class RoyalSlimyBody(BuffFight):
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if fighter == recap_round.defender and recap_round.is_success_block:
             opponent.stats.agility *= 0.96
+            opponent.stats.agility = max(1, opponent.stats.agility)
         return 
 
 class RootOfEvil(BuffFight):
@@ -193,6 +194,7 @@ class SharpTeeth(BuffFight):
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if fighter == recap_round.attacker and recap_round.is_success_lethal:
             opponent.stats.strength *= 0.9
+            opponent.stats.strength = max(1, opponent.stats.strength)
         return 
 
 class DragonResilience(BuffFight):
@@ -208,12 +210,12 @@ class DragonResilience(BuffFight):
 
 #31-40
 class Lycanthropy(BuffFight):
-    description:str = "Échange la Lethality et la Viciousness selon les HP de l'adversaire. Buff la Lethality"
-    description_en:str = "Swap Lethality and Viciousness depending on enemy's HP."
+    description:str = "Échange la Lethality et la Viciousness selon les HP de l'adversaire. Buff la Lethality."
+    description_en:str = "Swap Lethality and Viciousness depending on enemy's HP. Buff Lethality."
     category:CategoryBuff = CategoryBuff.LVL_4
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
-        fighter.stats.lethality += fighter.bully.lvl**2 * 0.05
+        fighter.stats.lethality += fighter.bully.lvl**2 * 0.1
     def before_fight(self, fighter: FightingBully, opponent: FightingBully):
         self.swap_stat_if_needed(fighter, opponent)
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
@@ -231,12 +233,12 @@ class Lycanthropy(BuffFight):
             fighter.stats.viciousness = best_s
 
 class Vampire(BuffFight):
-    description:str = "À chaque coup vicieux blessant l'adversaire, régénère 1 HP. Buff la Viciousness"
-    description_en:str = "When deal vicious damage on the enemy, regen HP."
+    description:str = "À chaque coup vicieux blessant l'adversaire, régénère 1 HP. Buff la Viciousness."
+    description_en:str = "When deal vicious damage on the enemy, regen HP. Buff Viciousness."
     category:CategoryBuff = CategoryBuff.LVL_4
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
-        fighter.stats.viciousness += fighter.bully.lvl**2 * 0.05
+        fighter.stats.viciousness += fighter.bully.lvl**2 * 0.1
     def apply_heal(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
         if fighter == recap_round.attacker and not recap_round.is_success_block and recap_round.is_success_vicious:
             heal = 1 if fighter.pv + 1 <= fighter.bully.max_pv else 0
@@ -291,10 +293,10 @@ class WarmUp(BuffFight):
                 self.countdown -= 1
             else : 
                 self.done = True
-                fighter.stats.strength *= 2
-                fighter.stats.agility *= 2
-                fighter.stats.lethality *= 2
-                fighter.stats.viciousness *= 2
+                fighter.stats.strength *= 1.5
+                fighter.stats.agility *= 1.5
+                fighter.stats.lethality *= 1.5
+                fighter.stats.viciousness *= 1.5
         return
 
 class Martyr(BuffFight):
@@ -302,7 +304,7 @@ class Martyr(BuffFight):
     category:CategoryBuff = CategoryBuff.LVL_4
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
-        self.debuff_coef = 0.95
+        self.debuff_coef = 0.96
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         malus = {stat: getattr(fighter.stats, stat) * (1 - self.debuff_coef) for stat in ['strength', 'agility', 'lethality', 'viciousness']}
         for stat, malus_value in malus.items():
@@ -359,7 +361,7 @@ class ProtectiveShadow(BuffFight):
     category:CategoryBuff = CategoryBuff.LVL_5
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
-    def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
+    def apply_heal(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound)-> tuple[int, int] :
         if recap_round.get_damage_receive(fighter) > 0:
             dmg = recap_round.get_damage_receive(fighter)
             fighter.pv += dmg
@@ -367,7 +369,8 @@ class ProtectiveShadow(BuffFight):
             if fighter.stats.viciousness <= 1 :
                 fighter.stats.viciousness = 1
                 fighter.buffs.remove(self)
-        return
+            return dmg, 0
+        return 0,0
 
 class DragonAscension(BuffFight):
     description:str = "Devient de plus en plus fort."
@@ -376,7 +379,7 @@ class DragonAscension(BuffFight):
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
-        bonus = fighter.bully.lvl**2 * 0.003
+        bonus = fighter.bully.lvl**2 * 0.004
         fighter.stats.strength += bonus
         fighter.stats.agility += bonus
         fighter.stats.lethality += bonus
@@ -396,9 +399,16 @@ class ToxicTeam(BuffFight):
             opponent.pv = round(opponent.pv, 1)
             return 0, self.dmg
         return 0, 0
-class TrueToxic(ToxicTeam):
+class TrueToxic(BuffFight):
+    category:CategoryBuff = CategoryBuff.TEAM
     description:str = "Les coups vicieux bloqués font 1 dégât."
     dmg = 1.0
+    def apply_damage(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
+        if fighter == recap_round.attacker and recap_round.is_success_vicious and recap_round.is_success_block:
+            opponent.pv -= self.dmg #type: ignore
+            opponent.pv = round(opponent.pv, 1)
+            return 0, self.dmg
+        return 0, 0
 
 class MonsterTeam(BuffFight):
     description:str = "Ses coups critiques soignent 1 HP."
@@ -409,13 +419,18 @@ class MonsterTeam(BuffFight):
             fighter.pv += 1
             return 1, 0
         return 0, 0
-class TrueMonster(MonsterTeam):
+class TrueMonster(BuffFight):
     description:str = "Ses coups critiques soignent 1 HP et inflige 1 dégât supplémentaire."
     category:CategoryBuff = CategoryBuff.TEAM
     def apply_damage(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
         if fighter == recap_round.attacker and recap_round.is_success_lethal and fighter.pv + 1 <= fighter.bully.max_pv:
             opponent.pv -= 1
             return 0, 1
+        return 0, 0
+    def apply_heal(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
+        if fighter == recap_round.attacker and recap_round.is_success_lethal and fighter.pv + 1 <= fighter.bully.max_pv:
+            fighter.pv += 1
+            return 1, 0
         return 0, 0
 
 class DevastatorTeam(BuffFight):
@@ -549,8 +564,8 @@ class Friendship(BuffFight):
     category:CategoryBuff = CategoryBuff.SPECIAL
 
 class Gambler(BuffFight):
-    description:str = "Gagne 1 pièce à chaque fois que l'attaquant alterne. 5 pièces => 1 effet aléatoire positif."
-    description_en:str = "Gain 1 coin when the attacker changes. 5 coins => 1 random positive effect."
+    description:str = "Gagne 1 pièce à chaque fois que l'attaquant alterne. 5 pièces => 3 effets aléatoires positifs."
+    description_en:str = "Gain 1 coin when the attacker changes. 5 coins => 3 random positive effects."
     category:CategoryBuff = CategoryBuff.UNIQUE
     price_buff = 5
     def __init__(self, fighter:FightingBully):
@@ -567,7 +582,7 @@ class Gambler(BuffFight):
             self.coins -= self.price_buff
             text_effect = self.trigger_random_effect(fighter)
             self.display_effect_description(text_effect)
-            return 1,0
+            return 0,0
         return 0,0
 
     def trigger_random_effect(self, fighter: FightingBully) -> str:
@@ -731,6 +746,7 @@ class Pollution(BuffFight):
     def apply_damage(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
         if opponent.stats.viciousness > fighter.stats.viciousness:
             opponent.stats.viciousness *= 0.9
+            opponent.stats.viciousness = max(1, opponent.stats.viciousness)
         else :
             opponent.pv -= 1
             return 0, 1

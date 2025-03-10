@@ -246,21 +246,31 @@ async def tuto_shop(ctx: Context):
 async def tuto_lootbox(ctx: Context):
     """Affiche un tutoriel concernant les lootbox"""
     await ctx.channel.send(tuto_text.tuto_lootbox)
-@bot.command(aliases=['tuto_buff', 'list_buff', 'list_buffs', 'buffs', 'buff'])
+@bot.command(aliases=['tuto_buffs'])
 @decorators.categories("Tuto", "Bully")
-async def tuto_buffs(ctx: Context):
+async def tuto_buff(ctx: Context):
+    """Affiche un tutoriel concernant les buffs"""
+    await ctx.channel.send(tuto_text.tuto_buff)
+@bot.command(aliases=['tuto_conso', 'tuto_consumables'])
+@decorators.categories("Tuto", "Consumable")
+async def tuto_consumable(ctx: Context):
+    """Affiche un tutoriel concernant les consommables"""
+    await ctx.channel.send(tuto_text.tuto_consumable)
+@bot.command(aliases=['list_buff', 'liste_buff', 'liste_buffs', 'buffs', 'buff'])
+@decorators.categories("Tuto", "Bully")
+async def list_buffs(ctx: Context):
     """Affiche la liste des buffs"""
     txt = ""
-    import inspect, buffs, fighting_bully
+    from buffs import name_to_buffs_class
+    from fighting_bully import CategoryBuff
     dict_text:dict[str, str] = {"Buffs Positifs":"", "Buffs Négatifs":""}
-    for buffClass in buffs.name_to_buffs_class.values():
-        if buffClass.category not in [fighting_bully.CategoryBuff.UNIQUE, fighting_bully.CategoryBuff.NONE, fighting_bully.CategoryBuff.DEBUFF] and buffClass != fighting_bully.BuffFight:
-            key = "Buffs Positifs"
-        elif buffClass.category == fighting_bully.CategoryBuff.DEBUFF :
-            key = "Buffs Négatifs"
-        else :
+    for buffClass in name_to_buffs_class.values():
+        if buffClass.category == CategoryBuff.NONE:
             continue
-        dict_text[key] += f"{buffClass.__name__} : {buffClass.description}\n"
+        category = buffClass.category.name
+        if category not in dict_text:
+            dict_text[category] = ""
+        dict_text[category] += f"{buffClass.__name__} : {buffClass.description}\n"
 
     await paginate_dict(ctx, dict_text=dict_text)
 
@@ -620,9 +630,9 @@ async def use_consumable(ctx: Context):
             await consumable.use_consumable(ctx=ctx, user=user, player=player, session=session, bot=bot)
             await session.commit()
 
-@bot.command(aliases=['show_c', 'consumable', 'conso', 'print_c'])
+@bot.command(aliases=['consommable', 'consumable', 'conso', 'print_c'])
 @decorators.categories("Consumable")
-async def show_consumables(ctx: Context):
+async def print_consumables(ctx: Context):
     """Pour afficher vos consommables"""
     user = ctx.author
 

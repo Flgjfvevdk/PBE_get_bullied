@@ -2,7 +2,7 @@ import discord
 from discord.ext.commands import Context
 from utils.color_str import CText
 
-TIMEOUT = 30
+TIMEOUT = 60
 
 class PaginatorView(discord.ui.View):
     def __init__(self, pages:list[discord.Embed], timeout=TIMEOUT):

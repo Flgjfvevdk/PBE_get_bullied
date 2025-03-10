@@ -28,8 +28,8 @@ For the moment, no configuration is available.
 - [ ] sélectionner que les images de bully parfaite
 - [x] les bully qui perdent autant de level que leur nombre de brutal loose (true loses)
 - [ ] systèmes d'xp combat entre 2 joueurs à modifier
-- [ ] faire le système du tournoi du dimanche
-- [ ] modifs les buffs qui donnenent + X*LVL (faire des LVL^2)
+- [x] faire le système du tournoi du dimanche
+- [x] modifs les buffs qui donnenent + X*LVL (faire des LVL^2)
 - [ ] Tester tous les boss (notamment le boss level 50)
 - [ ] buff boss level 50 (shadow ?)
 - [ ] voir buff devil pocket watch (dmg que en cas de parade ? Pulvérise Le boss Ombre ?)

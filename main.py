@@ -2,7 +2,7 @@
 import math
 from dotenv import load_dotenv
 
-from utils.discord_servers import save_server
+from utils.discord_servers import load_servers, save_server
 
 load_dotenv()
 
@@ -757,7 +757,7 @@ async def admin_add_server_to_list(ctx: Context):
         await ctx.send('This command can only be used in a server, not in a DM.')
         return
     
-    shop_servers_id = shop.load_shop_servers()
+    shop_servers_id = load_servers()
     server_id = ctx.guild.id
     if server_id not in shop_servers_id:
         shop_servers_id.append(server_id)

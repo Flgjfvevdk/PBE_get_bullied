@@ -2,10 +2,17 @@ import shop
 import lootbox
 
 patchnote="```\n\
-- Get bullied est enfin là !\
+- Get bullied est enfin là !\n\
+- Boostez vos bullies avec des buffs.\n\
+- Soyez le maitre de l'arène de votre serveur.\n\
+- Des boss fights dans les donjons.\n\
+- Des échanges entre les joueurs.\n\
+- Modification des conséquences des défaites.\n\
+- Et plein d'autres choses.\n\
 ```"
 
 tuto = "\
+- **!!join** pour rejoindre l'aventure. **!!invite** @username pour inviter quelqu'un et partager une récompense de parrainage.\n\
 - Vous pouvez recruter des **bullies** (max 5). Ils ont des **statistiques**, un **lvl**, et peuvent se battre à mort. Plus d'infos : **!!tuto_bully**\n\
 - Vous pouvez placer des **bullies** dans votre réserve (max 10). **!!reserve**\n\
 - Vous pouvez défier les autres joueurs dans un combat bully contre bully (**!!challenge @adversaire**) ou équipe contre équipe (**!!teamfight @adversaire**). Plus d'infos : **!!tuto_fight**\n\
@@ -16,6 +23,7 @@ tuto = "\
 - Explorer un donjon (**!!dungeon [lvl du donjon]**) rapporte beaucoup **d'xp** pour les combattants (**!!tuto_dungeon**).\n\
 - Explorer une ruine (**!!ruin [lvl de la ruine]**) permet de récupérer des **consonmmables**, de la monnaie et augmente votre payday. (**!!tuto_ruin**)\n\
 - **!!payday** permet de gagner de la monnaie. Vous en gagner plus en fonction de la ruine la plus puissante que vous ayez vaincue.\n\
+- Chaque serveur à sa propre arène. **!!arene** pour interagir avec l'arène du serveur. Le maitre de l'arène génère plus d'argent avec son **!!payday**.\n\
 - Les consommables sont utilisables pour modifier les statistiques de vos bullies, leur donner un buff permanent en combat ou récupérer des LVL perdues (!!tuto_consumable).\n\
 - ***!!help*** pour voir la liste des commandes.\n\
 "

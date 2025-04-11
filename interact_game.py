@@ -1,7 +1,7 @@
 import random
 import os
 import money
-from bully import Bully
+from bully import Bully, Rarity
 import bully
 from player_info import Player
 import generate_name_tab
@@ -167,14 +167,14 @@ async def join_game(ctx: Context, user:discord.Member|discord.User, session: Asy
     player.id = user.id
     try:
         session.add(player)
+        bully_start = Bully(f"Clashkid", stats=bully.Stats(7, 7, 7, 7), rarity=Rarity.TOXIC)
+        player.bullies.append(bully_start)
         await session.commit()
     except IntegrityError:
         await ctx.reply(getText("already_joined_game"))
-        # await ctx.reply("You have already joined the game!")
         return
 
     await ctx.reply(getText("welcome_adventure"))
-    # await ctx.reply("Welcome to the adventure ! (!!tuto)")
     return player
 
 async def invite_join(ctx: Context, parrain:Player, user:discord.Member|discord.User, session: AsyncSession, channel_cible: Optional[discord.abc.Messageable]=None) -> None:
@@ -184,7 +184,6 @@ async def invite_join(ctx: Context, parrain:Player, user:discord.Member|discord.
     if(user != ctx.author):
         #On affiche le message
         message = await ctx.channel.send(content=getText("invite_join_game").format(user=user.mention), view=ViewYesNo(user=user, event=event, variable_pointer = var))
-        # message = await ctx.channel.send(content=f"{user}, do you want to join game ?", view=ViewYesNo(user=user, event=event, variable_pointer = var))
         try:
             await asyncio.wait_for(event.wait(), timeout=CHOICE_TIMEOUT)
         except asyncio.exceptions.TimeoutError as e:
@@ -199,17 +198,14 @@ async def invite_join(ctx: Context, parrain:Player, user:discord.Member|discord.
                 session.add(new_player)
                 parrain.nb_referrals += 1
                 parrain.money += money.MONEY_REFERRAL
-                bully_gift = Bully(f"{ctx.author.name}'s gift", stats=bully.Stats(8, 8, 8, 8), buff_fight_tag="Friendship")
+                bully_gift = Bully(f"{ctx.author.name}'s gift", stats=bully.Stats(8, 8, 8, 8), buff_fight_tag="Friendship", rarity=Rarity.MONSTER)
                 new_player.bullies.append(bully_gift)
                 if (parrain.nb_referrals == NB_REFERRAL_REWARD):
                     await ctx.send(getText("referral_reward").format(user=ctx.author.mention, nb=NB_REFERRAL_REWARD))
-                    # await ctx.send(f"{ctx.author.mention} you have invited {NB_REFERRAL_REWARD} friends ! You deserve a prize (ask for it :wink: )") 
                 await ctx.send(getText("other_join").format(user=user.name))
-                # await ctx.send(f"{user} has joined the game!")
                 await session.commit()
             except IntegrityError:
                 await ctx.reply(getText("already_joined_game"))
-                # await ctx.reply("You have already joined the game.")
                 return            
 
 
@@ -238,13 +234,11 @@ async def add_bully_to_player(ctx: Context, player: Player, b: Bully, channel_ci
     if len(player.get_equipe()) >= BULLY_NUMBER_MAX:
         if talkative :
             await channel_cible.send(getText("max_bullies_reached").format(user = ctx.author.name, max_bullies=BULLY_NUMBER_MAX))
-            # await channel_cible.send(f"You cannot have more than {BULLY_NUMBER_MAX} bullies!")
         return
     
     player.bullies.append(b)
 
     await channel_cible.send(getText("new_bully_msg").format(bully=b.name))
-    # await channel_cible.send(f"You have a new bully : " + b.name)   
 
 
 async def print_bullies(ctx: Context, player: Player, compact_print=False, print_images=False, channel_cible=None) -> None:
@@ -316,7 +310,6 @@ async def print_bullies(ctx: Context, player: Player, compact_print=False, print
 
 def str_bullies(bullies:list[Bully], print_images = False) -> tuple[str, Optional[list[discord.File]]]:
     text = getText("your_bullies")
-    # text = "Your bullies:"
     images: list[Path] = []
 
     for b in bullies:
@@ -340,7 +333,6 @@ def str_bullies(bullies:list[Bully], print_images = False) -> tuple[str, Optiona
 
 def str_fighting_bully(fighting_bully:list[FightingBully], print_images=False) -> tuple[str, Optional[list[discord.File]]]:
     text = getText("your_bullies")
-    # text = "Your bullies:"
     images: list[Path] = []
 
     for f in fighting_bully:
@@ -372,12 +364,10 @@ async def select_bully(ctx: Context, user: discord.abc.User, player: Player, cha
 
     if len(bullies_in) == 0:
         await channel_cible.send(getText("you_have_no_bully").format(user=user.mention))
-        # await channel_cible.send(f"{user.mention}, you do not have any bullies!")
         raise IndexError
 
     #Demande au joueur de choisir son combattant
     message_choose_bully = await channel_cible.send(getText("choose_bully").format(user=user.mention))
-    # message_choose_bully = await channel_cible.send(f"{user} choose a bully : ") 
 
     #On init les variables
     event = asyncio.Event()
@@ -403,7 +393,6 @@ async def select_bully(ctx: Context, user: discord.abc.User, player: Player, cha
 
     #On envoie les infos sur le bully choisit
     await channel_cible.send(getText("selected_bully").format(user=user.name, bully=bully_selected.name))
-    # await channel_cible.send(f"{user} selects {bully_selected.name}") 
     return bully_selected
 
 async def player_choose_fighting_bully(ctx:Context, fighting_bullies:list[FightingBully], user: discord.abc.User, channel_cible=None, timeout = CHOICE_TIMEOUT) -> tuple[FightingBully, int]:
@@ -413,12 +402,10 @@ async def player_choose_fighting_bully(ctx:Context, fighting_bullies:list[Fighti
 
     if len(fighting_bullies) == 0:
         await channel_cible.send(getText("you_have_no_bully").format(user=user.name))
-        # channel_cible.send(f"{user.name}, you do not have any bullies!")
         raise IndexError
 
     #Demande au joueur de choisir son combattant
     message_choose_fighter = await channel_cible.send(getText("choose_fighter").format(user=user.name))
-    # message_choose_fighter = await channel_cible.send(f"{user} choose your fighter : ") 
 
     #On init les variables
     event = asyncio.Event()
@@ -445,7 +432,6 @@ async def player_choose_fighting_bully(ctx:Context, fighting_bullies:list[Fighti
         raise CancelChoiceException("No selected bully")
 
     await channel_cible.send(getText("selected_bully").format(user=user.name, bully=bully_selected.name))
-    # await channel_cible.send(f"{user} select {bully_selected.name}.") 
     return fighting_bully, bully_number
 
 async def suicide_bully(ctx: Context, user: discord.abc.User, player: Player, bot: Bot, channel_cible=None, timeout = CHOICE_TIMEOUT) -> None :
@@ -454,7 +440,6 @@ async def suicide_bully(ctx: Context, user: discord.abc.User, player: Player, bo
 
     if len(player.get_equipe()) == 0:
         await channel_cible.send(getText("you_have_no_bully").format(user=user.mention))
-        # await channel_cible.send(f"{user.mention}, you do not have any bullies!")
         raise IndexError
 
     #Demande au joueur de choisir son bully

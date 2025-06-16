@@ -934,6 +934,38 @@ async def bully_maj(ctx:Context):
             b.increase_stat_with_seed(nb_level_points=nb_points, valeur=val)
         await session.commit() 
 
+@bot.command()
+@decorators.is_admin()
+@decorators.categories("Admin")
+async def reset_bully_images(ctx: Context):
+    """Reset all bully images to random ones based on their rarity"""
+    user = ctx.author
+    lock = PlayerLock(user.id)
+    if not lock.check():
+        await ctx.send(getText("already_in_action"))
+        return
+    
+    await ctx.send("Starting image reset for all bullies...")
+    count = 0
+    
+    with lock:
+        async with database.new_session() as session:
+            result = await session.execute(select(bully.Bully))
+            bullies = result.scalars().all()
+            
+            for b in bullies:
+                old_path = b.image_file_path
+                new_path = b.new_possible_image_random()
+                b.image_file_path = new_path
+                count += 1
+                
+                if count % 50 == 0:  # Progress update every 50 bullies
+                    await ctx.send(f"Reset {count} bully images so far...")
+            
+            await session.commit()
+    
+    await ctx.send(f"Successfully reset images for {count} bullies!")
+
 bot.remove_command('help')
 
 @bot.command(name='help')

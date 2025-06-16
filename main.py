@@ -122,17 +122,16 @@ async def payday(ctx: Context):
             await ctx.send(getText("cooldown_wait").format(cd=money.format_temps(round(cooldown_restant))))
             return
 
-        server_id = ctx.guild.id #type: ignore
-        bonus_champion = await arena_system.get_bonus_payday(session, server_id, player.id.__str__())
+        if ctx.guild is None:
+            bonus_champion = 1
+        else:
+            server_id = ctx.guild.id 
+            bonus_champion = await arena_system.get_bonus_payday(session, server_id, player.id.__str__())
         bonus_arena_str = getText("arena_bonus_py").format(bonus=bonus_champion) if bonus_champion > 1 else ""
-        # bonus_arena_str = f"×{bonus_champion} (arena champion bonus)" if bonus_champion > 1 else ""
+        
         py_val = money.payday_value(player)
         money.give_money(player, montant=py_val * bonus_champion)
         await ctx.send(getText("payday").format(recu=py_val, bonus_str=bonus_arena_str, money_emoji=money.MONEY_EMOJI, total_money=money.get_money_user(player)))
-        # await ctx.send(
-        #     f"Vous avez reçu des {money.MONEY_EMOJI} ! +{py_val}{money.MONEY_EMOJI} {bonus_arena_str}\n"
-        #     f"Vous avez {money.get_money_user(player)} {money.MONEY_EMOJI}"
-        # )
 
         # Enregistrer l'heure actuelle comme dernière utilisation de la commande
         money.enregistrer_cooldown_pay(player)

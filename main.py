@@ -347,7 +347,7 @@ async def team_challenge(ctx: Context, opponent:discord.Member):
 
     if user == opponent:
         await ctx.send(getText("cant_self_tf"))
-        # return
+        return
     
     lock1 = PlayerLock(user.id)
     if not lock1.check():

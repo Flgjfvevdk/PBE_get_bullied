@@ -21,7 +21,7 @@ from dataclasses import dataclass, field, KW_ONLY
 from discord.ext.commands import Context, Bot
 import discord
 from all_texts import getText
-from utils.delete_tread import del_thread
+from utils.manage_tread import del_thread_if_possible, create_thread_if_possible
 
 RUIN_CHOICE_TIMEOUT = 60
 THREAD_DELETE_AFTER = 60
@@ -58,38 +58,6 @@ class Trap :
         self.text_intro = getText(f"trap_{self.stat_str}_intro")
         self.text_reussite = getText(f"trap_{self.stat_str}_success")
         self.text_echec = getText(f"trap_{self.stat_str}_fail")
-        # if (self.stat_str == "strength"):
-        #     #trap force
-        #     self.text_intro_en = "**[STRENGTH]** The room is filled with large, sharp stones. One must create a path by moving these large stones."
-        #     self.text_reussite_en = "Your bully moved rocks and created a safe path for everyone."
-        #     self.text_echec_en = "Moving these rocks has left your bully with numerous wounds and bleeding, but the path is cleared."
-        #     self.text_intro = "**[STRENGTH]** La salle est remplie de grosses pierres tranchantes. Quelqu'un doit créer un chemin en déplaçant ces grosses rochers."
-        #     self.text_reussite = "Votre bully a déplacé des rochers et a créé un chemin sûr pour tout le monde."
-        #     self.text_echec = "Déplacer ces rochers a laissé votre bully avec de nombreuses blessures et des saignements, mais le chemin est dégagé."
-        # elif (self.stat_str == "agility"):
-        #     #trap agility
-        #     self.text_intro_en = "**[AGILITY]** The door to the next room is at the top of a ruined stone starcase. One must climb and tie a rope on top to create a path"
-        #     self.text_reussite_en = "Your bully climbed perfectly and tied a rope on top."
-        #     self.text_echec_en = "Climbing has left your bully with numerous wounds and bleeding, but the rope is tied."
-        #     self.text_intro = "**[AGILITY]** Pour progresser il faut grimper en haut d'un escalier en pierre en ruine. Quelqu'un doit grimper et attacher une corde en haut pour créer un chemin."
-        #     self.text_reussite = "Votre bully a grimpé parfaitement et a attaché une corde pour les autres."
-        #     self.text_echec = "En grimpant votre bully s'est blessé, mais la corde est finalement attachée pour les autres."
-        # elif (self.stat_str == "lethality"):
-        #     #trap lethality
-        #     self.text_intro_en = "**[LETHALITY]** A terrifying creature is sleeping in the room. One must assassinate it to create a safe path."
-        #     self.text_reussite_en = "Your bully stabbed the creature, which died instantly."
-        #     self.text_echec_en = "Your bully stabbed the creature, but it didn't instantly die, and hurt your bully."
-        #     self.text_intro = "**[LETHALITY]** Une créature terrifiante dort dans la salle. Quelqu'un doit l'assassiner pour créer un chemin sûr."
-        #     self.text_reussite = "Votre bully a poignardé la créature, qui est morte instantanément."
-        #     self.text_echec = "Votre bully a poignardé la créature, mais elle n'est pas morte instantanément, et a blessé votre bully."
-        # elif (self.stat_str == "viciousness"):
-        #     #trap viciousness
-        #     self.text_intro_en = "**[VICIOUSNESS]** The room is full of traps. One must identify them and find a safe path."
-        #     self.text_reussite_en = "Your bully identify every traps and find a safe path for everyone."
-        #     self.text_echec_en = "Your bully was wounded by many traps but ended up finding a safe path."
-        #     self.text_intro = "**[VICIOUSNESS]** La salle est pleine de pièges. Quelqu'un doit les identifier pour trouver un chemin sûr."
-        #     self.text_reussite = "Votre bully a identifié tous les pièges et a trouvé un chemin sûr pour tout le monde."
-        #     self.text_echec = "Votre bully a été blessé par de nombreux pièges mais a fini par trouver un chemin sûr."
 
     def clash(self, fighter: FightingBully) -> bool:
         stat_value = getattr(fighter.stats, self.stat_str)
@@ -338,7 +306,7 @@ class Ruin():
 
     user: discord.abc.User = field(init=False)
     rooms: list[Room] = field(init=False, default_factory=list)
-    thread: discord.Thread = field(init=False)
+    thread: discord.abc.Messageable = field(init=False)
     fighters_joueur: list[FightingBully] = field(init=False, default_factory=list)
 
 
@@ -383,11 +351,12 @@ class Ruin():
 
     async def enter(self) -> None:
         message = await self.ctx.channel.send(getText("ruin_enter").format(user=self.user.mention, level=self.level))
-        try :
-            self.thread = await self.ctx.channel.create_thread(name=f"Ruin - Level {self.level}", message=message) #type: ignore
-        except Exception as e:
-            print(e)
-            return
+        self.thread = await create_thread_if_possible(self.ctx, name=f"Ruin - Level {self.level}", message=message)
+        # try :
+        #     self.thread = await self.ctx.channel.create_thread(name=f"Ruin - Level {self.level}", message=message) #type: ignore
+        # except Exception as e:
+        #     print(e)
+        #     return
 
         #On initialise les pv des bullies
         self.fighters_joueur = get_player_team(player=self.player)
@@ -415,10 +384,11 @@ class Ruin():
             f.reset_stats()
 
     async def exit(self, time_bfr_close_thread=THREAD_DELETE_AFTER) -> None:
-        try:
-            await del_thread(self.thread, time_bfr_close_thread)
-        except Exception as e:
-            print(e)
+        await del_thread_if_possible(self.thread, time_bfr_close_thread)
+        # try:
+        #     await del_thread(self.thread, time_bfr_close_thread)
+        # except Exception as e:
+        #     print(e)
         
 
 

@@ -16,7 +16,7 @@ from typing import Optional, Dict
 from dataclasses import replace
 import utils.color_str  as color_str
 from utils.color_str import CText
-from utils.delete_tread import del_thread
+from utils.manage_tread import del_thread, create_thread
 from tournament import tournaments
 
 CHOICE_TIMEOUT = 30
@@ -60,7 +60,8 @@ async def proposition_fight(ctx:Context, user_1:discord.abc.User, user_2:discord
         await message.reply(getText("challenge_declined"))
         return
     
-    thread_challenge = await ctx.channel.create_thread(name=getText("title_challenge").format(user1= user_1.name, user2=user_2.name), message=message_accept) #type: ignore
+    # thread_challenge = await ctx.channel.create_thread(name=getText("title_challenge").format(user1= user_1.name, user2=user_2.name), message=message_accept) #type: ignore
+    thread_challenge = await create_thread(ctx, getText("title_challenge").format(user1= user_1.name, user2=user_2.name), message=message_accept)
 
     #On selectionne les 2 combattants
     try :
@@ -431,7 +432,8 @@ async def proposition_team_fight(ctx:Context, user_1:discord.abc.User, user_2:di
 
 
     #On commence le teamfight
-    thread_challenge = await ctx.channel.create_thread(name=getText("title_challenge").format(user1= user_1.name, user2=user_2.name), message=message_accept) #type: ignore
+    # thread_challenge = await ctx.channel.create_thread(name=getText("title_challenge").format(user1= user_1.name, user2=user_2.name), message=message_accept) #type: ignore
+    thread_challenge = await create_thread(ctx, getText("title_challenge").format(user1= user_1.name, user2=user_2.name), message=message_accept)
     try : 
         teamfight = TeamFight(ctx=ctx, user_1=user_1, user_2=user_2, player_1=player_1, player_2=player_2, for_fun=for_fun, can_swap=True, 
                             channel_cible=thread_challenge)

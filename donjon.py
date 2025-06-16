@@ -15,7 +15,7 @@ from fight_manager import RecapExpGold, Fight, InterruptionCombat, reward_win_fi
 from dataclasses import dataclass, field, KW_ONLY, replace
 
 from typing import List
-from utils.delete_tread import del_thread
+from utils.manage_tread import del_thread_if_possible, create_thread_if_possible
 
 from discord.ext.commands import Context, Bot
 from discord.abc import User
@@ -160,7 +160,7 @@ class Dungeon():
     fighters_joueur: list[FightingBully] = field(init=False)
     can_swap_enemies:list[FightingBully] = field(default_factory=list) #Liste des ennemies contre lesquelles on peut swap (vide = aucun swap contre aucun ennemie)
     xp_earned_bullies: List[float] = field(init=False)
-    thread: Thread = field(init=False)
+    thread: discord.abc.Messageable = field(init=False)
 
     reward_conso:Consumable|None = None
 
@@ -209,11 +209,12 @@ class Dungeon():
 
     async def enter(self) -> None:
         message = await self.ctx.channel.send(getText("dungeon_enter").format(user=self.ctx.author.mention, dungeon_name=self.name))
-        try :
-            self.thread = await self.ctx.channel.create_thread(name=f"{self.name}", message=message) #type: ignore
-        except Exception as e:
-            print(e)
-            return
+        self.thread = await create_thread_if_possible(self.ctx, name=self.name, message=message)
+        # try :
+        #     self.thread = await self.ctx.channel.create_thread(name=f"{self.name}", message=message) #type: ignore
+        # except Exception as e:
+        #     print(e)
+        #     return
         
         #On fait la boucle de combat
         try:
@@ -321,10 +322,11 @@ class Dungeon():
             f.reset_stats()
 
     async def exit(self, time_bfr_close: int) -> None:
-        try :
-            await del_thread(self.thread, time_bfr_close)
-        except Exception as e:
-            print(e)
+        await del_thread_if_possible(self.thread, time_bfr_close)
+        # try :
+        #     await del_thread(self.thread, time_bfr_close)
+        # except Exception as e:
+        #     print(e)
 
 
 async def str_leaderboard_donjon(session: AsyncSession) -> str:

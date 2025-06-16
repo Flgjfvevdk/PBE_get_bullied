@@ -18,7 +18,7 @@ import json
 from discord.ext.commands import Bot, Context
 import utils.database as database
 from player_info import Player
-from utils.delete_tread import del_thread
+from utils.manage_tread import del_thread, create_thread
 from utils.locks import ArenaLock, PlayerLock
 from all_texts import getText
 
@@ -116,8 +116,8 @@ class ArenaFight:
         self.bot_player:Player = bot_player
 
         message_thread = await self.ctx.send(content=getText("arena_enter").format(user = self.user.mention))
-        # message_thread = await self.ctx.send(content=f"{self.user.mention} has entered the arena!")
-        self.thread:discord.Thread = await self.ctx.channel.create_thread(name=f"{self.user.name} est dans l'arene", message=message_thread) #type: ignore
+        # self.thread:discord.Thread = await self.ctx.channel.create_thread(name=f"{self.user.name} est dans l'arene", message=message_thread) #type: ignore
+        self.thread = await create_thread(self.ctx, f"{self.user.name} est dans l'arene", message = message_thread)
 
     async def enter_hall(self):
         txt_arena = await self.arena.get_print(self.session, self.bot)

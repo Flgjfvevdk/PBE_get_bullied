@@ -19,7 +19,10 @@ def is_admin():
     """ Command decorator to check if the message author is an admin.
     """
     async def predicate(ctx: commands.Context):
-        return ctx.author.id in ADMIN_LIST
+        if ctx.author.id in ADMIN_LIST:
+            return True
+        await ctx.send("You don't have permission to use this command.")
+        return False
     return commands.check(predicate)
 
 def author_is_free(f):

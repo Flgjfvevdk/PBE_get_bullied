@@ -72,8 +72,7 @@ async def proposition_fight(ctx:Context, user_1:discord.abc.User, user_2:discord
                     channel_cible=thread_challenge)
         await fight.start_fight()
     finally:
-        await asyncio.sleep(DELAIE_DELETE_THREAD_FIGHT)
-        await thread_challenge.delete()
+        await del_thread(thread=thread_challenge, time_bfr_close=DELAIE_DELETE_THREAD_FIGHT)
     return
 
 async def select_fighters(ctx: Context, user_1: discord.abc.User, user_2: discord.abc.User, player_1: Player, player_2: Player

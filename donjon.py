@@ -230,7 +230,7 @@ class Dungeon():
         else:
             #On est plus dans le combat, le joueur à vaincu le donjon
             txt_w = getText("dungeon_win").format(user=self.ctx.author.mention, dungeon_name=self.name)
-            await self.ctx.channel.send(txt_w)
+            
             await self.thread.send(txt_w)
 
             #on donne la récompense d'xp aux joueurs encore en vie

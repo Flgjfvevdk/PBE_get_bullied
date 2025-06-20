@@ -306,7 +306,9 @@ class Fight():
         else:
             raise Exception("aucun perdant?")
         
-        await self.channel_cible.send(getText("fight_winner").format(winner=bully_gagnant.name))
+        text_recap_end = ""
+        text_recap_end +=getText("fight_winner").format(winner=bully_gagnant.name) +  "\n"
+        # await self.channel_cible.send(getText("fight_winner").format(winner=bully_gagnant.name))
         if (not self.for_fun) :
             bully_gagnant.increment_win_loose(win=True)
             bully_perdant.increment_win_loose(win=False)
@@ -322,26 +324,26 @@ class Fight():
 
             pretext = ""
             if (exp_earned > 0):
+                txt_lvl = ""
                 try :
                     bully_gagnant.give_exp(exp_earned)
                 except LevelUpException as lvl_except:
-                    await self.channel_cible.send(f"{bully_gagnant.name} {lvl_except.text}")
+                    txt_lvl = f"{bully_gagnant.name} {lvl_except.text}"
                 
-                pretext += getText("gain").format(name=bully_gagnant.name, reward = exp_earned) + "xp\n"
+                text_recap_end += getText("gain").format(name=bully_gagnant.name, reward = exp_earned) + "xp\n"
+                text_recap_end += txt_lvl + "\n"
             if (gold_earned > 0):
                 player_gagnant = self.player_1 if bully_gagnant == self.fighter_1.bully else self.player_2
                 if user_gagnant is not None and player_gagnant is not None:
                     money.give_money(player_gagnant, montant=gold_earned)
-                    pretext += getText("gain").format(name=bully_gagnant.name, reward = gold_earned) + f"{money.MONEY_EMOJI}\n"
+                    text_recap_end += getText("gain").format(name=bully_gagnant.name, reward = gold_earned) + f"{money.MONEY_EMOJI}\n"
             
-            txt = ""
             if (user_perdant is not None):
-                txt = await bully_perdant.die_in_fight()
-            if (pretext+txt !=""):
-                await self.channel_cible.send(pretext + txt)
+                text_recap_end += await bully_perdant.die_in_fight()
+            
         else : 
             exp_earned, gold_earned = 0.0, 0
-        
+        await self.channel_cible.send(text_recap_end)
         return RecapExpGold(exp_earned, gold_earned)
         
     

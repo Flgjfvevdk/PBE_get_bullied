@@ -14,6 +14,7 @@ from sqlalchemy import String, select, ForeignKey
 from sqlalchemy.ext.asyncio.session import async_object_session
 from utils.database import Base, new_session, DBPath
 from sqlalchemy.ext.mutable import MutableComposite
+from all_texts import getText
 
 
 BULLY_RARITY_BASE_POINTS = [15, 17, 19, 21, 23]
@@ -322,7 +323,7 @@ class Bully(Base):
             self.level_up_one()
 
             if not nobody_evolve:
-                lvl_except = LevelUpException(self.lvl, text=f"leveled up from {base_lvl} to {str(self.lvl)} ")
+                lvl_except = LevelUpException(self.lvl, text=f"LVL {base_lvl} → {str(self.lvl)} ")
             if(self.lvl >= NOBODY_LEVEL_EVOLUTION and self.rarity == Rarity.NOBODY):
                 self.nobody_evolution()
                 nobody_evolve = True
@@ -396,10 +397,10 @@ class Bully(Base):
     async def die_in_fight(self) -> str:
         if self.rarity == Rarity.NOBODY :
             await self.kill()
-            return f"{self.name} died in terrible agony."
+            return getText("bully_died").format(bully=self.name)
         else : 
             lvl_lost = self.loose_level_death()
-            return f"{self.name} lost {lvl_lost} level"
+            return getText("bully_lost_lvl").format(bully=self.name, lvl=lvl_lost)
 
     async def kill(self):
         print("je me tue : ", self.name)

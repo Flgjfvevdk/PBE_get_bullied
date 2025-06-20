@@ -25,6 +25,10 @@ texts = {
         "no_arena" : "Aucune arène trouvée pour ce serveur. Veuillez créer une arène d'abord.",
         "cant_trade_self": "Vous ne pouvez pas échanger avec vous-même.",
 
+        #bully 
+        "bully_died" : "{bully} est mort dans d'atroces souffrances.",
+        "bully_lost_lvl" : "{bully} a perdu {lvl} niveau(x).",
+
         #arena
         "arena_enter":"{user} entre dans l'arène !",
         "arena_ask_enter": "{user}, voulez-vous entrer dans l'arène ? (Prix = {price} {money_emoji})",
@@ -238,6 +242,10 @@ texts = {
         "ruin_lower_50": "Maximum ruin level is 50.",
         "no_arena" : "No arena found for this server. Please create an arena first.",
         "cant_trade_self": "You can't trade with yourself.",
+
+        #bully 
+        "bully_died" : "{bully} died in terrible agony.",
+        "bully_lost_lvl" : "{bully} lost {lvl} level(s).",
 
         #arena
         "arena_enter":"{user} enters the arena!",

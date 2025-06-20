@@ -17,7 +17,7 @@ class Rage(BuffFight):
         super().__init__(fighter)
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
         if fighter == recap_round.defender and recap_round.damage_receive_defender > 0:
-            fighter.stats.strength += fighter.bully.lvl**2 * 0.02
+            fighter.stats.strength += max(0.4,fighter.bully.lvl**2 * 0.02)
         return 
     
 class LosingWeight(BuffFight):
@@ -28,7 +28,7 @@ class LosingWeight(BuffFight):
         super().__init__(fighter)
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
         if fighter == recap_round.defender and recap_round.damage_receive_defender > 0:
-            fighter.stats.agility += fighter.bully.lvl**2 * 0.02
+            fighter.stats.agility += max(0.4,fighter.bully.lvl**2 * 0.02)
         return 
     
 class AngerIssue(BuffFight):
@@ -39,7 +39,7 @@ class AngerIssue(BuffFight):
         super().__init__(fighter)
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
         if fighter == recap_round.defender and recap_round.damage_receive_defender > 0:
-            fighter.stats.lethality += fighter.bully.lvl**2 * 0.02
+            fighter.stats.lethality += max(0.4,fighter.bully.lvl**2 * 0.02)
         return 
 
 class Brutal(BuffFight):
@@ -90,7 +90,7 @@ class SlimyBody(BuffFight):
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
         if fighter == recap_round.defender and not recap_round.is_success_block:
             if (opponent.stats.agility > 1):
-                opponent.stats.agility -= fighter.bully.lvl**2 *0.05
+                opponent.stats.agility -= max(1.0, fighter.bully.lvl**2 *0.05)
                 opponent.stats.agility = max(1, opponent.stats.agility)
         return
 
@@ -114,7 +114,7 @@ class Frustration(BuffFight):
         super().__init__(fighter)
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
         if fighter == recap_round.attacker and recap_round.is_success_block:
-            fighter.stats.lethality += fighter.bully.lvl**2 * 0.005
+            fighter.stats.lethality += max(0.1, fighter.bully.lvl**2 * 0.005)
         return
 
 class DragonSkin(BuffFight):
@@ -145,7 +145,7 @@ class ShadowEater(BuffFight):
         super().__init__(fighter)
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
         if recap_round.attacker == fighter and not recap_round.is_success_block:
-            fighter.stats.viciousness += fighter.bully.lvl**2 * 0.01
+            fighter.stats.viciousness += max(0.2, fighter.bully.lvl**2 * 0.01)
         return 
     
 #21-30  
@@ -215,7 +215,7 @@ class Lycanthropy(BuffFight):
     category:CategoryBuff = CategoryBuff.LVL_4
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
-        fighter.stats.lethality += fighter.bully.lvl**2 * 0.1
+        fighter.stats.lethality += max(2, fighter.bully.lvl**2 * 0.1)
     def before_fight(self, fighter: FightingBully, opponent: FightingBully):
         self.swap_stat_if_needed(fighter, opponent)
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
@@ -238,7 +238,7 @@ class Vampire(BuffFight):
     category:CategoryBuff = CategoryBuff.LVL_4
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
-        fighter.stats.viciousness += fighter.bully.lvl**2 * 0.1
+        fighter.stats.viciousness += max(2, fighter.bully.lvl**2 * 0.1)
     def apply_heal(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
         if fighter == recap_round.attacker and not recap_round.is_success_block and recap_round.is_success_vicious:
             heal = 1 if fighter.pv + 1 <= fighter.bully.max_pv else 0
@@ -266,13 +266,13 @@ class Overdrive(BuffFight):
     category:CategoryBuff = CategoryBuff.LVL_4
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
-        bonus = fighter.bully.lvl**2 * 0.25
+        bonus = max(5, fighter.bully.lvl**2 * 0.25)
         fighter.stats.strength += bonus
         fighter.stats.agility += bonus
         fighter.stats.lethality += bonus
         fighter.stats.viciousness += bonus
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
-        malus = fighter.bully.lvl**2 * 0.02
+        malus = max(0.4, fighter.bully.lvl**2 * 0.02)
         fighter.stats.strength = max(1, fighter.stats.strength - malus)
         fighter.stats.agility = max(1, fighter.stats.agility - malus)
         fighter.stats.lethality = max(1, fighter.stats.lethality - malus)
@@ -365,7 +365,7 @@ class ProtectiveShadow(BuffFight):
         if recap_round.get_damage_receive(fighter) > 0:
             dmg = recap_round.get_damage_receive(fighter)
             fighter.pv += dmg
-            fighter.stats.viciousness -= fighter.bully.lvl**2 * 0.03
+            fighter.stats.viciousness -= max(0.6, fighter.bully.lvl**2 * 0.03)
             if fighter.stats.viciousness <= 1 :
                 fighter.stats.viciousness = 1
                 fighter.buffs.remove(self)
@@ -379,7 +379,7 @@ class DragonAscension(BuffFight):
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound):
-        bonus = fighter.bully.lvl**2 * 0.004
+        bonus = max(0.1, fighter.bully.lvl**2 * 0.004)
         fighter.stats.strength += bonus
         fighter.stats.agility += bonus
         fighter.stats.lethality += bonus
@@ -571,7 +571,7 @@ class Gambler(BuffFight):
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
         self.coins = 0
-        self.buff_value = fighter.bully.lvl**2 * 0.07
+        self.buff_value = max(1.5, fighter.bully.lvl**2 * 0.07)
         self.update_description()
         
     def apply_heal(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:

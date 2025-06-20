@@ -332,7 +332,7 @@ class Fight():
                 player_gagnant = self.player_1 if bully_gagnant == self.fighter_1.bully else self.player_2
                 if user_gagnant is not None and player_gagnant is not None:
                     money.give_money(player_gagnant, montant=gold_earned)
-                    pretext += getText("gain").format(name=bully_gagnant.name, reward = exp_earned) + f"{money.MONEY_EMOJI}\n"
+                    pretext += getText("gain").format(name=bully_gagnant.name, reward = gold_earned) + f"{money.MONEY_EMOJI}\n"
             
             txt = ""
             if (user_perdant is not None):

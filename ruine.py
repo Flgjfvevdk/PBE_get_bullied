@@ -83,7 +83,7 @@ class EnemyRoom():
     
     async def interact(self, ruin: "Ruin") -> bool:
         await ruin.thread.send(getText("ruin_enemy_intro").format(enemy=bully.mise_en_forme_str(self.enemy.get_print())))
-        # await ruin.thread.send(f"An enemy stands in your way! \n{bully.mise_en_forme_str(self.enemy.get_print())}")
+        
         while True:
             fighter = await self.fighter_choice(ruin)
             fight_won = await self.fight(ruin, fighter)
@@ -155,21 +155,8 @@ class EnemyRoom():
             #Le joueur a gagné
             is_success = True
 
-            #On calcule les récompenses, on les affiches et on les stock
-            (exp_earned, gold_earned) = recapExpGold.exp_earned, recapExpGold.gold_earned
-
-            if (exp_earned > 0):
-                try:
-                    bully_joueur.give_exp(exp_earned)
-                except LevelUpException as lvl_except:
-                    await ruin.thread.send(f"{bully_joueur.name} {lvl_except.text}")
-                
-            if (gold_earned > 0):
-                money.give_money(ruin.player, montant=gold_earned)
-
             #On envoie le message de succès et on progress dans le dungeon
             await ruin.thread.send(getText("ruin_enemy_defeated").format(enemy = self.enemy.bully.name))
-            # await ruin.thread.send(f"{self.enemy.bully.name} is dead! You progress in the ruin.")
             
         else : 
             #Le joueur à perdu
@@ -352,11 +339,6 @@ class Ruin():
     async def enter(self) -> None:
         message = await self.ctx.channel.send(getText("ruin_enter").format(user=self.user.mention, level=self.level))
         self.thread = await create_thread_if_possible(self.ctx, name=f"Ruin - Level {self.level}", message=message)
-        # try :
-        #     self.thread = await self.ctx.channel.create_thread(name=f"Ruin - Level {self.level}", message=message) #type: ignore
-        # except Exception as e:
-        #     print(e)
-        #     return
 
         #On initialise les pv des bullies
         self.fighters_joueur = get_player_team(player=self.player)
@@ -385,10 +367,6 @@ class Ruin():
 
     async def exit(self, time_bfr_close_thread=THREAD_DELETE_AFTER) -> None:
         await del_thread_if_possible(self.thread, time_bfr_close_thread)
-        # try:
-        #     await del_thread(self.thread, time_bfr_close_thread)
-        # except Exception as e:
-        #     print(e)
         
 
 

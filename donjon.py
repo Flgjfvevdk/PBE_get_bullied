@@ -210,11 +210,6 @@ class Dungeon():
     async def enter(self) -> None:
         message = await self.ctx.channel.send(getText("dungeon_enter").format(user=self.ctx.author.mention, dungeon_name=self.name))
         self.thread = await create_thread_if_possible(self.ctx, name=self.name, message=message)
-        # try :
-        #     self.thread = await self.ctx.channel.create_thread(name=f"{self.name}", message=message) #type: ignore
-        # except Exception as e:
-        #     print(e)
-        #     return
         
         #On fait la boucle de combat
         try:
@@ -285,16 +280,7 @@ class Dungeon():
             #Le joueur a gagné. On calcul les récompenses, on les affiches et on les stocks
             (exp_earned, gold_earned) = recapExpGold.exp_earned, recapExpGold.gold_earned
             
-            if (exp_earned > 0):
-                try:
-                    bully_joueur.give_exp(exp_earned)
-                except bully.LevelUpException as lvl_except:
-                    await self.thread.send(f"{bully_joueur.name} {lvl_except.text}")
-
-                self.xp_earned_bullies[num_bully_j] += exp_earned
-                
-            if (gold_earned > 0):
-                money.give_money(self.player, montant=gold_earned)
+            self.xp_earned_bullies[num_bully_j] += exp_earned
                 
             #On envoie le message de succès et on progress dans le dungeon
             await self.thread.send(getText("dungeon_enemy_dead").format(enemy_name=fighting_bully_enemy.bully.name))
@@ -323,10 +309,6 @@ class Dungeon():
 
     async def exit(self, time_bfr_close: int) -> None:
         await del_thread_if_possible(self.thread, time_bfr_close)
-        # try :
-        #     await del_thread(self.thread, time_bfr_close)
-        # except Exception as e:
-        #     print(e)
 
 
 async def str_leaderboard_donjon(session: AsyncSession) -> str:

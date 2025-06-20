@@ -448,9 +448,7 @@ async def suicide_bully(ctx: Context, user: discord.abc.User, player: Player, bo
     #On init les variables
     event = asyncio.Event()
     var:Dict[str, Bully | None] = {"choix" : None}
-    text, _ = str_bullies(player.get_equipe(), print_images=False)
-
-    #On affiche le message
+    text, _ = str_bullies(player.get_equipe(), print_images=False)    #On affiche le message
     message_bullies = await channel_cible.send(content=text, view=ViewBullyChoice(user=user, event=event, list_choix=player.get_equipe(), variable_pointer = var))
     
     try:
@@ -461,6 +459,19 @@ async def suicide_bully(ctx: Context, user: discord.abc.User, player: Player, bo
         bully_selected = var["choix"]
         if(not bully_selected) : 
             raise CancelChoiceException("No selected bully")
+            
+        # Demande de confirmation
+        confirmation_event = asyncio.Event()
+        confirmation_var: Dict[str, bool] = {"choix": False}
+        confirmation_message = await channel_cible.send(getText("confirm_suicide").format(user=user, bully=bully_selected.name), 
+                                                       view=ViewYesNo(user=user, event=confirmation_event, variable_pointer=confirmation_var))
+        
+        try:
+            await asyncio.wait_for(confirmation_event.wait(), timeout=timeout)
+            if not confirmation_var["choix"]:
+                raise CancelChoiceException
+        finally:
+            await confirmation_message.delete()
 
         #On envoie les infos sur le bully choisit
         await message_choose_suicide.edit(content=getText("suicide_kill").format(user = user, bully = bully_selected.name))

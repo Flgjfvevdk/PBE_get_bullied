@@ -42,7 +42,7 @@ ENEMIES_GROUP_SIZE = 6
 
 boss_rarity_lvl:dict[int, bully.Rarity] = {k:bully.Rarity.TOXIC for k in range(0,5)} | {k:bully.Rarity.MONSTER for k in range(5,20)} | {k:bully.Rarity.DEVASTATOR for k in range(20,35)} | {k:bully.Rarity.SUBLIME for k in range(35,50)}
 fighter_rarities_lvl:dict[int, list[bully.Rarity]] = {k:[bully.Rarity.TOXIC] for k in range(0,10)} | {k:[bully.Rarity.TOXIC, bully.Rarity.MONSTER] for k in range(10,15)} | {k:[bully.Rarity.MONSTER] for k in range(15,25)} | {k:[bully.Rarity.MONSTER, bully.Rarity.DEVASTATOR] for k in range(25,30)} | {k:[bully.Rarity.DEVASTATOR] for k in range(30,40)} | {k:[bully.Rarity.DEVASTATOR, bully.Rarity.SUBLIME] for k in range(40,45)} | {k:[bully.Rarity.SUBLIME] for k in range(45,50)}
-special_dg_name_number:dict[int, list[str]] = {111 : ["Phoenix", "phoenix", "Phenix", "phenix"], 666 : ["Hell", "hell", "Enfer", "enfer"], 432 : ["Elisha", "elisha", "BG", "bg"]}
+special_dg_name_number:dict[int, list[str]] = {111 : ["Phoenix", "phoenix", "Phenix", "phenix"], 666 : ["Hell", "hell", "Enfer", "enfer"], 432 : ["Elisha", "elisha", "BG", "bg"], 2005 : ["Slime", "slime", "Slime Kingdom", "slime kingdom"]}
 
 @dataclass
 class DungeonFightingBully():
@@ -86,7 +86,7 @@ dungeon_fighter_bully_list = [DungeonFightingBully(name="Thyr O'Flan", pv_max=5,
                               DungeonFightingBully(name="Le Fourbe", pv_max=6, seed=bully.Seed(0.1, 0.4, 0.05, 0.45)),
                               DungeonFightingBully(name="Nulos", pv_max=5, seed=bully.Seed(0.1, 0.1, 0.4, 0.4))]
 
-dungeon_fighters_lvl_10 = [DungeonFightingBully(name="Serpent mutant", pv_max=12, seed=Seed(0.3, 0.3, 0.4, 0.0), buffs_tags=["Venomous", "BuffStats"], rarity=Rarity.TOXIC, can_swap=True, exp_coef=1.0),
+dungeon_fighters_lvl_10 = [DungeonFightingBully(name="Serpent mutant", pv_max=12, seed=Seed(0.4, 0.3, 0.3, 0.0), buffs_tags=["Venomous", "BuffStats"], rarity=Rarity.TOXIC, can_swap=True, exp_coef=1.0),
                            DungeonFightingBully(name="Andy State", pv_max=10, seed=Seed(0.2, 0.4, 0.1, 0.3), buffs_tags=["Vilain", "BuffStats"], rarity=Rarity.TOXIC, can_swap=True, exp_coef=1.0),
                            DungeonFightingBully(name="Pollution", pv_max=20, seed = Seed(0.3, 0.3, 0.1, 0.3), buffs_tags=["Pollution", "BuffStats"], rarity=Rarity.TOXIC, can_swap=True, exp_coef=1.2)
                            ]
@@ -131,6 +131,11 @@ dungeon_fighters_lvl_phoenix = [DungeonFightingBully(name="Phoenix - L'oiseau ma
 
 dungeon_fighters_lvl_bg = [DungeonFightingBully(name="Elisha le BG", pv_max=50, seed=bully.Seed(1.1, 0.4, 0.2, 0), buffs_tags=["Adaptation", "TooPerfect", "PerfectSkin"], rarity=Rarity.UNIQUE, can_swap=True)]
 
+dungeon_fighters_lvl_slime = [DungeonFightingBully(name="Slime qui ronfle", pv_max=25, seed=bully.Seed(0.7, 0, 0.3, 0.2), buffs_tags=["SlimyBody", "Martyr"], rarity=Rarity.UNIQUE, can_swap=True),
+                              DungeonFightingBully(name="Slime ultra toxique", pv_max=1, seed=bully.Seed(0.1, 0.1, 0.1, 2), buffs_tags=["SlimyBody", "StrangeGift", "Cat"], rarity=Rarity.UNIQUE, can_swap=True),
+                              DungeonFightingBully(name="Slime cosmique", pv_max=10, seed=bully.Seed(0.4, 0.6, 0.2, 0.1), buffs_tags=["SlimyBody", "SpaceCake"], rarity=Rarity.UNIQUE, can_swap=True),
+                              DungeonFightingBully(name="Slime diabolique", pv_max=10, seed=bully.Seed(0.6, 0.01, 0.6, 0.6), buffs_tags=["RoyalSlimyBody", "DevilPocketWatch"], rarity=Rarity.UNIQUE, can_swap=True),
+                              DungeonFightingBully(name="Lord Slime", pv_max=20, seed=bully.Seed(0.5, 0.5, 0.5, 0.5), buffs_tags=["TrueSlime", "DragonAscension"], rarity=Rarity.UNIQUE, can_swap=True),]
 
 dungeon_specials_dict:dict[int, DungeonSpecialInfos] = {
                                                         10 : DungeonSpecialInfos("Dungeon lvl 10 - Boss", 10, dungeon_fighters_lvl_10), 
@@ -140,7 +145,8 @@ dungeon_specials_dict:dict[int, DungeonSpecialInfos] = {
                                                         50 : DungeonSpecialInfos("Dungeon lvl 50 - Boss", 50, dungeon_fighters_lvl_50, ConsumableElixirBuff("Dragon Blood", "Dragon")), 
                                                         111 : DungeonSpecialInfos("Phoenix nest", 15, dungeon_fighters_lvl_phoenix, ConsumableElixirBuff("Phoenix's Feather", "Phoenix")), 
                                                         432 : DungeonSpecialInfos("Elisha's house", 10, dungeon_fighters_lvl_bg, ConsumableElixirBuff("Perfect lotion", "PerfectSkin")),
-                                                        666 : DungeonSpecialInfos("Hell", 50, dungeon_fighters_lvl_666, ConsumableElixirBuff("Devil's Pocket Watch", "DevilPocketWatch"))
+                                                        666 : DungeonSpecialInfos("Hell", 50, dungeon_fighters_lvl_666, ConsumableElixirBuff("Devil's Pocket Watch", "DevilPocketWatch")),
+                                                        2005 : DungeonSpecialInfos("Slime Kingdom", 50, dungeon_fighters_lvl_slime, ConsumableElixirBuff("Slime ADN", "TrueSlime"))
                                                         }
 
 @dataclass

@@ -411,17 +411,23 @@ class TrueToxic(BuffFight):
         return 0, 0
 
 class MonsterTeam(BuffFight):
-    description:str = "Ses coups critiques soignent 1 HP."
+    description:str = "Ses coups critiques soignent 1 HP. Augmente la Strength proportionnellement à la Lethality (15%)."
     description_en:str = ""
     category:CategoryBuff = CategoryBuff.TEAM
+    def __init__(self, fighter:FightingBully):
+        super().__init__(fighter)
+        fighter.stats.strength += fighter.stats.lethality * 0.2
     def apply_heal(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
         if fighter == recap_round.attacker and recap_round.is_success_lethal and fighter.pv + 1 <= fighter.bully.max_pv:
             fighter.pv += 1
             return 1, 0
         return 0, 0
 class TrueMonster(BuffFight):
-    description:str = "Ses coups critiques soignent 1 HP et inflige 1 dégât supplémentaire."
+    description:str = "Ses coups critiques soignent 1 HP et inflige 1 dégât supplémentaire. Augmente la Strength proportionnellement à la Lethality (30%)"
     category:CategoryBuff = CategoryBuff.TEAM
+    def __init__(self, fighter:FightingBully):
+        super().__init__(fighter)
+        fighter.stats.strength += fighter.stats.lethality * 0.4
     def apply_damage(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> tuple[int, int]:
         if fighter == recap_round.attacker and recap_round.is_success_lethal and fighter.pv + 1 <= fighter.bully.max_pv:
             opponent.pv -= 1

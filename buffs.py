@@ -992,7 +992,7 @@ class TooPerfect(BuffFight):
                     setattr(opponent.stats, recap_round.vicious_target_str, new_value)
         return
 class PerfectSkin(BuffFight):
-    description:str = "Annule buffs négatifs à chaque round."
+    description:str = "Annule les buffs négatifs à chaque round."
     category:CategoryBuff = CategoryBuff.UNIQUE
     def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) :
         for b in fighter.buffs:

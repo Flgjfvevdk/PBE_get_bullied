@@ -571,7 +571,6 @@ class BuffStats(BuffFight):
     
     def __init__(self, fighter:FightingBully, value_coef:float=1.1):
         super().__init__(fighter)
-        self.name = ""
         
         fighter.stats.strength = round(max(1, fighter.stats.strength * value_coef), 1)
         fighter.stats.agility = round(max(1, fighter.stats.agility * value_coef), 1)

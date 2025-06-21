@@ -75,7 +75,7 @@ class DungeonSpecialInfos():
     reward_conso:Consumable|None = None
 
 dungeon_fighter_bully_list = [DungeonFightingBully(name="Thyr O'Flan", pv_max=5, seed=Seed(0.2, 0.45, 0.1, 0.25)),
-                              DungeonFightingBully(name="Grobrah Le Musclé", pv_max=7, seed=bully.Seed(0.65, 0.1, 0.2, 0.05)),
+                              DungeonFightingBully(name="Grobrah Le Musclé", pv_max=7, seed=bully.Seed(0.6, 0.15, 0.2, 0.05)),
                               DungeonFightingBully(name="Le Fou Furieux", pv_max=6, seed=bully.Seed(0.25, 0.2, 0.5, 0.05), buffs_tags=["Frustration"]),
                               DungeonFightingBully(name="L'Athlète", pv_max=6, seed=bully.Seed(0.4, 0.3, 0.1, 0.2)),
                               DungeonFightingBully(name="Craby", pv_max=6, seed=bully.Seed(0.2, 0.1, 0.4, 0.3)),

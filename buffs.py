@@ -563,6 +563,23 @@ class Petrified(BuffFight):
             fighter.stats.agility = 1
         return
 
+#Buff Stat
+class BuffStats(BuffFight):
+    description:str = "Augmente les stats du bully."
+    description_en:str = "Increases a statistic."
+    category:CategoryBuff = CategoryBuff.SPECIAL
+    
+    def __init__(self, fighter:FightingBully, value_coef:float=1.1):
+        super().__init__(fighter)
+        self.name = ""
+        
+        fighter.stats.strength = round(max(1, fighter.stats.strength * value_coef), 1)
+        fighter.stats.agility = round(max(1, fighter.stats.agility * value_coef), 1)
+        fighter.stats.lethality = round(max(1, fighter.stats.lethality * value_coef), 1)
+        fighter.stats.viciousness = round(max(1, fighter.stats.viciousness * value_coef), 1)
+    def apply_effect(self, fighter: FightingBully, opponent: FightingBully, recap_round: RecapRound) -> None:
+        fighter.buffs.remove(self)
+
 #Special Buff (for special occasion)
 class Friendship(BuffFight):
     description:str = "Tous tes amis t'adorent."

@@ -142,7 +142,6 @@ class EnemyRoom():
 
             #Permet de faire une interruption du combat et de changer de bully qui se bat.
             except InterruptionCombat as erreur:
-                print(erreur)
                 fighter = await self.fighter_change(ruin, fighter)
             else:
                 break

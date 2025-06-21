@@ -86,9 +86,9 @@ dungeon_fighter_bully_list = [DungeonFightingBully(name="Thyr O'Flan", pv_max=5,
                               DungeonFightingBully(name="Le Fourbe", pv_max=6, seed=bully.Seed(0.1, 0.4, 0.05, 0.45)),
                               DungeonFightingBully(name="Nulos", pv_max=5, seed=bully.Seed(0.1, 0.1, 0.4, 0.4))]
 
-dungeon_fighters_lvl_10 = [DungeonFightingBully(name="Serpent mutant", pv_max=12, seed=Seed(0.3, 0.3, 0.4, 0.0), buffs_tags=["Venomous"], rarity=Rarity.TOXIC, can_swap=True, exp_coef=1.0),
-                           DungeonFightingBully(name="Andy State", pv_max=10, seed=Seed(0.2, 0.4, 0.1, 0.3), buffs_tags=["Vilain"], rarity=Rarity.TOXIC, can_swap=True, exp_coef=1.0),
-                           DungeonFightingBully(name="Pollution", pv_max=20, seed = Seed(0.3, 0.3, 0.1, 0.3), buffs_tags=["Pollution"], rarity=Rarity.TOXIC, can_swap=True, exp_coef=1.2)
+dungeon_fighters_lvl_10 = [DungeonFightingBully(name="Serpent mutant", pv_max=12, seed=Seed(0.3, 0.3, 0.4, 0.0), buffs_tags=["Venomous", "BuffStats"], rarity=Rarity.TOXIC, can_swap=True, exp_coef=1.0),
+                           DungeonFightingBully(name="Andy State", pv_max=10, seed=Seed(0.2, 0.4, 0.1, 0.3), buffs_tags=["Vilain", "BuffStats"], rarity=Rarity.TOXIC, can_swap=True, exp_coef=1.0),
+                           DungeonFightingBully(name="Pollution", pv_max=20, seed = Seed(0.3, 0.3, 0.1, 0.3), buffs_tags=["Pollution", "BuffStats"], rarity=Rarity.TOXIC, can_swap=True, exp_coef=1.2)
                            ]
 
 dungeon_fighters_lvl_20 = [DungeonFightingBully(name="Vilain Slime !", pv_max=12, seed=Seed(0.48, 0.3, 0.02, 0.2), buffs_tags=["SlimyPunch", "SlimyBody"], rarity=Rarity.MONSTER, can_swap=True),
@@ -269,7 +269,6 @@ class Dungeon():
                 
             #Permet de faire une interruption du combat et de changer de bully qui se bat.
             except InterruptionCombat as erreur:
-                print(erreur)
                 fighting_bully_joueur = await self.fighter_change(fighting_bully_joueur)
                 num_bully_j = self.fighters_joueur.index(fighting_bully_joueur)
             else:

@@ -39,7 +39,7 @@ tuto_bully = "\
 \t- Si un bully à au moins 5 lvl de plus que sa victime, il ne gagne pas d'xp. À la place le joueur reçoit de la monnaie.\n\
 - Quand un bully meurt, si ce n'est pas un NOBODY, il ressucite et perd autant de niveaux que son nombre de morts.\n\
 - Les NOBODIES révèlent leur potentiel au lvl 15 …. \n\
-- Vous pouvez vous débarasser d'un bully en faisant ***!!suicide***\n\
+- Vous pouvez vous débarasser d'un bully en faisant ***!!sacrifice***\n\
 - Vous pouvez échanger des bullies avec la commande ***!!trade***\n\
 "
 

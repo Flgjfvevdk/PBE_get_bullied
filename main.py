@@ -2,6 +2,7 @@
 import math
 from dotenv import load_dotenv
 
+from tuto_text_manager import getTuto
 from utils.discord_servers import load_servers, save_server
 
 load_dotenv()
@@ -68,7 +69,6 @@ bot = GetBulliedBot(command_prefix = "$$", intents=intents)
 async def on_ready():
     print(f'{bot.user} is now running !')
     await shop.init_shop()
-    # await keys.init_keys_restock()
     await check_add_bot_database(bot)
     await arena_system.update_arenas(bot)
     await tournament.init_tournaments(bot)
@@ -147,7 +147,6 @@ async def bank(ctx: Context):
             await ctx.reply(TEXT_JOIN_THE_GAME)
             return
         await ctx.send(getText("bank").format(money=money.get_money_user(player), money_emoji=money.MONEY_EMOJI))
-        # await ctx.send(f"You have {money.get_money_user(player)} {money.MONEY_EMOJI}")
 
 
 
@@ -186,7 +185,7 @@ async def credits(ctx: Context):
     """Affiche les crédits"""
     await ctx.send(getText("credits"))
 
-@bot.command(aliases=['suicide', 'kill'])
+@bot.command(aliases=['kill'])
 @decorators.categories("Bully")
 async def sacrifice(ctx: Context):
     """Élimine un bully de son club"""
@@ -194,7 +193,6 @@ async def sacrifice(ctx: Context):
     lock = PlayerLock(user.id)
     if not lock.check():
         await ctx.send(getText("already_in_action"))
-        # await ctx.send("You are already in an action.")
         return
     with lock:
         async with database.new_session() as session:
@@ -214,47 +212,54 @@ async def sacrifice(ctx: Context):
 @decorators.categories("Tuto")
 async def tuto(ctx: Context):
     """Affiche un tutoriel général. Faites le si vous êtes perdu !"""
-    await ctx.channel.send(tuto_text.tuto)
+    await ctx.channel.send(getTuto(""))
+    # await ctx.channel.send(tuto_text.tuto)
+@bot.command()
+@decorators.categories("Tuto")
+async def tuto_all(ctx: Context):
+    """Affiche la liste des tutoriels. Faites le si vous êtes perdu !"""
+    await ctx.channel.send(getTuto("all"))
 @bot.command(aliases=['tuto_b'])
 @decorators.categories("Tuto", "Bully")
 async def tuto_bully(ctx: Context):
     """Affiche un tutoriel concernant le fonctionnemet des bullies"""
-    await ctx.channel.send(tuto_text.tuto_bully)
+    await ctx.channel.send(getTuto("bully"))
+    # await ctx.channel.send(tuto_text.tuto_bully)
 @bot.command(aliases=['tuto_f'])
 @decorators.categories("Tuto", "Bully")
 async def tuto_fight(ctx: Context):
     """Affiche un tutoriel concernant les combats"""
-    await ctx.channel.send(tuto_text.tuto_fight)
+    await ctx.channel.send(getTuto("fight"))
 @bot.command(aliases=['tuto_d', 'tuto_donjon'])
 @decorators.categories("Tuto", "Fight")
 async def tuto_dungeon(ctx: Context):
     """Affiche un tutoriel concernant les donjons"""
-    await ctx.channel.send(tuto_text.tuto_dungeon)
+    await ctx.channel.send(getTuto("dungeon"))
 @bot.command(aliases=['tuto_r', 'tuto_ruine'])
 @decorators.categories("Tuto", "Fight")
 async def tuto_ruin(ctx: Context):
     """Affiche un tutoriel concernant les ruines"""
-    await ctx.channel.send(tuto_text.tuto_ruin)
-@bot.command(aliases=['tuto_s'])
+    await ctx.channel.send(getTuto("ruin"))
+@bot.command(aliases=['tuto_s', 'tuto_buy'])
 @decorators.categories("Tuto", "Money")
 async def tuto_shop(ctx: Context):
-    """Affiche un tutoriel concernant le shop"""
-    await ctx.channel.send(tuto_text.tuto_shop)
+    """Affiche un tutoriel concernant les achats de bullies"""
+    await ctx.channel.send(getTuto("shop"))
 @bot.command(aliases=['tuto_lb', 'tuto_l'])
 @decorators.categories("Tuto", "Money")
 async def tuto_lootbox(ctx: Context):
     """Affiche un tutoriel concernant les lootbox"""
-    await ctx.channel.send(tuto_text.tuto_lootbox)
+    await ctx.channel.send(getTuto("shop"))
 @bot.command(aliases=['tuto_buffs'])
 @decorators.categories("Tuto", "Bully")
 async def tuto_buff(ctx: Context):
     """Affiche un tutoriel concernant les buffs"""
-    await ctx.channel.send(tuto_text.tuto_buff)
+    await ctx.channel.send(getTuto("conso"))
 @bot.command(aliases=['tuto_conso', 'tuto_consumables'])
 @decorators.categories("Tuto", "Consumable")
 async def tuto_consumable(ctx: Context):
     """Affiche un tutoriel concernant les consommables"""
-    await ctx.channel.send(tuto_text.tuto_consumable)
+    await ctx.channel.send(getTuto("conso"))
 @bot.command(aliases=['list_buff', 'liste_buff', 'liste_buffs', 'buffs', 'buff'])
 @decorators.categories("Tuto", "Bully")
 async def list_buffs(ctx: Context):

@@ -1,0 +1,19 @@
+Consommables :
+- Elixir : Donne (remplace) un buff de combat à un Bully.
+- Snack : Modifie les stats d'un Bully.
+- WaterXP : Fait regagner des niveaux perdus à un Bully.
+
+Comment les obtenir :
+- Elixirs & Snacks : Ruines, **!!snack_machine**, .
+- WaterXP : Commande **!!water_fountain**.
+
+Gestion :
+- Voir vos consommables : **!!print_consumables**
+- Utiliser un consommable : **!!use_consumable**
+- Liste des buffs : **!!list_buffs**
+
+Les buffs : 
+- Modifie les règles du combats pour avantager le possesseur.
+- Les buffs ont un TIER qui indique quel niveau de ruine il faut battre pour tenter de le gagner.
+- Dans un combat d'équipe, plusieurs alliés ne peuvent pas avoir le même buff UNIQUE.
+- Liste des buffs : **!!list_buffs**

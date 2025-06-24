@@ -1,0 +1,8 @@
+Les Ruines :
+- Commande : **!!ruin [niveau]** (ex : !!ruin 10).
+- Une ruine est idéale pour gagner de la monnaie.
+- Chaque ruine comprend une série de salle pouvant donner sur : un combat, un coffre, une salle piégée.
+- Les Bullies ne se régénèrent pas avant la fin de l'exploration de la ruine.
+- Pendant les combat contre un boss, le joueur peut échanger le Bully qui se bat quand il veut. 
+- Le Boss final laisse tomber un consommable (un elixir ou un snack).
+- Le niveau de la Ruine la plus élevée que vous avez battue détermine vos gains de **!!payday**.

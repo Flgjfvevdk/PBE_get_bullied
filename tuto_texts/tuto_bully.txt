@@ -1,0 +1,15 @@
+Les Bullies :
+- Consultez vos Bullies avec **!!club**.
+- Stockez-les en réserve avec **!!reserve** (max 10).
+- Chaque Bully possède une rareté (voir **!!tuto_rarity**).
+- Le niveau d'un Bully (lvl) augmente lorsqu'il cumule autant d'expérience que son niveau.
+- Les Bullies ont des stats (Strength, Agility, Lethality, Viciousness) qui augmente quand ils gagnent en niveau.
+
+Points importants :
+- La mort des NOBODY est définitivement.
+- Les autres Bully ressuscite mais perdent des niveaux égaux à leur nombre de morts.
+- Les NOBODY révèlent leur potentiel au niveau 15...
+- Les combats font gagner de l'expérience ainsi que de la monnaie, selon la rareté du Bully vaincu.
+- Les Bullies trop forts (5 lvl de plus que l'ennemi) ne gagnent pas d'expérience, uniquement de l'argent.
+- Échangez vos Bullies avec **!!trade @user**.
+- Abandonnez un Bully avec **!!sacrifice**.

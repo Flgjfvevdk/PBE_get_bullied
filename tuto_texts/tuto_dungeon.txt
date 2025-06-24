@@ -1,0 +1,9 @@
+Les Donjons :
+- Commande : **!!dungeon [niveau]**.
+- Un donjon est idéal pour gagner de l'expérience.
+- Chaque donjon comprend une série de combats.
+- Les Bullies ne se régénèrent pas avant la fin du donjon.
+- Les Donjons de pallier (niveaux 10, 20, 30, 40, 50) sont des combats de boss et doivent être vaincus pour atteindre le palier supérieur.
+- Pendant les combat contre un boss, le joueur peut échanger le Bully qui se bat quand il veut. 
+- Vaincre donjon multiplie l'expérience reçu par les Bullies pendant le donjon.
+

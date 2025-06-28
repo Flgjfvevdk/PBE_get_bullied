@@ -1,4 +1,4 @@
-Les Ruines :
+__Les Ruines :__
 - Commande : **!!ruin [niveau]** (ex : !!ruin 10).
 - Une ruine est idéale pour gagner de la monnaie.
 - Chaque ruine comprend une série de salle pouvant donner sur : un combat, un coffre, une salle piégée.

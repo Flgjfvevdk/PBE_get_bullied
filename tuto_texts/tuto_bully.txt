@@ -1,11 +1,11 @@
-Les Bullies :
+__Les Bullies :__
 - Consultez vos Bullies avec **!!club**.
 - Stockez-les en réserve avec **!!reserve** (max 10).
 - Chaque Bully possède une rareté (voir **!!tuto_rarity**).
 - Le niveau d'un Bully (lvl) augmente lorsqu'il cumule autant d'expérience que son niveau.
 - Les Bullies ont des stats (Strength, Agility, Lethality, Viciousness) qui augmente quand ils gagnent en niveau.
 
-Points importants :
+__Points importants :__
 - La mort des NOBODY est définitivement.
 - Les autres Bully ressuscite mais perdent des niveaux égaux à leur nombre de morts.
 - Les NOBODY révèlent leur potentiel au niveau 15...

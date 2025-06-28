@@ -1,4 +1,4 @@
-Les Donjons :
+__Les Donjons :__
 - Commande : **!!dungeon [niveau]**.
 - Un donjon est idéal pour gagner de l'expérience.
 - Chaque donjon comprend une série de combats.

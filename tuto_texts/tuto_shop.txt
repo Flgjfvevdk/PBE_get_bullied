@@ -1,9 +1,9 @@
-La monnaie : 
+__La monnaie : __
 - Gagner facilement de la monnaie : **!!payday**
 - Pour afficher votre monnaie total : **!!bank**
 - Pour recrutez des bullies gratuitements : **!!hire** ou **!!hire_all**
 
-Shop :
+__Shop :__
 - Le Shop est commun à tous les joueurs du serveur.
 - Consultez le shop avec **!!shop**. Le Shop se reset toutes les 10 minutes.
 - Probabilités de rareté :
@@ -12,7 +12,7 @@ Shop :
     - Devastator : 21%
     - Sublime : 9%
 
-Lootbox :
+__Lootbox :__
 - Achetez une lootbox avec **!!lootbox**.
 - Niveau requis : avoir vaincu un donjon du niveau de la lootbox.
 - Probabilités de rareté :

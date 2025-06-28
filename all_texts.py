@@ -100,7 +100,7 @@ texts = {
         "title_challenge": "{user1} vs {user2}",
 
         #interact_game
-        "already_joined_game": "Vous avez déjà rejoint le jeu !",
+        "already_joined_game": "Vous avez déjà rejoint le jeu ! (!!tuto pour le tutoriel)",
         "other_join" : "{user} a rejoint le jeu !",
         "welcome_adventure": "Bienvenue dans l'aventure ! (!!tuto)",
         "invite_join_game": "{user}, voulez-vous rejoindre le jeu ?",
@@ -319,7 +319,7 @@ texts = {
         "title_challenge": "{user1} vs {user2}",
 
         #interact_game
-        "already_joined_game": "You have already joined the game!",
+        "already_joined_game": "You have already joined the game! (!!tuto for the turoial)",
         "other_join" : "{user} has joined the game!",
         "welcome_adventure": "Welcome to the adventure! (!!tuto)",
         "invite_join_game": "{user}, do you want to join the game?",

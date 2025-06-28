@@ -1,11 +1,11 @@
 Get Bullied est un jeu textuel où vous recrutez des Bullies pour combattre, explorer des donjons, affronter d'autres joueurs et grimper en niveau. 
 
-Les Bullies :
+__Les Bullies :__
 - Sont vos combattants. Chacun possède des stats (Strength, Agility, Lethality, Viciousness), un niveau (lvl) ainsi qu'une rareté (NOBODY, TOXIC, MONSTER, DEVASTATOR, SUBLIME).
 - Se battent à mort en duel, en équipe, ou dans des donjons et des ruines.
 - Gagnent de l'expérience, montent en niveau, peuvent mourir, ressusciter, et changer de stats.
 
-Comment débuter :
+__Comment débuter :__
 1. Utilisez **!!join** pour rejoindre le jeu.
 2. Invitez des amis avec **!!invite @user** (récompense de parrainage).
 3. Recrutez vos premiers Bullies avec **!!hire** ou **!!hire_all**.

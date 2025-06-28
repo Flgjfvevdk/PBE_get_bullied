@@ -1,4 +1,4 @@
-Tutos : 
+__Tutos : __
 - tuto général : **!!tuto**
 - tuto pour les combattants (Bully) : **!!tuto_bully**
 - tuto des combats : **!!tuto_fight**

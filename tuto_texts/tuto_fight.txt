@@ -1,20 +1,20 @@
-Les combats :
+__Les combats :__
 - Duel à mort : **!!challenge @adversaire**
 - Duel amical : **!!fun_challenge @adversaire**
 - Combat en équipe amical : **!!team_challenge @adversaire**
 - Les combats suivent un schéma où vos Bullies attaquent à tour de rôle.
 - Les statistiques définissent la probabilité d'activer un effet pour prendre l'avantage pendant le combat
 
-Les Stats :
+__Les Stats :__
 - Strength : Comparée à celle de l'adversaire pour bloquer une attaque.
 - Agility : Comparée à celle de l'adversaire pour tenter de voler un tour.
 - Lethality : Comparée à la Strength et à la Lethality adverse pour infliger des dégâts supplémentaires.
 - Viciousness : Comparée à celle de l'adversaire pour tenter de diminuer sa meilleure stat à chaque attaque.
 
-La comparaison : 
+__La comparaison : __
 - Quand on dit qu'une statistique est comparée, cela signifie qu'on a une probabilité d'activer un effet qui dépend du ratio entre 2 statistiques.
 - Avoir une statistique à peine meilleur de celle à laquelle elle est comparé augmente beaucoup les chances de gagner une comparaison.
 
-💥 Astuce :
+__💥 Astuce :__
 - Pour gagner un combat, il faut mieux choisir un Bully qui a le plus de statistiques différentes au dessus de celles de l'adversaire.
 

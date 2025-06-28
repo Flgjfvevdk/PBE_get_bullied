@@ -84,6 +84,51 @@ async def check_add_bot_database(bot: Bot) -> None:
     async with database.new_session() as session:
         await interact_game.make_bot_join(bot.user, session)
 
+
+@bot.event
+async def on_guild_join(guild: discord.Guild):
+    """Called when the bot joins a new server"""
+    print(f'Bot joined new server: {guild.name} (ID: {guild.id})')
+    
+    # Get admin list from your existing decorators module
+    from utils.decorators import ADMIN_LIST
+    
+    # Create embed with server information
+    embed = discord.Embed(
+        title="🎉 Bot Added to New Server!",
+        color=0x00ff00,
+        timestamp=discord.utils.utcnow()
+    )
+    embed.add_field(name="Server Name", value=guild.name, inline=True)
+    embed.add_field(name="Server ID", value=str(guild.id), inline=True)
+    embed.add_field(name="Member Count", value=str(guild.member_count), inline=True)
+    embed.add_field(name="Owner", value=f"{guild.owner} (ID: {guild.owner_id})" if guild.owner else "Unknown", inline=False)
+    embed.add_field(name="Created At", value=guild.created_at.strftime("%Y-%m-%d %H:%M:%S UTC"), inline=True)
+    
+    if guild.icon:
+        embed.set_thumbnail(url=guild.icon.url)
+    
+    embed.set_footer(text="Server Join Notification")
+    
+    # Prepare the command for easy copy-paste
+    prepared_command = f"$$admin_add_server_to_list {guild.id}"
+    command_text = f"**To add this server to the game:**\n```{prepared_command}```"
+    
+    # Send notification to all admins
+    for admin_id in ADMIN_LIST:
+        try:
+            admin_user = await bot.fetch_user(admin_id)
+            await admin_user.send(embed=embed)
+            await admin_user.send(command_text)
+            print(f"Notification sent to admin: {admin_user.name}")
+        except discord.NotFound:
+            print(f"Admin user with ID {admin_id} not found")
+        except discord.Forbidden:
+            print(f"Cannot send DM to admin with ID {admin_id}")
+        except Exception as e:
+            print(f"Error sending notification to admin {admin_id}: {e}")
+    
+
 # Command général ____________________________________________________________________________________
 @bot.command()
 @decorators.categories("Game")
@@ -210,10 +255,9 @@ async def sacrifice(ctx: Context):
 #Les tutos : ___________________________________________________________
 @bot.command()
 @decorators.categories("Tuto")
-async def tuto(ctx: Context):
+async def tuto(ctx: Context, tuto_name:str=""):
     """Affiche un tutoriel général. Faites le si vous êtes perdu !"""
-    await ctx.channel.send(getTuto(""))
-    # await ctx.channel.send(tuto_text.tuto)
+    await ctx.channel.send(getTuto(tuto_name))
 @bot.command()
 @decorators.categories("Tuto")
 async def tuto_all(ctx: Context):
@@ -224,7 +268,11 @@ async def tuto_all(ctx: Context):
 async def tuto_bully(ctx: Context):
     """Affiche un tutoriel concernant le fonctionnemet des bullies"""
     await ctx.channel.send(getTuto("bully"))
-    # await ctx.channel.send(tuto_text.tuto_bully)
+@bot.command(aliases=['tuto_rare'])
+@decorators.categories("Tuto", "Bully")
+async def tuto_rarity(ctx: Context):
+    """Affiche un tutoriel concernant le fonctionnemet des bullies"""
+    await ctx.channel.send(getTuto("rarity"))
 @bot.command(aliases=['tuto_f'])
 @decorators.categories("Tuto", "Bully")
 async def tuto_fight(ctx: Context):
@@ -756,19 +804,51 @@ async def admin_new_shop(ctx: Context):
 @bot.command()
 @decorators.is_admin()
 @decorators.categories("Admin")
-async def admin_add_server_to_list(ctx: Context):
-    if ctx.guild is None:
-        await ctx.send('This command can only be used in a server, not in a DM.')
-        return
+async def admin_add_server_to_list(ctx: Context, server_id: Optional[int] = None):
+    if server_id is None:
+        if ctx.guild is None:
+            await ctx.send('This command can only be used in a server, not in a DM.')
+            return
+        server_id = ctx.guild.id
+        server_name = ctx.guild.name
+    else:
+        try:
+            guild = bot.get_guild(server_id)
+            server_name = guild.name if guild else f"Unknown Server (ID: {server_id})"
+        except:
+            server_name = f"Unknown Server (ID: {server_id})"
+            return
     
     shop_servers_id = load_servers()
-    server_id = ctx.guild.id
     if server_id not in shop_servers_id:
         shop_servers_id.append(server_id)
         save_server(shop_servers_id)
-        await ctx.send(f'Server {ctx.guild.name} has been saved!')
+        await ctx.send(f'Server {server_name} has been added to the list!')
+        
+        # Setup shop, arena, and tournament for the new server
+        try:
+            # Setup shop for this specific server
+            await shop.setup_shop_for_server(server_id)
+            await ctx.send(f'✅ Shop created for server {server_name}')
+        except Exception as e:
+            await ctx.send(f'❌ Failed to create shop for server {server_name}: {e}')
+        
+        try:
+            # Setup arena for this specific server
+            await arena_system.setup_arena_for_server(bot, server_id)
+            await ctx.send(f'✅ Arena created for server {server_name}')
+        except Exception as e:
+            await ctx.send(f'❌ Failed to create arena for server {server_name}: {e}')
+        
+        try:
+            # Setup tournament for this specific server
+            await tournament.setup_tournament_for_server(bot, server_id)
+            await ctx.send(f'✅ Tournament initialized for server {server_name}')
+        except Exception as e:
+            await ctx.send(f'❌ Failed to initialize tournament for server {server_name}: {e}')
+            
     else:
-        await ctx.send(f'Server {ctx.guild.name} is already saved.')
+        await ctx.send(f'Server {server_name} is already in the list.')
 
 @bot.command()
 @decorators.is_admin()
@@ -905,7 +985,6 @@ async def del_all_c(ctx: Context):
     if not lock.check():
         await ctx.send("You are already in an action.")
         return
-
     with lock:
         async with database.new_session() as session:
             player = await session.get(Player, ctx.author.id)
@@ -971,7 +1050,6 @@ async def reset_bully_images(ctx: Context):
     await ctx.send(f"Successfully reset images for {count} bullies!")
 
 bot.remove_command('help')
-
 @bot.command(name='help')
 @decorators.categories("Game")
 async def custom_help(ctx: Context):

@@ -1,4 +1,3 @@
-
 import asyncio
 from pathlib import Path
 import discord
@@ -293,6 +292,25 @@ async def update_arenas(bot : Bot):
                 print(f"Created a new arena for server {server_id}")
 
         await session.commit()
+
+async def setup_arena_for_server(bot: Bot, server_id: int):
+    """Setup arena for a specific server"""
+    async with database.new_session() as session:
+        arena = await session.get(Arena, server_id)
+        server = bot.get_guild(server_id)
+
+        if arena is None and server is not None:
+            new_arena = Arena(name=server.name)
+            new_arena.id = server_id
+
+            session.add(new_arena)
+            await session.flush() 
+            if bot.user is not None:    
+                bot_player = await session.get(Player, bot.user.id)
+                if bot_player is not None:
+                    await init_arena(bot_player, new_arena, session)
+            print(f"Created a new arena for server {server_id}")
+            await session.commit()
 
 async def get_bonus_payday(session: AsyncSession, server_id:int,  player_id_str: str) -> int:
     arena = await session.get(Arena, server_id)

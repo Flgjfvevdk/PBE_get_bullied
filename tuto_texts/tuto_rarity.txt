@@ -1,4 +1,4 @@
-La Rareté : 
+__La Rareté : __
 - Il y a 5 types de rareté : NOBODY < TOXIC < MONSTER < DEVASTATOR < SUBLIME (ordonné par puissance).
 - La rareté d'un bully indique comment ses statistiques augmentent à chaque niveau.
 - Un Bully avec une rareté élevé montent gagne moins vite de l'xp, et en donne plus en mourrant.

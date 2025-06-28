@@ -10,6 +10,6 @@ Points importants :
 - Les autres Bully ressuscite mais perdent des niveaux égaux à leur nombre de morts.
 - Les NOBODY révèlent leur potentiel au niveau 15...
 - Les combats font gagner de l'expérience ainsi que de la monnaie, selon la rareté du Bully vaincu.
-- Les Bullies trop forts (5 lvl de plus que l'ennemi) ne gagnent pas d'expérience, uniquement de l'argent.
+- Les Bullies trop forts (5 lvl de plus que l'ennemi) ne gagnent pas d'expérience, uniquement de la monnaie.
 - Échangez vos Bullies avec **!!trade @user**.
 - Abandonnez un Bully avec **!!sacrifice**.

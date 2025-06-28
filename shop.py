@@ -220,3 +220,11 @@ def restock_message() -> str:
     return getText("shop_restocking").format(seconds=SHOP_CLOSE_WAIT_TIME)
     return (f"```The shop is restocking. Please wait <{SHOP_CLOSE_WAIT_TIME} seconds```")
 
+async def setup_shop_for_server(server_id: int) -> None:
+    """Setup shop for a specific server"""
+    if server_id not in bullies_in_shop_server:
+        bullies_in_shop_server[server_id] = []
+        for k in range(SHOP_MAX_BULLY):
+            b = new_bully_shop()
+            bullies_in_shop_server[server_id].append(b)
+

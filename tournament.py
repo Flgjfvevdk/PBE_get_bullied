@@ -139,13 +139,9 @@ def is_sunday_utc():
 tournaments:dict[int, Tournament] = {}
 
 async def init_tournaments(bot:Bot):
-    # channel_id = 1004117014358528063
-    # channel = await bot.fetch_channel(channel_id)
     servers_ids = load_servers()
     for server_id in servers_ids:
         tournaments[server_id] = Tournament(bot, None)
-    # if isinstance(channel, discord.abc.Messageable):
-    #     tournaments[0] = Tournament(bot, channel)
     
 def create_random_snack(value:int)->ConsumableAliment:
     return random.choice(list(AlimentEnum)).new_conso(value)
@@ -220,3 +216,8 @@ def get_reward(score: int, player: Player) -> int:
         reward.grant(player)
         return score_index
     return 0
+
+async def setup_tournament_for_server(bot: Bot, server_id: int):
+    """Setup tournament for a specific server"""
+    if server_id not in tournaments:
+        tournaments[server_id] = Tournament(bot, None)

@@ -16,7 +16,6 @@ from utils.database import Base, new_session, DBPath
 from sqlalchemy.ext.mutable import MutableComposite
 from all_texts import getText
 
-
 BULLY_RARITY_BASE_POINTS = [15, 17, 19, 21, 23]
 BULLY_RARITY_LEVEL = [1, 1.1, 1.25, 1.5, 2]
 BULLY_RARITY_DEATH_EXP_COEFF = [0.5, 1, 1.25, 1.5, 2, 2]
@@ -418,14 +417,16 @@ class Bully(Base):
     def get_print(self, compact_print = False):
         return str_print_bully(self, compact_print)
     
-    def str_all_infos(self) :
+    def str_all_infos(self, lang:str) :
         text = ""
         hp_text = f"Max HP : {self.max_pv}"
         buff_text = ""
         if self.buff_fight_tag != 'NoBuff':
-            import buffs
-            buff_category_str = (buffs.name_to_buffs_class[self.buff_fight_tag].category.name).replace("LVL_", "TIER ")
-            buff_text = f"Buff - {self.buff_fight_tag} [{buff_category_str}] : {buffs.name_to_buffs_class[self.buff_fight_tag].description}\n"
+            from buffs import get_buff_description, name_to_buffs_class
+            BuffClass = name_to_buffs_class[self.buff_fight_tag]
+            buff_category_str = (BuffClass.category.name).replace("LVL_", "TIER ")
+            # buff_text = f"Buff - {self.buff_fight_tag} [{buff_category_str}] : {buff_type.description}\n"
+            buff_text = f"Buff : {self.buff_fight_tag} - [{buff_category_str}]  {get_buff_description(BuffClass, lang)}\n"
             
         win_lose_text = f"Crushed bullies  : {self.nb_win_true_fight} | Brutal losses : {self.nb_loose_true_fight}"
 

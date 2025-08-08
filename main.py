@@ -339,8 +339,7 @@ async def tuto_consumable(ctx: Context):
 @decorators.categories("Tuto", "Bully")
 async def list_buffs(ctx: Context):
     """Affiche la liste des buffs"""
-    txt = ""
-    from buffs import name_to_buffs_class
+    from buffs import name_to_buffs_class, get_buff_description
     from fighting_bully import CategoryBuff
     dict_text:dict[str, str] = {"Buffs Positifs":"", "Buffs Négatifs":""}
     for buffClass in name_to_buffs_class.values():
@@ -349,7 +348,11 @@ async def list_buffs(ctx: Context):
         category = buffClass.category.name
         if category not in dict_text:
             dict_text[category] = ""
-        dict_text[category] += f"{buffClass.__name__} : {buffClass.description}\n"
+        
+        # dict_text[category] += f"{buffClass.__name__} : {buffClass.description}\n"
+
+        lang = language_manager_instance.get_server_language(ctx.guild.id if ctx.guild is not None else None)
+        dict_text[category] += f"{buffClass.__name__} : {get_buff_description(buffClass, lang=lang)}\n" 
 
     await paginate_dict(ctx, dict_text=dict_text)
 

@@ -388,8 +388,8 @@ class Fight():
     def texts_fight(self) -> tuple[str, str, str]:
         barre_pv_1 = value_to_bar_str(self.fighter_1.pv, max_value= self.max_pv_1)
         barre_pv_2 = value_to_bar_str(self.fighter_2.pv, max_value= self.max_pv_2)
-        text_1 = buff_to_str(self.fighter_1.buffs)
-        text_2 = buff_to_str(self.fighter_2.buffs)
+        text_1 = buff_to_str(self.fighter_1.buffs, lang=self.lang)
+        text_2 = buff_to_str(self.fighter_2.buffs, lang=self.lang)
 
         pv1 = round(self.fighter_1.pv,1); pv2 = round(self.fighter_2.pv,1)
         text_mid = CText(
@@ -624,11 +624,12 @@ def value_to_bar_str(v:int, max_value=10) -> str:
         t += "."
     return t
 
-def buff_to_str(buffs:list[fighting_bully.BuffFight]):
+def buff_to_str(buffs:list[fighting_bully.BuffFight], lang:str):
+    from buffs import get_buff_description
     txt = "\n" if buffs == [] else "\nBuff : \n" 
     for b in buffs : 
-        # txt += f" {b.name} |"
-        txt += f" **{b.name}** : {b.description}\n"
+        # txt += f" **{b.name}** : {b.description}\n"
+        txt += f" **{b.name}** : {get_buff_description(b, lang=lang)}\n"
     return txt
 
 # Les récompenses 

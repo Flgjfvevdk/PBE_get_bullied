@@ -298,7 +298,7 @@ async def print_bullies(ctx: Context, player: Player, compact_print=False, print
         if(not bully_selected) : 
             raise Exception("No selected bully")
             
-        text_info = bully_selected.str_all_infos()
+        text_info = bully_selected.str_all_infos(lang=lang)
         if print_images:
             if images:
                 filename = str(images[bully_selected.id])

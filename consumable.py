@@ -113,7 +113,8 @@ class ConsumableElixirBuff(Consumable):
     def get_effect(self, lang:Optional[str] = None) -> str:
         try : 
             BuffClass:type[BuffFight] = getattr(buffs, self.buff_tag)
-            return f"{BuffClass.description}"
+            return buffs.get_buff_description(BuffClass, lang=lang)
+            # return f"{BuffClass.description}"
         except Exception:
             return f"ERROR ELIXIR"
 

@@ -19,7 +19,7 @@ class CategoryBuff(Enum):
 
 class BuffFight():
     description:str = "No buff"
-    description_en:str =""
+    description_en:str ="No buff"
     category:CategoryBuff = CategoryBuff.NONE
     def __init__(self, fighter:FightingBully):
         self.name:str = self.__class__.__name__

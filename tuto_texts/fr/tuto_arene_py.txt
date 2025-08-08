@@ -1,0 +1,4 @@
+__Arène :__
+- Chaque serveur possède sa propre arène (**!!arene**).
+- Les 3 équipes les plus puissantes de l'arène sont enregistrés et peuvent être affronté par d'autres joueurs.
+- Tant que votre équipe est dans l'arène, vous bénéficiez d'un bonus de revenu avec **!!payday**.

@@ -1,4 +1,8 @@
-lang = "fr"
+from typing import Optional
+from utils.language_manager import language_manager_instance, DEFAULT_LANG
+from discord.ext.commands import Context
+
+# lang_default = "fr"
 
 
 texts = {
@@ -31,6 +35,7 @@ texts = {
 
         #arena
         "arena_enter":"{user} entre dans l'arène !",
+        "arena_title_thread":"{user} est dans l'arène",
         "arena_ask_enter": "{user}, voulez-vous entrer dans l'arène ? (Prix = {price} {money_emoji})",
         "arena_label":"Entrer dans l'arène (et payer {price})",
         "arena_no_money": "{user}, vous n'avez pas assez de {money_emoji} pour entrer dans l'arène. (Prix = {price})",
@@ -218,8 +223,59 @@ texts = {
         "tournament_end": "```Le tournoi est terminé ! Résultats : \n{results}```",
         "tournament_recap_fight": "{user1} VS {user2} : {winner} a gagné",
         "tournament_winner": "{user} est le vainqueur du tournoi avec un score de {score}.",
-        "tournament_player_score": "{user} : {score} points"
+        "tournament_player_score": "{user} : {score} points",
 
+        # Category translations
+        "category_Game": "Jeu",
+        "category_Bully": "Bully",
+        "category_Fight": "Combat",
+        "category_Money": "Argent",
+        "category_Tuto": "Tutoriel",
+        "category_Consumable": "Consommable",
+        "category_Uncategorized": "Uncategorized Commands",
+        "category_Admin": "Admin",
+        
+        # Command help texts
+        "help_join": "Pour rejoindre le jeu",
+        "help_invite": "Pour inviter un ami à rejoindre le jeu",
+        "help_payday": "Pour recevoir des 🩹",
+        "help_bank": "Afficher ses ressources",
+        "help_patchnote": "Nouvelle mise à jour récente",
+        "help_leaderboard": "Affiche le classement des joueurs en fonction du donjon maximum terminé",
+        "help_print_shop": "Affiche le shop de ce server",
+        "help_buy_lootbox": "Pour acheter une lootbox",
+        "help_credits": "Affiche les crédits",
+        "help_sacrifice": "Élimine un bully de son club",
+        "help_tuto": "Affiche un tutoriel général. Faites le si vous êtes perdu !",
+        "help_tuto_all": "Affiche la liste des tutoriels. Faites le si vous êtes perdu !",
+        "help_tuto_bully": "Affiche un tutoriel concernant le fonctionnemet des bullies",
+        "help_tuto_rarity": "Affiche un tutoriel concernant le fonctionnemet des bullies",
+        "help_tuto_fight": "Affiche un tutoriel concernant les combats",
+        "help_tuto_dungeon": "Affiche un tutoriel concernant les donjons",
+        "help_tuto_ruin": "Affiche un tutoriel concernant les ruines",
+        "help_tuto_shop": "Affiche un tutoriel concernant les achats de bullies",
+        "help_tuto_economy": "Affiche un tutoriel concernant l'économie du jeu",
+        "help_tuto_lootbox": "Affiche un tutoriel concernant les lootbox",
+        "help_tuto_buff": "Affiche un tutoriel concernant les buffs",
+        "help_tuto_consumable": "Affiche un tutoriel concernant les consommables",
+        "help_list_buffs": "Affiche la liste des buffs",
+        "help_challenge": "Pour provoquer un joueur en duel à mort, bully vs bully",
+        "help_fun_challenge": "Pour provoquer un joueur en duel amical, bully vs bully",
+        "help_team_challenge": "Pour provoquer un joueur en combat (amical) TEAM vs TEAM",
+        "help_explore_dungeon": "Pour explorer un donjon. Très utile pour xp rapidement",
+        "help_explore_ruin": "Pour explorer une ruine. Très utile pour obtenir des items et de la monnaie",
+        "help_arena": "Pour afficher l'arène",
+        "help_club": "Affiche les bullies d'un joueur",
+        "help_print_reserve": "Affiche les bullies de la réserve d'un joueur",
+        "help_trade": "Pour faire un échange de bullies",
+        "help_hire": "Pour engager un NOBODY",
+        "help_hire_all": "Pour remplir son club de NOBODY",
+        "help_use_consumable": "Pour utiliser un consommable",
+        "help_print_consumables": "Pour afficher vos consommables",
+        "help_del_conso": "Pour supprimer un consommable",
+        "help_snack_machine": "Pour acheter un consommable snack (modifie les stats)",
+        "help_water_fountain": "Pour acheter un consommable eau XP",
+        "help_custom_help": "Affiche l'aide des commandes par catégorie",
     },
     "en":{
         "join":"Please join the game first ! (!!join)",
@@ -250,6 +306,7 @@ texts = {
 
         #arena
         "arena_enter":"{user} enters the arena!",
+        "arena_title_thread":"{user} is in the arena",
         "arena_ask_enter": "{user}, do you want to enter the arena?  (Price = {price} {money_emoji})",
         "arena_label":"Enter The Arena (and pay {price})",
         "arena_no_money": "{user}, you do not have enough {money_emoji} to enter the arena. (Price = {price})",
@@ -435,14 +492,78 @@ texts = {
         "tournament_end": "```The tournament is over! Results: \n{results}```",
         "tournament_recap_fight": "{user1} VS {user2} : {winner} won",
         "tournament_winner": "{user} is the winner or the Sunday tournament with a score of {score}.",
-        "tournament_player_score": "{user} : {score} points"
+        "tournament_player_score": "{user} : {score} points",
+
+        # Category translations
+        "category_Game": "Game",
+        "category_Bully": "Bully",
+        "category_Fight": "Fight",
+        "category_Money": "Money",
+        "category_Tuto": "Tutorial",
+        "category_Consumable": "Consumable",
+        "category_Uncategorized": "Uncategorized Commands",
+        "category_Admin": "Admin",
+        
+        # Command help texts
+        "help_join": "Join the game",
+        "help_invite": "Invite a friend to join the game",
+        "help_payday": "Receive bandages",
+        "help_bank": "Display your resources",
+        "help_patchnote": "Show recent updates",
+        "help_leaderboard": "Show player ranking based on maximum completed dungeon",
+        "help_print_shop": "Display this server's shop",
+        "help_buy_lootbox": "Buy a lootbox",
+        "help_credits": "Display credits",
+        "help_sacrifice": "Eliminate a bully from your club",
+        "help_tuto": "Display a general tutorial. Use this if you're lost!",
+        "help_tuto_all": "Display the list of tutorials. Use this if you're lost!",
+        "help_tuto_bully": "Display a tutorial on how bullies work",
+        "help_tuto_rarity": "Display a tutorial on bullies rarity",
+        "help_tuto_fight": "Display a tutorial on fights",
+        "help_tuto_dungeon": "Display a tutorial on dungeons",
+        "help_tuto_ruin": "Display a tutorial on ruins",
+        "help_tuto_shop": "Display a tutorial on buying bullies",
+        "help_tuto_economy": "Display a tutorial on the game's economy",
+        "help_tuto_lootbox": "Display a tutorial on lootboxes",
+        "help_tuto_buff": "Display a tutorial on buffs",
+        "help_tuto_consumable": "Display a tutorial on consumables",
+        "help_list_buffs": "Display the list of buffs",
+        "help_challenge": "Challenge a player to a death duel, bully vs bully",
+        "help_fun_challenge": "Challenge a player to a friendly duel, bully vs bully",
+        "help_team_challenge": "Challenge a player to a (friendly) TEAM vs TEAM fight",
+        "help_explore_dungeon": "Explore a dungeon. Very useful for quick XP",
+        "help_explore_ruin": "Explore a ruin. Very useful for obtaining items and currency",
+        "help_arena": "Display the arena",
+        "help_club": "Display a player's bullies",
+        "help_print_reserve": "Display the bullies in a player's reserve",
+        "help_trade": "Exchange bullies with another player",
+        "help_hire": "Hire a NOBODY",
+        "help_hire_all": "Fill your club with NOBODIES",
+        "help_use_consumable": "Use a consumable",
+        "help_print_consumables": "Display your consumables",
+        "help_del_conso": "Delete a consumable",
+        "help_snack_machine": "Buy a snack consumable (modifies stats)",
+        "help_water_fountain": "Buy a water XP consumable",
+        "help_custom_help": "Display command help by category",
     }
 }
 
-
-def getText(key:str):
+def getText(key: str, guild_id: Optional[int] = None, lang: Optional[str] = None, ctx:Optional[Context] = None) -> str:
+    """
+    Get the text for a given key in the specified language.
+    If lang is None, it will use the language of the server (guild_id) or the context (ctx).
+    If guild_id is provided, it will use that guild's language.
+    If ctx is provided and guild_id is None, it will use the guild ID from the context.
+    """
+    if lang is None:
+        if ctx is not None and guild_id is None:
+            guild_id = ctx.guild.id if ctx.guild else None
+        lang = language_manager_instance.get_server_language(guild_id)
     return texts[lang][key]
 
+def getTextFromContext(key: str, ctx:Context) -> str:
+    guild_id = ctx.guild.id if ctx.guild else None
+    return getText(key, guild_id)
 
 def verify_texts_keys() -> bool:
     """

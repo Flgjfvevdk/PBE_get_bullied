@@ -14,6 +14,7 @@ import asyncio
 from player_info import Player
 import buffs
 import inspect
+from utils.language_manager import language_manager_instance
 
 from typing import Any, Optional, overload, Type
 from dataclasses import dataclass, field, KW_ONLY
@@ -38,7 +39,7 @@ classes = [member[1] for member in inspect.getmembers(buffs) if inspect.isclass(
 
 
 class Trap :
-    def __init__(self, level: int, rarity: Rarity, stat_index: int|None = None, damage = 4):
+    def __init__(self, level: int, rarity: Rarity, stat_index: int|None = None, damage = 4, lang:Optional[str] = None):
         init_R = rarity.base_points
         coef_R = rarity.coef_level_points
 
@@ -55,9 +56,9 @@ class Trap :
         self.text_reussite = ""
         self.text_echec = ""
 
-        self.text_intro = getText(f"trap_{self.stat_str}_intro")
-        self.text_reussite = getText(f"trap_{self.stat_str}_success")
-        self.text_echec = getText(f"trap_{self.stat_str}_fail")
+        self.text_intro = getText(f"trap_{self.stat_str}_intro", lang=lang)
+        self.text_reussite = getText(f"trap_{self.stat_str}_success", lang=lang)
+        self.text_echec = getText(f"trap_{self.stat_str}_fail", lang=lang)
 
     def clash(self, fighter: FightingBully) -> bool:
         stat_value = getattr(fighter.stats, self.stat_str)
@@ -82,7 +83,7 @@ class EnemyRoom():
         return EnemyRoom(enemy_fighter)
     
     async def interact(self, ruin: "Ruin") -> bool:
-        await ruin.thread.send(getText("ruin_enemy_intro").format(enemy=bully.mise_en_forme_str(self.enemy.get_print())))
+        await ruin.thread.send(getText("ruin_enemy_intro", lang=ruin.lang).format(enemy=bully.mise_en_forme_str(self.enemy.get_print())))
         
         while True:
             fighter = await self.fighter_choice(ruin)
@@ -105,8 +106,7 @@ class EnemyRoom():
             raise #On propage l'exception
 
         if (fighting_bully_joueur.pv <= 0):
-            await ruin.thread.send(getText("ruin_bully_error"))
-            # await ruin.thread.send(f"Your bully is dead or do not exist.\nYour team left the ruin.") 
+            await ruin.thread.send(getText("ruin_bully_error", lang=ruin.lang))
             raise IndexError
         
         return fighting_bully_joueur
@@ -115,14 +115,11 @@ class EnemyRoom():
         try :
             fighter, new_num_bully_j = await interact_game.player_choose_fighting_bully(ctx=ruin.ctx, fighting_bullies=ruin.fighters_joueur, user=ruin.user, channel_cible=ruin.thread, timeout=RUIN_CHOICE_TIMEOUT)
         except interact_game.CancelChoiceException:
-            await ruin.thread.send(getText("fighter_stay_in_fight").format(fighter_name=fighter.bully.name))
-            # await ruin.thread.send(f"{fighter.bully.name} stays in fight.")
+            await ruin.thread.send(getText("fighter_stay_in_fight", lang=ruin.lang).format(fighter_name=fighter.bully.name))
         except asyncio.exceptions.TimeoutError:
-            await ruin.thread.send(getText("fighter_change_too_slow").format(fighter_name=fighter.bully.name))
-            # await ruin.thread.send(f"Too slow, {fighter.bully.name} stays in fight.")
+            await ruin.thread.send(getText("fighter_change_too_slow", lang=ruin.lang).format(fighter_name=fighter.bully.name))
         except IndexError:
-            await ruin.thread.send(getText("fighter_change_error").format(fighter_name=fighter.bully.name))
-            # await ruin.thread.send(f"Error, {fighter.bully.name} stays in fight.")
+            await ruin.thread.send(getText("fighter_change_error", lang=ruin.lang).format(fighter_name=fighter.bully.name))
         return fighter
     
     async def fight(self, ruin: "Ruin", fighter: FightingBully) -> bool:
@@ -155,7 +152,7 @@ class EnemyRoom():
             is_success = True
 
             #On envoie le message de succès et on progress dans le dungeon
-            await ruin.thread.send(getText("ruin_enemy_defeated").format(enemy = self.enemy.bully.name))
+            await ruin.thread.send(getText("ruin_enemy_defeated", lang=ruin.lang).format(enemy = self.enemy.bully.name))
             
         else : 
             #Le joueur à perdu
@@ -171,11 +168,12 @@ class ConsoRoom():
     conso: Consumable
 
     @staticmethod
-    def generate(level: int, rarity: Rarity) -> "ConsoRoom":
+    def generate(level: int, rarity: Rarity, lang:Optional[str] = None) -> "ConsoRoom":
         if random.random() < 0.33:
             Buff = random.choice(buffs.BuffsLVL[math.floor(level/10)])
             buff_tag = Buff.__name__
-            conso = consumable.ConsumableElixirBuff(getText("elixir_of").format(elixir = buff_tag), buff_tag)
+            
+            conso = consumable.ConsumableElixirBuff(getText("elixir_of", lang=lang).format(elixir = buff_tag), buff_tag)
         else :
             valeur = round(level * rarity.coef_level_points) 
             aliment = random.choice(list(consumable.AlimentEnum))
@@ -183,7 +181,7 @@ class ConsoRoom():
         return ConsoRoom(conso)
     
     async def interact(self, ruin: "Ruin"):
-        await ruin.thread.send(getText("found_conso").format(name=self.conso.name))
+        await ruin.thread.send(getText("found_conso", lang=ruin.lang).format(name=self.conso.name))
         await consumable.add_conso_to_player(ruin.ctx, ruin.player, self.conso, channel_cible=ruin.thread)
 
 
@@ -191,14 +189,14 @@ class ConsoRoom():
 class BossRoom(EnemyRoom, ConsoRoom): 
 
     @staticmethod
-    def generate(level: int, rarity: Rarity) -> "BossRoom":
+    def generate(level: int, rarity: Rarity, lang:Optional[str] = None) -> "BossRoom":
         max_pv_boss:int = MAX_PV_BOSS
 
         boss = Bully("BOSS", rarity=rarity, must_load_image=False, max_pv=max_pv_boss)
         for _ in range(1, level) :
             boss.level_up_one()
-        boss_conso = ConsoRoom.generate(level, rarity).conso
-        boss_conso.apply(boss)
+        boss_conso = ConsoRoom.generate(level, rarity, lang=lang).conso
+        boss_conso.apply(boss, lang=lang)  
         boss_fighter = FightingBully.create_fighting_bully(boss)
         return BossRoom(boss_conso, boss_fighter, can_switch = True) #reverse MRO for dataclasses
     
@@ -218,8 +216,7 @@ class TreasureRoom():
         return TreasureRoom(gold=gold)
 
     async def interact(self, ruin: "Ruin"):
-        await ruin.thread.send(getText("found_treasure").format(gold=self.gold, money_emoji=money.MONEY_EMOJI))
-        # await ruin.thread.send(f"You find a **treasure**. It contains **{self.gold}** {money.MONEY_EMOJI}!")
+        await ruin.thread.send(getText("found_treasure", lang=ruin.lang).format(gold=self.gold, money_emoji=money.MONEY_EMOJI))
         money.give_money(ruin.player, montant=self.gold)
 
 @dataclass
@@ -227,8 +224,8 @@ class TrapRoom():
     trap: Trap
 
     @staticmethod
-    def generate(level: int, rarity: Rarity) -> "TrapRoom":
-        trap = Trap(level, rarity)
+    def generate(level: int, rarity: Rarity, lang:Optional[str] = None) -> "TrapRoom":
+        trap = Trap(level, rarity, lang=lang)
         return TrapRoom(trap)
     
     async def interact(self, ruin: "Ruin"):
@@ -242,8 +239,7 @@ class TrapRoom():
             fighter.pv -= self.trap.damage
             if fighter.pv <= 0:
                 ruin.fighters_joueur.remove(fighter)
-                await ruin.thread.send(getText("bully_is_dead").format(bully=fighter.bully.name))
-                # await ruin.thread.send(f"{fighter.bully.name} is dead.")
+                await ruin.thread.send(getText("bully_is_dead", lang=ruin.lang).format(bully=fighter.bully.name))
         
         return
 
@@ -261,8 +257,7 @@ class TrapRoom():
             raise #On propage l'exception
 
         if (fighting_bully_joueur.pv <= 0):
-            await ruin.thread.send(getText("ruin_bully_error"))
-            # await ruin.thread.send(f"Your bully is dead or do not exist.\nYour team left the ruin.") 
+            await ruin.thread.send(getText("ruin_bully_error", lang=ruin.lang))
             raise IndexError
 
         return fighting_bully_joueur
@@ -298,6 +293,8 @@ class Ruin():
 
     def __post_init__(self):
         self.user = self.ctx.author
+        guild_id = self.ctx.guild.id if self.ctx.guild is not None else None
+        self.lang = language_manager_instance.get_server_language(guild_id)
         self.generate()
 
     def generate(self) -> None:
@@ -314,7 +311,7 @@ class Ruin():
         all_fighters_enemy:list[FightingBully] = []
         
         #Ajout salle boss à la fin
-        boss_room = BossRoom.generate(self.level, boss_rarity)  
+        boss_room = BossRoom.generate(self.level, boss_rarity, lang=self.lang)  
         self.rooms.append(boss_room)
         all_fighters_enemy.append(boss_room.enemy)
 
@@ -324,7 +321,7 @@ class Ruin():
 
         #Ajout salle trap
         for _ in range(nb_salle_trap):
-            self.rooms.append(TrapRoom.generate(self.level, rarity=boss_rarity))
+            self.rooms.append(TrapRoom.generate(self.level, rarity=boss_rarity, lang=self.lang))
         #Ajout salle Enemy
         for _ in range(nb_salle_enemy):
             rarity = random.choice(fighter_rarities)
@@ -336,7 +333,7 @@ class Ruin():
 
 
     async def enter(self) -> None:
-        message = await self.ctx.channel.send(getText("ruin_enter").format(user=self.user.mention, level=self.level))
+        message = await self.ctx.channel.send(getText("ruin_enter", lang=self.lang).format(user=self.user.mention, level=self.level))
         self.thread = await create_thread_if_possible(self.ctx, name=f"Ruin - Level {self.level}", message=message)
 
         #On initialise les pv des bullies
@@ -347,13 +344,13 @@ class Ruin():
             while not await self.rooms.pop().interact(self):
                 pass
             
-            await self.thread.send(getText("ruin_victory").format(user=self.user))
+            await self.thread.send(getText("ruin_victory", lang=self.lang).format(user=self.user))
         except interact_game.CancelChoiceException as e:
-            await self.thread.send(getText("ruin_cancelled").format(user=self.user.name))
+            await self.thread.send(getText("ruin_cancelled", lang=self.lang).format(user=self.user.name))
         except asyncio.exceptions.TimeoutError as e:
-            await self.thread.send(getText("ruin_team_timeout").format(user=self.user))
+            await self.thread.send(getText("ruin_team_timeout", lang=self.lang).format(user=self.user))
         except IndexError as e:
-            await self.thread.send(getText("ruin_bully_error"))
+            await self.thread.send(getText("ruin_bully_error", lang=self.lang))
         else :
             if self.level > self.player.max_ruin:
                 self.player.max_ruin = self.level
@@ -366,6 +363,6 @@ class Ruin():
 
     async def exit(self, time_bfr_close_thread=THREAD_DELETE_AFTER) -> None:
         await del_thread_if_possible(self.thread, time_bfr_close_thread)
-        
+
 
 

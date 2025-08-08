@@ -394,13 +394,13 @@ class Bully(Base):
         self.decrease_lvl(lvl_loss)
         return lvl_loss
 
-    async def die_in_fight(self) -> str:
+    async def die_in_fight(self, lang: Optional[str]=None) -> str:
         if self.rarity == Rarity.NOBODY :
             await self.kill()
-            return getText("bully_died").format(bully=self.name)
+            return getText("bully_died", lang=lang).format(bully=self.name)
         else : 
             lvl_lost = self.loose_level_death()
-            return getText("bully_lost_lvl").format(bully=self.name, lvl=lvl_lost)
+            return getText("bully_lost_lvl", lang=lang).format(bully=self.name, lvl=lvl_lost)
 
     async def kill(self):
         print("je me tue : ", self.name)

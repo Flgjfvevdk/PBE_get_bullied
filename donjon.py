@@ -11,10 +11,11 @@ import money
 from player_info import Player
 import interact_game
 from fight_manager import RecapExpGold, Fight, InterruptionCombat, reward_win_fight
+from utils.language_manager import language_manager_instance
 
 from dataclasses import dataclass, field, KW_ONLY, replace
 
-from typing import List
+from typing import List, Optional
 from utils.manage_tread import del_thread_if_possible, create_thread_if_possible
 
 from discord.ext.commands import Context, Bot
@@ -172,6 +173,8 @@ class Dungeon():
 
     def __post_init__(self):
         self.user = self.ctx.author
+        guild_id = self.ctx.guild.id if self.ctx.guild is not None else None
+        self.lang = language_manager_instance.get_server_language(guild_id)
         self.name = f"Dungeon Level {self.level}"
         self.enemies_fighters = self.generate_dungeon_team()
 
@@ -214,7 +217,7 @@ class Dungeon():
         return enemies_fighters
 
     async def enter(self) -> None:
-        message = await self.ctx.channel.send(getText("dungeon_enter").format(user=self.ctx.author.mention, dungeon_name=self.name))
+        message = await self.ctx.channel.send(getText("dungeon_enter", lang=self.lang).format(user=self.ctx.author.mention, dungeon_name=self.name))
         self.thread = await create_thread_if_possible(self.ctx, name=self.name, message=message)
         
         #On fait la boucle de combat
@@ -224,18 +227,18 @@ class Dungeon():
                 await self.handle_fight(can_switch = (fighting_bully_enemy in self.can_swap_enemies))
 
         except interact_game.CancelChoiceException as e:
-            await self.thread.send(getText("dungeon_cancel").format(user=self.ctx.author.mention))
+            await self.thread.send(getText("dungeon_cancel", lang=self.lang).format(user=self.ctx.author.mention))
         except asyncio.exceptions.TimeoutError as e:
-            await self.thread.send(getText("dungeon_team_left_timeout").format(user=self.ctx.author))
+            await self.thread.send(getText("dungeon_team_left_timeout", lang=self.lang).format(user=self.ctx.author))
         except IndexError as e:
-            await self.thread.send(getText("dungeon_team_left"))
+            await self.thread.send(getText("dungeon_team_left", lang=self.lang))
         except Exception as e:
             print(e)
 
         #Le joueur a gagné le donjon
         else:
             #On est plus dans le combat, le joueur à vaincu le donjon
-            txt_w = getText("dungeon_win").format(user=self.ctx.author.mention, dungeon_name=self.name)
+            txt_w = getText("dungeon_win", lang=self.lang).format(user=self.ctx.author.mention, dungeon_name=self.name)
             
             await self.thread.send(txt_w)
 
@@ -262,7 +265,7 @@ class Dungeon():
         fighting_bully_enemy = self.enemies_fighters[self.current_floor]
         text_enemy_coming = f"{fighting_bully_enemy.get_print()}"
 
-        await self.thread.send(getText("dungeon_next_enemy").format(enemy=bully.mise_en_forme_str(text_enemy_coming)))
+        await self.thread.send(getText("dungeon_next_enemy", lang=self.lang).format(enemy=bully.mise_en_forme_str(text_enemy_coming)))
         
         fighting_bully_joueur, num_bully_j = await interact_game.player_choose_fighting_bully(ctx=self.ctx, fighting_bullies=self.fighters_joueur, user=self.ctx.author, channel_cible=self.thread, timeout=DUNGEON_CHOICE_TIMEOUT)
 
@@ -288,7 +291,7 @@ class Dungeon():
             self.xp_earned_bullies[num_bully_j] += exp_earned
                 
             #On envoie le message de succès et on progress dans le dungeon
-            await self.thread.send(getText("dungeon_enemy_dead").format(enemy_name=fighting_bully_enemy.bully.name))
+            await self.thread.send(getText("dungeon_enemy_dead", lang=self.lang).format(enemy_name=fighting_bully_enemy.bully.name))
             self.current_floor += 1
 
         else : 
@@ -301,11 +304,11 @@ class Dungeon():
             fighter, new_num_bully_j = await interact_game.player_choose_fighting_bully(ctx=self.ctx, fighting_bullies=self.fighters_joueur, user=self.ctx.author, channel_cible=self.thread, timeout=DUNGEON_CHOICE_TIMEOUT)
 
         except interact_game.CancelChoiceException:
-            await self.thread.send(getText("fighter_stay_in_fight").format(fighter_name=fighter.bully.name))
+            await self.thread.send(getText("fighter_stay_in_fight", lang=self.lang).format(fighter_name=fighter.bully.name))
         except asyncio.exceptions.TimeoutError:
-            await self.thread.send(getText("fighter_change_too_slow").format(fighter_name=fighter.bully.name))
+            await self.thread.send(getText("fighter_change_too_slow", lang=self.lang).format(fighter_name=fighter.bully.name))
         except IndexError:
-            await self.thread.send(getText("fighter_change_error").format(fighter_name=fighter.bully.name))
+            await self.thread.send(getText("fighter_change_error", lang=self.lang).format(fighter_name=fighter.bully.name))
         return fighter
     
     def reset_stats_bullies(self) -> None:
@@ -316,7 +319,7 @@ class Dungeon():
         await del_thread_if_possible(self.thread, time_bfr_close)
 
 
-async def str_leaderboard_donjon(session: AsyncSession) -> str:
+async def str_leaderboard_donjon(session: AsyncSession, lang:Optional[str] = None) -> str:
     text_classement = ""
 
     # On récupère tout en une commande SQL
@@ -325,9 +328,9 @@ async def str_leaderboard_donjon(session: AsyncSession) -> str:
     # Afficher le classement des joueurs
     for joueur in classement_joueurs:
         if joueur.max_dungeon > 0:
-            text_classement+= getText("dungeon_highest_ranked").format(player_id=joueur.id, max_dungeon=joueur.max_dungeon) + "\n"
+            text_classement+= getText("dungeon_highest_ranked", lang=lang).format(player_id=joueur.id, max_dungeon=joueur.max_dungeon) + "\n"
         else:
-            text_classement += getText("dungeon_not_ranked").format(player_id=joueur.id) + "\n"
+            text_classement += getText("dungeon_not_ranked", lang = lang).format(player_id=joueur.id) + "\n"
 
     return text_classement
 

@@ -7,6 +7,7 @@ import donjon
 from utils.locks import PlayerLock
 import utils.database as database
 from player_info import Player
+from utils.language_manager import language_manager_instance
 
 import os
 import random 
@@ -70,21 +71,22 @@ async def restock_shop_loop():
     is_shop_restocking = False
 
 async def print_shop(ctx: Context, bot: Bot) -> None:
+    guild_id = ctx.guild.id if ctx.guild is not None else None
+    lang = language_manager_instance.get_server_language(guild_id)
+    
     if ctx.guild is None: #$$
-        await ctx.send(getText("shop_dm_error"))
-        # await ctx.send('This command can only be used in a server, not in a DM.')
+        await ctx.send(getText("shop_dm_error", lang=lang))
         return
     
     if ctx.guild.id not in bullies_in_shop_server : #$$
-        await ctx.send(getText("shop_not_open"))
-        # await ctx.send('The shop is not open in this server. Ask an admin to open it.')
+        await ctx.send(getText("shop_not_open", lang=lang))
         return
 
     if(is_shop_restocking) :
-        await ctx.channel.send(restock_message())
+        await ctx.channel.send(restock_message(lang=lang))
         return
     
-    text = bullies_in_shop_to_text(ctx.guild.id)
+    text = bullies_in_shop_to_text(ctx.guild.id, lang=lang)
     images = bullies_in_shop_to_images(ctx.guild.id)
 
     event = asyncio.Event()
@@ -99,7 +101,7 @@ async def print_shop(ctx: Context, bot: Bot) -> None:
     try:
         while True:
             if(is_shop_restocking):
-                await shop_msg.edit(content=restock_message(), attachments=[], view=None)
+                await shop_msg.edit(content=restock_message(lang=lang), attachments=[], view=None)
                 return
                 
             await asyncio.wait_for(event.wait(), timeout=SHOP_TIMEOUT)
@@ -110,44 +112,40 @@ async def print_shop(ctx: Context, bot: Bot) -> None:
     except Exception as e:
         if not isinstance(e, asyncio.TimeoutError):
             print(e)
-        await shop_msg.edit(content="```" + getText("shop_closed_message") + "```", attachments=[], view=None)
-        # await shop_msg.edit(content="```Shop is closed. See you again!```", attachments=[], view=None)
+        await shop_msg.edit(content="```" + getText("shop_closed_message", lang=lang) + "```", attachments=[], view=None)
         return
 
 async def handle_shop_click(ctx:Context, variable_pointer:Dict[str, Bully | discord.abc.User | None], shop_msg: discord.Message, event:asyncio.Event) -> None:
+    guild_id = ctx.guild.id if ctx.guild is not None else None
+    lang = language_manager_instance.get_server_language(guild_id)
+    
     if(not isinstance(variable_pointer["choix"], Bully) or not isinstance(variable_pointer["user"], discord.abc.User)):
         return
     choix_bully: Bully = variable_pointer["choix"]
     user: discord.abc.User = variable_pointer["user"]
 
-
     lock = PlayerLock(user.id)
     if not lock.check():
-        await ctx.send(getText("already_in_action"))
-        # await ctx.send("You are already in an action.")
+        await ctx.send(getText("already_in_action", lang=lang))
         return
     with lock:
         async with database.new_session() as session:
             try:
                 print(choix_bully)
             except exc.DetachedInstanceError as e:
-                await ctx.send(getText("shop_bully_not_available").format(user=user.name))
-                # await ctx.send(f"This bully is no longer available (sorry {user.name})")
+                await ctx.send(getText("shop_bully_not_available", lang=lang).format(user=user.name))
                 return
             player = await session.get(Player, user.id)
             
             if player is None:
-                await ctx.send(getText("join"))
-                # await ctx.send("Please join the game first !")
+                await ctx.send(getText("join", lang=lang))
                 return
             if(money.get_money_user(player) < cout_bully(choix_bully)):
-                await ctx.send(getText("shop_not_enough_money").format(user=user.name, money_emoji=money.MONEY_EMOJI, bully=choix_bully.name, cost=cout_bully(choix_bully)))
-                # await ctx.send(f"You don't have enough {money.MONEY_EMOJI} {user} for {choix_bully.name} [cost: {cout_bully(choix_bully)}{money.MONEY_EMOJI}]")
+                await ctx.send(getText("shop_not_enough_money", lang=lang).format(user=user.name, money_emoji=money.MONEY_EMOJI, bully=choix_bully.name, cost=cout_bully(choix_bully)))
                 return
 
             if(interact_game.nb_bully_in_team(player) >= interact_game.BULLY_NUMBER_MAX):
-                await ctx.send(getText("max_bullies_reached").format(user = user.name, max_bullies=interact_game.BULLY_NUMBER_MAX))
-                # await ctx.channel.send(f"You can't have more than {interact_game.BULLY_NUMBER_MAX} bullies at the same time")
+                await ctx.send(getText("max_bullies_reached", lang=lang).format(user = user.name, max_bullies=interact_game.BULLY_NUMBER_MAX))
                 return
             
             money.give_money(player, - cout_bully(choix_bully))
@@ -160,12 +158,11 @@ async def handle_shop_click(ctx:Context, variable_pointer:Dict[str, Bully | disc
             variable_pointer["choix"] = None
             variable_pointer["user"] = None
 
-            text = bullies_in_shop_to_text(ctx.guild.id)
+            text = bullies_in_shop_to_text(ctx.guild.id, lang=lang)
             images = bullies_in_shop_to_images(ctx.guild.id)
             files = [discord.File(image) for image in images]
             await shop_msg.edit(content=text, attachments=files, view=interact_game.ViewBullyShop(event=event, list_choix=bullies_in_shop_server[ctx.guild.id], variable_pointer = variable_pointer))
-            await ctx.send(getText("shop_purchase_success").format(user=user.mention, bully=choix_bully.name, cost=cout_bully(choix_bully), money_emoji=money.MONEY_EMOJI))
-            # await ctx.channel.send(f"{user.mention} has purchased {choix_bully.name} for {cout_bully(choix_bully)}🩹!")
+            await ctx.send(getText("shop_purchase_success", lang=lang).format(user=user.mention, bully=choix_bully.name, cost=cout_bully(choix_bully), money_emoji=money.MONEY_EMOJI))
 
             await session.commit()
 
@@ -180,13 +177,13 @@ def new_bully_shop() -> Bully:
     b = Bully(name, rarity=rarity)
     return b
 
-def bullies_in_shop_to_text(server_id) -> str:
-    text = getText("bully_in_shop")
+def bullies_in_shop_to_text(server_id, lang: Optional[str] = None) -> str:
+    text = getText("bully_in_shop", lang=lang)
     for k in range(len(bullies_in_shop_server[server_id])) :
         b = bullies_in_shop_server[server_id][k]
         text += "\n___________\n"
         text += b.get_print(compact_print = True)
-        text += "\n" + getText("price").format(cost=cout_bully(b), money_emoji=money.MONEY_EMOJI)
+        text += "\n" + getText("price", lang=lang).format(cost=cout_bully(b), money_emoji=money.MONEY_EMOJI)
     text = bully.mise_en_forme_str(text)
     return text
 
@@ -216,14 +213,16 @@ async def restock_shop_automatic() -> None:
         is_shop_restocking = False
 
 
-def restock_message() -> str:
-    return getText("shop_restocking").format(seconds=SHOP_CLOSE_WAIT_TIME)
-    return (f"```The shop is restocking. Please wait <{SHOP_CLOSE_WAIT_TIME} seconds```")
+def restock_message(lang: Optional[str] = None) -> str:
+    return getText("shop_restocking", lang=lang).format(seconds=SHOP_CLOSE_WAIT_TIME)
 
 async def setup_shop_for_server(server_id: int) -> None:
     """Setup shop for a specific server"""
     if server_id not in bullies_in_shop_server:
         bullies_in_shop_server[server_id] = []
+        for k in range(SHOP_MAX_BULLY):
+            b = new_bully_shop()
+            bullies_in_shop_server[server_id].append(b)
         for k in range(SHOP_MAX_BULLY):
             b = new_bully_shop()
             bullies_in_shop_server[server_id].append(b)

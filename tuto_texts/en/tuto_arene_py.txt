@@ -1,0 +1,4 @@
+__Arena:__
+- Each server has its own arena (**!!arena**).
+- The 3 most powerful teams in the arena are recorded and can be challenged by other players.
+- While your team is in the arena, you benefit from an income bonus with **!!payday**.

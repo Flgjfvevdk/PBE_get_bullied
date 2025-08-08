@@ -1,0 +1,15 @@
+__Bullies:__
+- Check your Bullies with **!!club**.
+- Store them in reserve with **!!reserve** (max 10).
+- Each Bully has a rarity (NOBODY, TOXIC, MONSTER, DEVASTATOR, SUBLIME) (see **!!tuto_rarity**).
+- A Bully's level (lvl) increases when it accumulates as much experience as its level.
+- Bullies have stats (Strength, Agility, Lethality, Viciousness) that increase when they gain levels.
+
+__Important points:__
+- NOBODY's death is permanent.
+- Other Bullies resurrect but lose levels equal to their number of deaths.
+- NOBODYs reveal their potential at level 15...
+- Fights earn experience and money, depending on the defeated Bully's rarity.
+- Bullies that are too strong (5 levels higher than the enemy) don't gain experience, only money.
+- Trade your Bullies with **!!trade @user**.
+- Abandon a Bully with **!!sacrifice**.

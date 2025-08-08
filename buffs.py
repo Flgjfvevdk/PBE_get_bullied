@@ -464,8 +464,13 @@ class SublimeTeam(BuffFight):
     def __init__(self, fighter:FightingBully):
         super().__init__(fighter)
         fighter.pv += 2
-class TrueSublime(SublimeTeam):
-    pass
+class TrueSublime(BuffFight):
+    description:str = "Commence les combats avec 2 pv supplémentaire."
+    description_en:str = ""
+    category:CategoryBuff = CategoryBuff.TEAM
+    def __init__(self, fighter:FightingBully):
+        super().__init__(fighter)
+        fighter.pv += 2
 
 #Buff Negatif
 class Poisoned(BuffFight):

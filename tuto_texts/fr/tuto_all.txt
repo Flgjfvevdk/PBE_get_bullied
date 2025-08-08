@@ -1,0 +1,13 @@
+__Tutos : __
+- Tuto général : **!!tuto**
+- Tuto pour les combattants (Bully) : **!!tuto_bully**
+- Tuto des combats : **!!tuto_fight**
+- Tuto qui explique les raretés : **!!tuto_rarity**
+- Tuto sur l'économie : **!!tuto_economy**
+- Tuto sur l'achat des combattants (Bullies) : **!!tuto_shop**
+- Tuto pour les donjons : **!!tuto_dungeon**
+- Tuto pour les ruines : **!!tuto_ruin**
+- Tuto sur les divers consommables : **!!tuto_conso**
+- Tuto qui affiche les effets de tous les buffs de combats : **!!list_buffs**
+
+Pour voir toutes les commandes : **!!help**

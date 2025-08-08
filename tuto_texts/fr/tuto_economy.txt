@@ -1,0 +1,13 @@
+__Gagner de la monnaie :__
+- La commande **!!payday** permet de générer de la monnaie facilement.
+- Explorer des ruines permet de récupérer des trésors remplis de cette monnaie.
+- Si votre bully écrase un adversaire avec 5 niveaux de moins, vous ramassez un petit peu de monnaie (pas grand-chose) à la place de l'expérience.
+
+__Payday :__
+- Commande : **!!payday**.
+- Génère de la monnaie en fonction de la Ruine la plus élevée que vous avez conquise ainsi que de votre position dans l'Arène du serveur.
+
+__Utiliser de la monnaie : __
+- Dans des shops (**!!tuto_shop**, **!!shop**).
+- Dans des lootboxes (**!!tuto_shop**, **!!lootbox**).
+- Dans des machines à consommables (**!!tuto_conso**).

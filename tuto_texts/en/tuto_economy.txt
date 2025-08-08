@@ -1,0 +1,13 @@
+__Earning change :__
+- The **!!payday** command is an easy way to generate money.
+- Exploring ruins allows you to recover treasures chests filled with money.
+- If your bully crushes an opponent 5 levels lower, you'll collect a small amount of money (not much) instead of experience.
+
+__Payday :__
+- Command: **!!payday**.
+- Generates money based on the highest Ruin you've conquered and your position in the server's Arena.
+
+__Using currency: __
+- In shops (**!!tuto_shop**, **!!shop**).
+- In lootboxes (**!!tuto_shop**, **!!lootbox**).
+- In consumables machines (**!!tuto_conso**).

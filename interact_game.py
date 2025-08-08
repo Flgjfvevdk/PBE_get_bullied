@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
 from fighting_bully import FightingBully
+from utils.language_manager import language_manager_instance
 
 import asyncio
 
@@ -171,19 +172,22 @@ async def join_game(ctx: Context, user:discord.Member|discord.User, session: Asy
         player.bullies.append(bully_start)
         await session.commit()
     except IntegrityError:
-        await ctx.reply(getText("already_joined_game"))
+        await ctx.reply(getText("already_joined_game", ctx=ctx))
         return
 
-    await ctx.reply(getText("welcome_adventure"))
+    await ctx.reply(getText("welcome_adventure", ctx=ctx))
     return player
 
 async def invite_join(ctx: Context, parrain:Player, user:discord.Member|discord.User, session: AsyncSession, channel_cible: Optional[discord.abc.Messageable]=None) -> None:
     event = asyncio.Event()
     var:Dict[str, bool] = {"choix" : False}
 
+    guild_id = ctx.guild.id if ctx.guild is not None else None
+    lang = language_manager_instance.get_server_language(guild_id)
+
     if(user != ctx.author):
         #On affiche le message
-        message = await ctx.channel.send(content=getText("invite_join_game").format(user=user.mention), view=ViewYesNo(user=user, event=event, variable_pointer = var))
+        message = await ctx.channel.send(content=getText("invite_join_game", lang=lang).format(user=user.mention), view=ViewYesNo(user=user, event=event, variable_pointer = var))
         try:
             await asyncio.wait_for(event.wait(), timeout=CHOICE_TIMEOUT)
         except asyncio.exceptions.TimeoutError as e:
@@ -201,11 +205,11 @@ async def invite_join(ctx: Context, parrain:Player, user:discord.Member|discord.
                 bully_gift = Bully(f"{ctx.author.name}'s gift", stats=bully.Stats(8, 8, 8, 8), buff_fight_tag="Friendship", rarity=Rarity.MONSTER)
                 new_player.bullies.append(bully_gift)
                 if (parrain.nb_referrals == NB_REFERRAL_REWARD):
-                    await ctx.send(getText("referral_reward").format(user=ctx.author.mention, nb=NB_REFERRAL_REWARD))
-                await ctx.send(getText("other_join").format(user=user.name))
+                    await ctx.send(getText("referral_reward", lang=lang).format(user=ctx.author.mention, nb=NB_REFERRAL_REWARD))
+                await ctx.send(getText("other_join", lang=lang).format(user=user.name))
                 await session.commit()
             except IntegrityError:
-                await ctx.reply(getText("already_joined_game"))
+                await ctx.reply(getText("already_joined_game", lang=lang))
                 return            
 
 
@@ -231,22 +235,26 @@ async def add_bully_to_player(ctx: Context, player: Player, b: Bully, channel_ci
     if(channel_cible==None):
         channel_cible = ctx.channel
 
+    guild_id = ctx.guild.id if ctx.guild is not None else None
+    lang = language_manager_instance.get_server_language(guild_id)
+
     if len(player.get_equipe()) >= BULLY_NUMBER_MAX:
         if talkative :
-            await channel_cible.send(getText("max_bullies_reached").format(user = ctx.author.name, max_bullies=BULLY_NUMBER_MAX))
+            await channel_cible.send(getText("max_bullies_reached", lang=lang).format(user = ctx.author.name, max_bullies=BULLY_NUMBER_MAX))
         return
     
     player.bullies.append(b)
 
-    await channel_cible.send(getText("new_bully_msg").format(bully=b.name))
+    await channel_cible.send(getText("new_bully_msg", lang=lang).format(bully=b.name))
 
 
 async def print_bullies(ctx: Context, player: Player, compact_print=False, print_images=False, channel_cible=None) -> None:
     #Par défaut, le channel d'envoie est le channel du contexte
     if(channel_cible==None):
         channel_cible = ctx.channel
-
-    text = getText("your_bullies")
+    guild_id = ctx.guild.id if ctx.guild is not None else None
+    lang = language_manager_instance.get_server_language(guild_id)
+    text = getText("your_bullies", lang = lang)
     split_txt = []
     images: dict[int, Path] = {}
 
@@ -308,8 +316,8 @@ async def print_bullies(ctx: Context, player: Player, compact_print=False, print
 
     return
 
-def str_bullies(bullies:list[Bully], print_images = False) -> tuple[str, Optional[list[discord.File]]]:
-    text = getText("your_bullies")
+def str_bullies(bullies:list[Bully], print_images = False, lang:Optional[str] = None) -> tuple[str, Optional[list[discord.File]]]:
+    text = getText("your_bullies", lang=lang)
     images: list[Path] = []
 
     for b in bullies:
@@ -331,8 +339,8 @@ def str_bullies(bullies:list[Bully], print_images = False) -> tuple[str, Optiona
         files = None
     return (text, files)
 
-def str_fighting_bully(fighting_bully:list[FightingBully], print_images=False) -> tuple[str, Optional[list[discord.File]]]:
-    text = getText("your_bullies")
+def str_fighting_bully(fighting_bully:list[FightingBully], print_images=False, lang:Optional[str] = None) -> tuple[str, Optional[list[discord.File]]]:
+    text = getText("your_bullies", lang=lang)
     images: list[Path] = []
 
     for f in fighting_bully:
@@ -360,19 +368,22 @@ async def select_bully(ctx: Context, user: discord.abc.User, player: Player, cha
     if(channel_cible == None):
         channel_cible = ctx.channel
     
+    guild_id = ctx.guild.id if ctx.guild is not None else None
+    lang = language_manager_instance.get_server_language(guild_id)
+
     bullies_in:list[Bully] = player.get_equipe() if from_team else player.get_reserve()
 
     if len(bullies_in) == 0:
-        await channel_cible.send(getText("you_have_no_bully").format(user=user.mention))
+        await channel_cible.send(getText("you_have_no_bully", lang=lang).format(user=user.mention))
         raise IndexError
 
     #Demande au joueur de choisir son combattant
-    message_choose_bully = await channel_cible.send(getText("choose_bully").format(user=user.mention))
+    message_choose_bully = await channel_cible.send(getText("choose_bully", lang=lang).format(user=user.mention))
 
     #On init les variables
     event = asyncio.Event()
     var:Dict[str, Bully | None] = {"choix" : None}
-    text, _ = str_bullies(bullies_in, print_images=False)
+    text, _ = str_bullies(bullies_in, print_images=False, lang=lang)
 
     #On affiche le message
     message_bullies = await channel_cible.send(content=text, view=ViewBullyChoice(user=user, event=event, list_choix=bullies_in, variable_pointer = var))
@@ -392,25 +403,28 @@ async def select_bully(ctx: Context, user: discord.abc.User, player: Player, cha
         raise CancelChoiceException("No selected bully")
 
     #On envoie les infos sur le bully choisit
-    await channel_cible.send(getText("selected_bully").format(user=user.name, bully=bully_selected.name))
+    await channel_cible.send(getText("selected_bully", lang=lang).format(user=user.name, bully=bully_selected.name))
     return bully_selected
 
 async def player_choose_fighting_bully(ctx:Context, fighting_bullies:list[FightingBully], user: discord.abc.User, channel_cible=None, timeout = CHOICE_TIMEOUT) -> tuple[FightingBully, int]:
     '''Il faut try catch cette méthode car elle peut raise une exception en cas de timeout !!!'''
     if(channel_cible == None):
         channel_cible = ctx.channel
+    
+    guild_id = ctx.guild.id if ctx.guild is not None else None
+    lang = language_manager_instance.get_server_language(guild_id)
 
     if len(fighting_bullies) == 0:
-        await channel_cible.send(getText("you_have_no_bully").format(user=user.name))
+        await channel_cible.send(getText("you_have_no_bully", lang=lang).format(user=user.name))
         raise IndexError
 
     #Demande au joueur de choisir son combattant
-    message_choose_fighter = await channel_cible.send(getText("choose_fighter").format(user=user.name))
+    message_choose_fighter = await channel_cible.send(getText("choose_fighter", lang=lang).format(user=user.name))
 
     #On init les variables
     event = asyncio.Event()
     var:Dict[str, Bully | None] = {"choix" : None}
-    text, _ = str_fighting_bully(fighting_bully=fighting_bullies, print_images=False)
+    text, _ = str_fighting_bully(fighting_bully=fighting_bullies, print_images=False, lang=lang)
 
     bullies_available = [f.bully for f in fighting_bullies]
 
@@ -431,24 +445,27 @@ async def player_choose_fighting_bully(ctx:Context, fighting_bullies:list[Fighti
     else : 
         raise CancelChoiceException("No selected bully")
 
-    await channel_cible.send(getText("selected_bully").format(user=user.name, bully=bully_selected.name))
+    await channel_cible.send(getText("selected_bully", lang=lang).format(user=user.name, bully=bully_selected.name))
     return fighting_bully, bully_number
 
 async def suicide_bully(ctx: Context, user: discord.abc.User, player: Player, bot: Bot, channel_cible=None, timeout = CHOICE_TIMEOUT) -> None :
     if(channel_cible == None):
         channel_cible = ctx.channel
 
+    guild_id = ctx.guild.id if ctx.guild is not None else None
+    lang = language_manager_instance.get_server_language(guild_id)
+
     if len(player.get_equipe()) == 0:
-        await channel_cible.send(getText("you_have_no_bully").format(user=user.mention))
+        await channel_cible.send(getText("you_have_no_bully", lang=lang).format(user=user.mention))
         raise IndexError
 
     #Demande au joueur de choisir son bully
-    message_choose_suicide = await channel_cible.send(getText("choose_suicide").format(user = user))
+    message_choose_suicide = await channel_cible.send(getText("choose_suicide", lang=lang).format(user = user))
 
     #On init les variables
     event = asyncio.Event()
     var:Dict[str, Bully | None] = {"choix" : None}
-    text, _ = str_bullies(player.get_equipe(), print_images=False)    #On affiche le message
+    text, _ = str_bullies(player.get_equipe(), print_images=False, lang=lang)    #On affiche le message
     message_bullies = await channel_cible.send(content=text, view=ViewBullyChoice(user=user, event=event, list_choix=player.get_equipe(), variable_pointer = var))
     
     try:
@@ -463,7 +480,7 @@ async def suicide_bully(ctx: Context, user: discord.abc.User, player: Player, bo
         # Demande de confirmation
         confirmation_event = asyncio.Event()
         confirmation_var: Dict[str, bool] = {"choix": False}
-        confirmation_message = await channel_cible.send(getText("confirm_suicide").format(user=user, bully=bully_selected.name), 
+        confirmation_message = await channel_cible.send(getText("confirm_suicide", lang=lang).format(user=user, bully=bully_selected.name), 
                                                        view=ViewYesNo(user=user, event=confirmation_event, variable_pointer=confirmation_var))
         
         try:
@@ -474,13 +491,13 @@ async def suicide_bully(ctx: Context, user: discord.abc.User, player: Player, bo
             await confirmation_message.delete()
 
         #On envoie les infos sur le bully choisit
-        await message_choose_suicide.edit(content=getText("suicide_kill").format(user = user, bully = bully_selected.name))
+        await message_choose_suicide.edit(content=getText("suicide_kill", lang=lang).format(user = user, bully = bully_selected.name))
         await bully_selected.kill()
         montant : int = int(bully_selected.gold_give_when_die())
         money.give_money(player, montant= montant)
-        await ctx.send(getText("you_receive_gold").format(value = montant, money_emoji = money.MONEY_EMOJI))
+        await ctx.send(getText("you_receive_gold", lang=lang).format(value = montant, money_emoji = money.MONEY_EMOJI))
     except Exception as e:
-        await message_choose_suicide.edit(content=getText("no_suicide").format(user=user.name))
+        await message_choose_suicide.edit(content=getText("no_suicide", lang=lang).format(user=user.name))
     finally:
         await message_bullies.delete()
    

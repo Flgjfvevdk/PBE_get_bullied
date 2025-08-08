@@ -1,0 +1,5 @@
+__Rarity:__
+- There are 5 types of rarity: NOBODY < TOXIC < MONSTER < DEVASTATOR < SUBLIME (ordered by power).
+- A bully's rarity indicates how its statistics increase with each level.
+- A Bully with high rarity gains experience slower and gives more when dying.
+- In team combat (against a player, dungeon, ruin, arena), having 3 Bullies with the same rarity grants a Buff to your team.

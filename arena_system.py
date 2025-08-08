@@ -5,7 +5,7 @@ from fight_manager import TeamFight
 from fighting_bully import FightingBully, get_player_team, setup_buffs_team
 import interact_game, money
 from utils.database import Base
-from typing import List, Dict
+from typing import List, Dict, Optional
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 from sqlalchemy import String
 import bully
@@ -92,6 +92,7 @@ class ArenaFight:
     def __init__(self, arena: Arena, ctx:Context, session: AsyncSession, bot: Bot, user:discord.abc.User, player: Player):
         self.arena = arena
         self.ctx = ctx
+        self.guild_id:Optional[int] = self.ctx.guild.id if self.ctx.guild else None
         self.session = session
         self.bot = bot
         if (self.bot.user is None):
@@ -114,16 +115,16 @@ class ArenaFight:
             raise Exception("The bot player is None")
         self.bot_player:Player = bot_player
 
-        message_thread = await self.ctx.send(content=getText("arena_enter").format(user = self.user.mention))
-        # self.thread:discord.Thread = await self.ctx.channel.create_thread(name=f"{self.user.name} est dans l'arene", message=message_thread) #type: ignore
-        self.thread = await create_thread(self.ctx, f"{self.user.name} est dans l'arene", message = message_thread)
+        message_thread = await self.ctx.send(content=getText("arena_enter", self.guild_id).format(user = self.user.mention))
+        # self.thread = await create_thread(self.ctx, f"{self.user.name} est dans l'arene", message = message_thread)
+        self.thread = await create_thread(self.ctx, getText("arena_title_thread", self.guild_id).format(user = self.user), message = message_thread)
 
     async def enter_hall(self):
         txt_arena = await self.arena.get_print(self.session, self.bot)
         event = asyncio.Event()
-        txt_demande = "\n" + getText("arena_ask_enter").format(user=self.user.mention, price = PRICE_ENTER, money_emoji = money.MONEY_EMOJI) + "\n"
+        txt_demande = "\n" + getText("arena_ask_enter", self.guild_id).format(user=self.user.mention, price = PRICE_ENTER, money_emoji = money.MONEY_EMOJI) + "\n"
         message = await self.ctx.channel.send(content=txt_arena+txt_demande, 
-                                view=interact_game.ViewClickBool(user=self.user, event=event, label=getText("arena_label").format(price = PRICE_ENTER), emoji="⚔️"))
+                                view=interact_game.ViewClickBool(user=self.user, event=event, label=getText("arena_label", self.guild_id).format(price = PRICE_ENTER), emoji="⚔️"))
         try:
             await asyncio.wait_for(event.wait(), timeout=CHOICE_TIMEOUT)
         except asyncio.exceptions.TimeoutError as e:
@@ -132,12 +133,12 @@ class ArenaFight:
         
         lock = PlayerLock(self.user.id)
         if not lock.check():
-            await self.ctx.send(getText("already_in_action"))
+            await self.ctx.send(getText("already_in_action", self.guild_id))
             return
         
         with lock :
             if self.player.money < PRICE_ENTER:
-                await self.ctx.send(getText("arena_no_money").format(user=self.user.name, price = PRICE_ENTER, money_emoji = money.MONEY_EMOJI))
+                await self.ctx.send(getText("arena_no_money", self.guild_id).format(user=self.user.name, price = PRICE_ENTER, money_emoji = money.MONEY_EMOJI))
                 await message.edit(content = txt_arena, view=None)
                 return
             
@@ -150,7 +151,7 @@ class ArenaFight:
             enemy_teamfighters:list[FightingBully] = [FightingBully.create_fighting_bully(b) for b in enemy_player_team[1]]
             self.add_champion_buff(enemy_teamfighters)
             setup_buffs_team(enemy_teamfighters, is_team_buff_active=True)
-            await self.thread.send(getText("arena_next_teamfight").format(teamfighters=str_teamfighters_complete(self.user, enemy_teamfighters)))
+            await self.thread.send(getText("arena_next_teamfight", self.guild_id).format(teamfighters=str_teamfighters_complete(self.user, enemy_teamfighters)))
 
             teamfight = TeamFight(ctx=self.ctx, user_1=self.user, user_2=None, player_1=self.player, player_2=None, can_swap=True, channel_cible=self.thread)
             teamfight.setup_teams(team_1=self.player_teamfighters, team_2=enemy_teamfighters)
@@ -176,9 +177,9 @@ class ArenaFight:
             if rank > 0:
                 reward = REWARD_WIN_RANK[rank - 1] if rank <= len(REWARD_WIN_RANK) else 0
                 money.give_money(self.player, reward)
-                await self.ctx.send(getText("arena_reached_rank").format(user=self.user.mention, rank=rank, reward=reward, money_emoji = money.MONEY_EMOJI))
+                await self.ctx.send(getText("arena_reached_rank", self.guild_id).format(user=self.user.mention, rank=rank, reward=reward, money_emoji = money.MONEY_EMOJI))
             else:
-                await self.ctx.send(getText("arena_no_improve_rank").format(user=self.user.mention))
+                await self.ctx.send(getText("arena_no_improve_rank", self.guild_id).format(user=self.user.mention))
             
             await del_thread(self.thread, DELETE_THREAD_TIME)
             money.give_money(self.player, -PRICE_ENTER)

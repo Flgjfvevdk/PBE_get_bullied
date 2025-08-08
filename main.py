@@ -32,6 +32,7 @@ import lootbox
 import consumable
 import trades
 import tournament
+from utils.language_manager import language_manager_instance
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -52,8 +53,6 @@ TOKEN = getenv("DISCORD_TOKEN")
 
 intents = discord.Intents.default()
 intents.message_content = True
-
-TEXT_JOIN_THE_GAME:str = getText("join")
 
 class GetBulliedBot(Bot):
     def __init__(self, *args, **kwargs):
@@ -141,13 +140,16 @@ async def join(ctx: Context):
 @decorators.categories("Game")
 async def invite(ctx: Context, user:discord.Member):
     """Pour inviter un amis à rejoindre le jeu"""
+    guild_id = ctx.guild.id if ctx.guild is not None else None
+    lang = language_manager_instance.get_server_language(guild_id)
+    
     async with database.new_session() as session:
         player_parrain = await session.get(Player, ctx.author.id)
         if player_parrain is None:
-            await ctx.reply(TEXT_JOIN_THE_GAME)
+            await ctx.reply(getText("join", lang=lang))
             return
         if await session.get(Player, user.id) is not None :
-            await ctx.reply(getText("other_already_joined").format(other=user))
+            await ctx.reply(getText("other_already_joined", lang=lang).format(other=user))
             return
         await interact_game.invite_join(ctx, player_parrain, user, session=session)
        
@@ -156,15 +158,18 @@ async def invite(ctx: Context, user:discord.Member):
 @decorators.categories("Money")
 async def payday(ctx: Context):
     """Pour recevoir des 🩹"""
+    guild_id = ctx.guild.id if ctx.guild is not None else None
+    lang = language_manager_instance.get_server_language(guild_id)
+    
     async with database.new_session() as session:
         player = await session.get(Player, ctx.author.id)
         if player is None:
-            await ctx.reply(TEXT_JOIN_THE_GAME)
+            await ctx.reply(getText("join", lang=lang))
             return
         
         cooldown_restant = await money.cooldown_restant_pay(player)
         if cooldown_restant > 0:
-            await ctx.send(getText("cooldown_wait").format(cd=money.format_temps(round(cooldown_restant))))
+            await ctx.send(getText("cooldown_wait", lang=lang).format(cd=money.format_temps(round(cooldown_restant))))
             return
 
         if ctx.guild is None:
@@ -172,11 +177,11 @@ async def payday(ctx: Context):
         else:
             server_id = ctx.guild.id 
             bonus_champion = await arena_system.get_bonus_payday(session, server_id, player.id.__str__())
-        bonus_arena_str = getText("arena_bonus_py").format(bonus=bonus_champion) if bonus_champion > 1 else ""
+        bonus_arena_str = getText("arena_bonus_py", lang=lang).format(bonus=bonus_champion) if bonus_champion > 1 else ""
         
         py_val = money.payday_value(player)
         money.give_money(player, montant=py_val * bonus_champion)
-        await ctx.send(getText("payday").format(recu=py_val, bonus_str=bonus_arena_str, money_emoji=money.MONEY_EMOJI, total_money=money.get_money_user(player)))
+        await ctx.send(getText("payday", lang=lang).format(recu=py_val, bonus_str=bonus_arena_str, money_emoji=money.MONEY_EMOJI, total_money=money.get_money_user(player)))
 
         # Enregistrer l'heure actuelle comme dernière utilisation de la commande
         money.enregistrer_cooldown_pay(player)
@@ -189,9 +194,9 @@ async def bank(ctx: Context):
     async with database.new_session() as session:
         player = await session.get(Player, ctx.author.id)
         if player is None:
-            await ctx.reply(TEXT_JOIN_THE_GAME)
+            await ctx.reply(getText("join", ctx=ctx))
             return
-        await ctx.send(getText("bank").format(money=money.get_money_user(player), money_emoji=money.MONEY_EMOJI))
+        await ctx.send(getText("bank", ctx=ctx).format(money=money.get_money_user(player), money_emoji=money.MONEY_EMOJI))
 
 
 
@@ -204,8 +209,10 @@ async def patchnote(ctx: Context):
 @decorators.categories("Game")
 async def leaderboard(ctx: Context):
     """Affiche le classement des joueurs en fonction du donjon maximum terminé."""
+    guild_id = ctx.guild.id if ctx.guild is not None else None
+    lang = language_manager_instance.get_server_language(guild_id)
     async with database.new_session() as session:
-        lb = Embed(title="Leaderbord Donjon", description=await donjon.str_leaderboard_donjon(session))
+        lb = Embed(title="Leaderbord Donjon", description=await donjon.str_leaderboard_donjon(session, lang = lang))
         await ctx.channel.send(embed=lb)
     
 
@@ -221,29 +228,32 @@ async def buy_lootbox(ctx: Context):
     """Pour acheter une lootbox"""
     user = ctx.author
     if not PlayerLock(user.id).check():
-        await ctx.reply(getText("already_in_action"))
+        await ctx.reply(getText("already_in_action", ctx=ctx))
         return
     await lootbox.shop_lootbox(ctx, user=user)
 
 @bot.command(aliases=['credit'])
 async def credits(ctx: Context):
     """Affiche les crédits"""
-    await ctx.send(getText("credits"))
+    await ctx.send(getText("credits", ctx=ctx))
 
 @bot.command(aliases=['kill'])
 @decorators.categories("Bully")
 async def sacrifice(ctx: Context):
     """Élimine un bully de son club"""
     user = ctx.author
+    guild_id = ctx.guild.id if ctx.guild is not None else None
+    lang = language_manager_instance.get_server_language(guild_id)
+    
     lock = PlayerLock(user.id)
     if not lock.check():
-        await ctx.send(getText("already_in_action"))
+        await ctx.send(getText("already_in_action", lang=lang))
         return
     with lock:
         async with database.new_session() as session:
             p = await session.get(Player, user.id)
             if p is None:
-                await ctx.reply(TEXT_JOIN_THE_GAME)
+                await ctx.reply(getText("join", lang=lang))
                 return
             await interact_game.suicide_bully(ctx, user=user, player=p, bot=bot)
             await session.commit()
@@ -257,57 +267,74 @@ async def sacrifice(ctx: Context):
 @decorators.categories("Tuto")
 async def tuto(ctx: Context, tuto_name:str=""):
     """Affiche un tutoriel général. Faites le si vous êtes perdu !"""
-    await ctx.channel.send(getTuto(tuto_name))
+    await ctx.channel.send(getTuto(tuto_name, ctx=ctx))
+
 @bot.command()
 @decorators.categories("Tuto")
 async def tuto_all(ctx: Context):
     """Affiche la liste des tutoriels. Faites le si vous êtes perdu !"""
-    await ctx.channel.send(getTuto("all"))
+    await ctx.channel.send(getTuto("all", ctx=ctx))
+
 @bot.command(aliases=['tuto_b'])
 @decorators.categories("Tuto", "Bully")
 async def tuto_bully(ctx: Context):
     """Affiche un tutoriel concernant le fonctionnemet des bullies"""
-    await ctx.channel.send(getTuto("bully"))
+    await ctx.channel.send(getTuto("bully", ctx=ctx))
+
 @bot.command(aliases=['tuto_rare'])
 @decorators.categories("Tuto", "Bully")
 async def tuto_rarity(ctx: Context):
     """Affiche un tutoriel concernant le fonctionnemet des bullies"""
-    await ctx.channel.send(getTuto("rarity"))
+    await ctx.channel.send(getTuto("rarity", ctx=ctx))
+
 @bot.command(aliases=['tuto_f'])
 @decorators.categories("Tuto", "Bully")
 async def tuto_fight(ctx: Context):
     """Affiche un tutoriel concernant les combats"""
-    await ctx.channel.send(getTuto("fight"))
+    await ctx.channel.send(getTuto("fight", ctx=ctx))
+
 @bot.command(aliases=['tuto_d', 'tuto_donjon'])
 @decorators.categories("Tuto", "Fight")
 async def tuto_dungeon(ctx: Context):
     """Affiche un tutoriel concernant les donjons"""
-    await ctx.channel.send(getTuto("dungeon"))
+    await ctx.channel.send(getTuto("dungeon", ctx=ctx))
+
 @bot.command(aliases=['tuto_r', 'tuto_ruine'])
 @decorators.categories("Tuto", "Fight")
 async def tuto_ruin(ctx: Context):
     """Affiche un tutoriel concernant les ruines"""
-    await ctx.channel.send(getTuto("ruin"))
+    await ctx.channel.send(getTuto("ruin", ctx=ctx))
+
 @bot.command(aliases=['tuto_s', 'tuto_buy'])
 @decorators.categories("Tuto", "Money")
 async def tuto_shop(ctx: Context):
     """Affiche un tutoriel concernant les achats de bullies"""
-    await ctx.channel.send(getTuto("shop"))
+    await ctx.channel.send(getTuto("shop", ctx=ctx))
+
+@bot.command(aliases=['tuto_e', 'tuto_money'])
+@decorators.categories("Tuto", "Money")
+async def tuto_economy(ctx: Context):
+    """Affiche un tutoriel concernant l'économie du jeu"""
+    await ctx.channel.send(getTuto("economy", ctx=ctx))
+
 @bot.command(aliases=['tuto_lb', 'tuto_l'])
 @decorators.categories("Tuto", "Money")
 async def tuto_lootbox(ctx: Context):
     """Affiche un tutoriel concernant les lootbox"""
-    await ctx.channel.send(getTuto("shop"))
+    await ctx.channel.send(getTuto("shop", ctx=ctx))
+
 @bot.command(aliases=['tuto_buffs'])
 @decorators.categories("Tuto", "Bully")
 async def tuto_buff(ctx: Context):
     """Affiche un tutoriel concernant les buffs"""
-    await ctx.channel.send(getTuto("conso"))
+    await ctx.channel.send(getTuto("conso", ctx=ctx))
+
 @bot.command(aliases=['tuto_conso', 'tuto_consumables'])
 @decorators.categories("Tuto", "Consumable")
 async def tuto_consumable(ctx: Context):
     """Affiche un tutoriel concernant les consommables"""
-    await ctx.channel.send(getTuto("conso"))
+    await ctx.channel.send(getTuto("conso", ctx=ctx))
+
 @bot.command(aliases=['list_buff', 'liste_buff', 'liste_buffs', 'buffs', 'buff'])
 @decorators.categories("Tuto", "Bully")
 async def list_buffs(ctx: Context):
@@ -335,14 +362,16 @@ async def list_buffs(ctx: Context):
 async def challenge(ctx: Context, opponent:discord.Member):
     """Pour provoquer un joueur en duel à mort, bully vs bully"""
     user = ctx.author
+    guild_id = ctx.guild.id if ctx.guild is not None else None
+    lang = language_manager_instance.get_server_language(guild_id)
 
     lock1 = PlayerLock(user.id)
     if not lock1.check():
-        await ctx.send(getText("already_in_action"))
+        await ctx.send(getText("already_in_action", lang=lang))
         return
     lock2 = PlayerLock(opponent.id)
     if not lock2.check():
-        await ctx.send(getText("other_is_in_action").format(user=opponent))
+        await ctx.send(getText("other_is_in_action", lang=lang).format(user=opponent))
         return
     
     with lock1, lock2:
@@ -350,10 +379,10 @@ async def challenge(ctx: Context, opponent:discord.Member):
             p1 = await session.get(Player, user.id)
             p2 = await session.get(Player, opponent.id)
             if p1 is None:
-                await ctx.reply(TEXT_JOIN_THE_GAME)
+                await ctx.reply(getText("join", lang=lang))
                 return
             if p2 is None:
-                await ctx.reply(getText("other_hasnt_joined").format(other=opponent))
+                await ctx.reply(getText("other_hasnt_joined", lang=lang).format(other=opponent))
                 return
             await fight_manager.proposition_fight(ctx, user, opponent, p1, p2, bot)
             await session.commit()
@@ -365,16 +394,16 @@ async def challenge(ctx: Context, opponent:discord.Member):
 async def fun_challenge(ctx: Context, opponent:discord.Member):
     """Pour provoquer un joueur en duel amical, bully vs bully"""
     user = ctx.author
+    guild_id = ctx.guild.id if ctx.guild is not None else None
+    lang = language_manager_instance.get_server_language(guild_id)
     
     lock1 = PlayerLock(user.id)
     if not lock1.check():
-        await ctx.send(getText("already_in_action"))
-        #await ctx.send("You are already in an action.")
+        await ctx.send(getText("already_in_action", lang=lang))
         return
     lock2 = PlayerLock(opponent.id)
     if not lock2.check():
-        await ctx.send(getText("other_is_in_action").format(user=opponent))
-        # await ctx.channel.send(f"Sorry, but {opponent} is already busy!")
+        await ctx.send(getText("other_is_in_action", lang=lang).format(user=opponent))
         return
 
     with lock1, lock2:
@@ -382,10 +411,10 @@ async def fun_challenge(ctx: Context, opponent:discord.Member):
             p1 = await session.get(Player, user.id)
             p2 = await session.get(Player, opponent.id)
             if p1 is None:
-                await ctx.reply(TEXT_JOIN_THE_GAME)
+                await ctx.reply(getText("join", lang=lang))
                 return
             if p2 is None:
-                await ctx.reply(getText("other_hasnt_joined").format(other=opponent))
+                await ctx.reply(getText("other_hasnt_joined", lang=lang).format(other=opponent))
                 return
             await fight_manager.proposition_fight(ctx, user, opponent, p1, p2, bot, for_fun=True)
 
@@ -396,20 +425,20 @@ async def fun_challenge(ctx: Context, opponent:discord.Member):
 async def team_challenge(ctx: Context, opponent:discord.Member):
     """Pour provoquer un joueur en combat (amical) TEAM vs TEAM"""
     user = ctx.author
+    guild_id = ctx.guild.id if ctx.guild is not None else None
+    lang = language_manager_instance.get_server_language(guild_id)
 
     if user == opponent:
-        await ctx.send(getText("cant_self_tf"))
+        await ctx.send(getText("cant_self_tf", lang=lang))
         return
     
     lock1 = PlayerLock(user.id)
     if not lock1.check():
-        await ctx.send(getText("already_in_action"))
-        # await ctx.send("You are already in an action.")
+        await ctx.send(getText("already_in_action", lang=lang))
         return
     lock2 = PlayerLock(opponent.id)
     if not lock2.check():
-        await ctx.send(getText("other_is_in_action").format(user=opponent))
-        # await ctx.channel.send(f"Sorry, but {opponent} is already busy!")
+        await ctx.send(getText("other_is_in_action", lang=lang).format(user=opponent))
         return
 
     with lock1, lock2:
@@ -417,56 +446,55 @@ async def team_challenge(ctx: Context, opponent:discord.Member):
             p1 = await session.get(Player, user.id)
             p2 = await session.get(Player, opponent.id)
             if p1 is None:
-                await ctx.reply(TEXT_JOIN_THE_GAME)
+                await ctx.reply(getText("join", lang=lang))
                 return
             if p2 is None:
-                await ctx.reply(getText("other_hasnt_joined").format(other=opponent))
+                await ctx.reply(getText("other_hasnt_joined", lang=lang).format(other=opponent))
                 return
             await fight_manager.proposition_team_fight(ctx, user_1=user, user_2=opponent, player_1=p1, player_2=p2, for_fun=True)
 
     return
 
-    
 @bot.command(aliases=['dungeon', 'donjon', 'dj', 'dg'])
 @decorators.categories("Fight")
 async def explore_dungeon(ctx: Context, level:int|str):
     """Pour explorer un donjon. Très utile pour xp rapidement"""
+    guild_id = ctx.guild.id if ctx.guild is not None else None
+    lang = language_manager_instance.get_server_language(guild_id)
+    
     if isinstance(level, str):
         for dg_tags in donjon.special_dg_name_number.values():
             if level in dg_tags:
                 level = next(key for key, value in donjon.special_dg_name_number.items() if level in value)
                 break
         else : 
-            await ctx.send(getText("dg_error_param"))
-            # await ctx.channel.send("Dungeon level must be a number (or a specific keyword).")
+            await ctx.send(getText("dg_error_param", lang=lang))
             return
     
     if(level <= 0) :
-        await ctx.send(getText("dg_greater_0"))
-        # await ctx.channel.send("Dungeon level must be greater than 0.")
+        await ctx.send(getText("dg_greater_0", lang=lang))
         return
     if level > 50 and level not in donjon.special_dg_name_number.keys():
-        await ctx.send(getText("dg_lower_50"))
-        # await ctx.channel.send("Level max is 50.")
+        await ctx.send(getText("dg_lower_50", lang=lang))
         return
 
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
-        await ctx.send(getText("already_in_action"))
+        await ctx.send(getText("already_in_action", lang=lang))
         return
 
     with lock:
         async with database.new_session() as session:
             player = await session.get(Player, user.id)
             if player is None:
-                await ctx.reply(TEXT_JOIN_THE_GAME)
+                await ctx.reply(getText("join", lang=lang))
                 return
             
             pallier_boss_vaincu = math.floor(player.max_dungeon/10) * 10
             if (level - 10 > pallier_boss_vaincu) and level not in donjon.special_dg_name_number.keys():
                 pallier_minimum = math.floor((level-1)/10)*10
-                await ctx.send(getText("dg_pallier").format(lvl_pallier=pallier_minimum))
+                await ctx.send(getText("dg_pallier", lang=lang).format(lvl_pallier=pallier_minimum))
                 return
 
             try :
@@ -475,40 +503,38 @@ async def explore_dungeon(ctx: Context, level:int|str):
                 print(e)
                 raise e
             await session.commit()
-    
 
 @bot.command(aliases=['ruin', 'ruine'])
 @decorators.categories("Fight")
 async def explore_ruin(ctx: Context, level:int):
     """Pour explorer une ruine. Très utile pour obtenir des items et de la monnaie"""
+    guild_id = ctx.guild.id if ctx.guild is not None else None
+    lang = language_manager_instance.get_server_language(guild_id)
+    
     if(level <= 0) :
-        await ctx.send(getText("ruin_greater_0"))
-        # await ctx.channel.send("Ruin level must be greater than 0")
+        await ctx.send(getText("ruin_greater_0", lang=lang))
         return
     if(level > 50) :
-        await ctx.send(getText("ruin_lower_50"))
-        # await ctx.channel.send("50 is the maximum")
+        await ctx.send(getText("ruin_lower_50", lang=lang))
         return
     
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
-        await ctx.send(getText("already_in_action"))
-        # await ctx.send("You are already in an action.")
+        await ctx.send(getText("already_in_action", lang=lang))
         return
 
     with lock:
         async with database.new_session() as session:
             player = await session.get(Player, user.id)
             if player is None:
-                await ctx.reply(TEXT_JOIN_THE_GAME)
+                await ctx.reply(getText("join", lang=lang))
                 return
             try:
                 await ruine.Ruin(ctx, bot, player, level).enter()
             except Exception as e :
                 raise e
             await session.commit()
-
 
 @challenge.error
 @fun_challenge.error
@@ -517,8 +543,7 @@ async def explore_ruin(ctx: Context, level:int):
 @explore_ruin.error
 async def challenge_error(ctx: Context, error: commands.CommandError):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(getText("missing_argument").format(arg=error.param.name))
-        # await ctx.send(f"Error: Missing required argument `{error.param.name}`.")
+        await ctx.send(getText("missing_argument", ctx=ctx).format(arg=error.param.name))
 
 @bot.command(aliases=['arene'])
 @decorators.categories("Fight")
@@ -529,16 +554,18 @@ async def arena(ctx: Context):
 
     user = ctx.author
     server_id = ctx.guild.id
+    guild_id = ctx.guild.id if ctx.guild is not None else None
+    lang = language_manager_instance.get_server_language(guild_id)
+    
     async with database.new_session() as session:
         arena = await session.get(Arena, server_id)
         if arena is None:
-            await ctx.send(getText("no_arena"))
-            # await ctx.send("No arena found for this server. Please create an arena first.")
+            await ctx.send(getText("no_arena", lang=lang))
             return
 
         player = await session.get(Player, user.id)
         if player is None:
-            await ctx.reply(TEXT_JOIN_THE_GAME)
+            await ctx.reply(getText("join", lang=lang))
             return
 
         arena_fight = arena_system.ArenaFight(arena, ctx=ctx, session=session, bot=bot, user=user, player=player)
@@ -557,7 +584,7 @@ async def club(ctx: Context, user:Optional[discord.User |discord.Member] = None)
     async with database.new_session() as session:
         player = await session.get(Player, user.id)
         if player is None:
-            await ctx.reply(TEXT_JOIN_THE_GAME)
+            await ctx.reply(getText("join", ctx=ctx))
             return
         await interact_game.print_bullies(ctx, player, print_images = True)
 
@@ -570,7 +597,7 @@ async def print_reserve(ctx: Context, user:Optional[discord.User |discord.Member
     async with database.new_session() as session:
         player = await session.get(Player, user.id)
         if player is None:
-            await ctx.reply(TEXT_JOIN_THE_GAME)
+            await ctx.reply(getText("join", ctx=ctx))
             return
         await reserve.print_reserve(ctx, user, player, bot, session=session, print_images = True)
         
@@ -579,25 +606,26 @@ async def print_reserve(ctx: Context, user:Optional[discord.User |discord.Member
 async def trade(ctx: Context, other:discord.Member):
     """Pour faire un échange de bullies"""
     user = ctx.author
+    guild_id = ctx.guild.id if ctx.guild is not None else None
+    lang = language_manager_instance.get_server_language(guild_id)
+    
     if user == other:
-        await ctx.send(getText("cant_trade_self"))
+        await ctx.send(getText("cant_trade_self", lang=lang))
         return
  
     async with database.new_session() as session:
         p1 = await session.get(Player, user.id)
         p2 = await session.get(Player, other.id)
         if p1 is None:
-            await ctx.reply(TEXT_JOIN_THE_GAME)
+            await ctx.reply(getText("join", lang=lang))
             return
         if p2 is None:
-            await ctx.reply(getText("other_hasnt_joined").format(other=other))
-            # await ctx.reply(f"{other} has not joined the game.")
+            await ctx.reply(getText("other_hasnt_joined", lang=lang).format(other=other))
             return
         await trades.trade_offer(ctx, user, other, p1, p2)
         await session.commit()
 
     return
-
 
 @bot.command(aliases=['h'])
 @decorators.categories("Bully")
@@ -606,15 +634,14 @@ async def hire(ctx: Context):
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
-        await ctx.send(getText("already_in_action"))
-        # await ctx.send("You are already in an action.")
+        await ctx.send(getText("already_in_action", ctx=ctx))
         return
 
     with lock:
         async with database.new_session() as session:
             player = await session.get(Player, ctx.author.id)
             if player is None:
-                await ctx.reply(TEXT_JOIN_THE_GAME)
+                await ctx.reply(getText("join", ctx=ctx))
                 return
             await interact_game.add_random_bully_to_player(ctx, player, interact_game.generate_name())
             await session.commit()
@@ -626,15 +653,14 @@ async def hire_all(ctx: Context):
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
-        await ctx.send(getText("already_in_action"))
-        # await ctx.send("You are already in an action.")
+        await ctx.send(getText("already_in_action", ctx=ctx))
         return
 
     with lock:
         async with database.new_session() as session:
             player = await session.get(Player, ctx.author.id)
             if player is None:
-                await ctx.reply(TEXT_JOIN_THE_GAME)
+                await ctx.reply(getText("join", ctx=ctx))
                 return
             for _ in range(interact_game.BULLY_NUMBER_MAX):
                 await interact_game.add_random_bully_to_player(ctx, player, interact_game.generate_name(), talkative=False)
@@ -647,21 +673,19 @@ async def kill_all(ctx: Context):
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
-        await ctx.send(getText("already_in_action"))
-        # await ctx.send("You are already in an action.")
+        await ctx.send(getText("already_in_action", ctx=ctx))
         return
     with lock:
         async with database.new_session() as session:
             player = await session.get(Player, user.id)
             if player is None:
-                await ctx.reply(TEXT_JOIN_THE_GAME)
+                await ctx.reply(getText("join", ctx=ctx))
                 return
             all_bullies = player.bullies
             for b in all_bullies:
                 if isinstance(b, bully.Bully):
                     await b.kill()
             await session.commit()
-    
 
 @bot.command(aliases=['use_c', 'use_conso', 'use_consumables'])
 @decorators.categories("Consumable")
@@ -670,14 +694,14 @@ async def use_consumable(ctx: Context):
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
-        await ctx.send(getText("already_in_action"))
+        await ctx.send(getText("already_in_action", ctx=ctx))
         return
 
     with lock:
         async with database.new_session() as session:
             player = await session.get(Player, ctx.author.id)
             if player is None:
-                await ctx.reply(TEXT_JOIN_THE_GAME)
+                await ctx.reply(getText("join", ctx=ctx))
                 return
             await consumable.use_consumable(ctx=ctx, user=user, player=player, session=session, bot=bot)
             await session.commit()
@@ -691,9 +715,9 @@ async def print_consumables(ctx: Context):
     async with database.new_session() as session:
         player = await session.get(Player, ctx.author.id)
         if player is None:
-            await ctx.reply(TEXT_JOIN_THE_GAME)
+            await ctx.reply(getText("join", ctx=ctx))
             return
-        embed = consumable.embed_consumables(player,user)
+        embed = consumable.embed_consumables(player,user, guild=ctx.guild)
         await ctx.channel.send(embed=embed)
 
 @bot.command(aliases=['del_c', 'delete_conso', 'remove_conso'])
@@ -703,14 +727,14 @@ async def del_conso(ctx: Context):
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
-        await ctx.send(getText("already_in_action"))
+        await ctx.send(getText("already_in_action", ctx=ctx))
         return
 
     with lock:
         async with database.new_session() as session:
             player = await session.get(Player, ctx.author.id)
             if player is None:
-                await ctx.reply(TEXT_JOIN_THE_GAME)
+                await ctx.reply(getText("join", ctx=ctx))
                 return
 
             await consumable.remove_consumable(ctx, user, player)
@@ -725,13 +749,13 @@ async def snack_machine(ctx: Context, value:int|None = None):
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
-        await ctx.send(getText("already_in_action"))
+        await ctx.send(getText("already_in_action", ctx=ctx))
         return
     with lock:
         async with database.new_session() as session:
             player = await session.get(Player, user.id)
             if player is None:
-                await ctx.reply(TEXT_JOIN_THE_GAME)
+                await ctx.reply(getText("join", ctx=ctx))
                 return
 
             await run_snack_machine(ctx, bot, session, user, player = player, value = value)
@@ -743,13 +767,13 @@ async def water_fountain(ctx: Context, level: int | None = None):
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
-        await ctx.send(getText("already_in_action"))
+        await ctx.send(getText("already_in_action", ctx=ctx))
         return
     with lock:
         async with database.new_session() as session:
             player = await session.get(Player, user.id)
             if player is None:
-                await ctx.reply(TEXT_JOIN_THE_GAME)
+                await ctx.reply(getText("join", ctx=ctx))
                 return
 
             await run_water_fountain(ctx, bot, session, user, player, value=level)
@@ -785,7 +809,7 @@ async def admin_give(ctx: Context,user: discord.User, name: str, lvl:int, rarity
     async with database.new_session() as session:
         player = await session.get(Player, user.id)
         if player is None:
-            await ctx.reply(getText("other_hasnt_joined").format(other=user))
+            await ctx.reply(getText("other_hasnt_joined", ctx=ctx).format(other=user))
             return
         await interact_game.add_bully_to_player(ctx, player, b)
         await session.commit()
@@ -857,7 +881,7 @@ async def admin_set_max_dg_lvl(ctx: Context, lvl:int):
     async with database.new_session() as session:
         player = await session.get(Player, ctx.author.id)
         if player is None:
-            await ctx.reply(TEXT_JOIN_THE_GAME)
+            await ctx.reply(getText("join", ctx=ctx))
             return
         player.max_dungeon = lvl
         await session.commit()
@@ -869,7 +893,7 @@ async def admin_set_max_ruin_lvl(ctx: Context, lvl:int):
     async with database.new_session() as session:
         player = await session.get(Player, ctx.author.id)
         if player is None:
-            await ctx.reply(TEXT_JOIN_THE_GAME)
+            await ctx.reply(getText("join", ctx=ctx))
             return
         player.max_ruin = lvl
         await session.commit()
@@ -881,7 +905,7 @@ async def py_admin(ctx: Context):
     async with database.new_session() as session:
         player = await session.get(Player, ctx.author.id)
         if player is None:
-            await ctx.reply(TEXT_JOIN_THE_GAME)
+            await ctx.reply(getText("join", ctx=ctx))
             return
         
         money.give_money(player, montant=10000)
@@ -906,7 +930,7 @@ async def give_lvl(ctx: Context, nombre_lvl : Optional[int] = None ):
         async with database.new_session() as session:
             player = await session.get(Player, ctx.author.id)
             if player is None:
-                await ctx.reply(TEXT_JOIN_THE_GAME)
+                await ctx.reply(getText("join", ctx=ctx))
                 return
             nb_level = 1 if nombre_lvl is None else nombre_lvl
             await interact_game.increase_all_lvl(ctx, player, nb_level = nb_level)
@@ -926,7 +950,7 @@ async def add_food(ctx: Context):
         async with database.new_session() as session:
             player = await session.get(Player, ctx.author.id)
             if player is None:
-                await ctx.reply(TEXT_JOIN_THE_GAME)
+                await ctx.reply(getText("join", ctx=ctx))
                 return
             c = consumable.AlimentEnum.Gigot.new_conso(2)
             player.consumables.append(c)
@@ -946,7 +970,7 @@ async def add_water(ctx: Context):
         async with database.new_session() as session:
             player = await session.get(Player, ctx.author.id)
             if player is None:
-                await ctx.reply(TEXT_JOIN_THE_GAME)
+                await ctx.reply(getText("join", ctx=ctx))
                 return
             c = consumable.ConsumableWaterLvl("WaterMst", 3, bully.Rarity.MONSTER)
             player.consumables.append(c)
@@ -969,9 +993,9 @@ async def add_elixir(ctx: Context, buff_name : str, cible_user:Optional[discord.
         async with database.new_session() as session:
             player = await session.get(Player, user.id)
             if player is None:
-                await ctx.reply(TEXT_JOIN_THE_GAME)
+                await ctx.reply(getText("join", ctx=ctx))
                 return
-            e = consumable.ConsumableElixirBuff(getText("elixir_of").format(elixir = buff_name), buff_name)
+            e = consumable.ConsumableElixirBuff(getText("elixir_of", ctx=ctx).format(elixir = buff_name), buff_name)
             player.consumables.append(e)
             await ctx.send(f"{user} has received an elixir of {buff_name}")
             await session.commit()
@@ -989,7 +1013,7 @@ async def del_all_c(ctx: Context):
         async with database.new_session() as session:
             player = await session.get(Player, ctx.author.id)
             if player is None:
-                await ctx.reply(TEXT_JOIN_THE_GAME)
+                await ctx.reply(getText("join", ctx=ctx))
                 return
             player.consumables = []
             await session.commit()
@@ -1011,7 +1035,6 @@ async def bully_maj(ctx:Context):
         bullies = result.scalars().all()
         for b in bullies:
             difference_points = bully.nb_points_tot_rarity(b.lvl, b.rarity) - b.stats.sum_stats()
-            print(f"{b.name}- diff:{difference_points}")
             nb_points:int = round(b.lvl * (b.lvl + 1) / 2)
             val = difference_points/nb_points
             b.increase_stat_with_seed(nb_level_points=nb_points, valeur=val)
@@ -1025,7 +1048,7 @@ async def reset_bully_images(ctx: Context):
     user = ctx.author
     lock = PlayerLock(user.id)
     if not lock.check():
-        await ctx.send(getText("already_in_action"))
+        await ctx.send(getText("already_in_action", ctx=ctx))
         return
     
     await ctx.send("Starting image reset for all bullies...")
@@ -1055,12 +1078,24 @@ bot.remove_command('help')
 async def custom_help(ctx: Context):
     dict_text:dict[str, str] = {}
     
+    # Get the server language
+    guild_id = ctx.guild.id if ctx.guild is not None else None
+    lang = language_manager_instance.get_server_language(guild_id)
+    
     for command in bot.commands:
         if not command.hidden:
             categories:list[str] = getattr(command.callback, 'categories', ["Uncategorized"])
             if len(categories) == 0:
                 continue  # Skip commands without categories
-            description = command.help or "No description."
+            
+            # Get language-specific help text - use ctx directly like other code does
+            help_key = f"help_{command.name}"
+            # Try to get translated help text, fall back to command's docstring
+            try:
+                description = getText(help_key, ctx=ctx, lang=lang)
+            except:
+                description = command.help or "No description."
+            
             aliases = "[" + "; ".join(command.aliases) + "]" if command.aliases else ""
             command_info = f"**{command.name}** {aliases}: {description}\n"
             for category in categories:
@@ -1069,9 +1104,20 @@ async def custom_help(ctx: Context):
                 dict_text[category] += command_info
     
     dict_text.pop("Admin", None)
-    #all the key are organized in alphabetic order : 
-    dict_text = dict(sorted(dict_text.items(), key=lambda item: item[0]))
-    await paginate_dict(ctx, dict_text, max_chars=700)
+    
+    # Get translated category names
+    translated_dict = {}
+    for category, content in dict_text.items():
+        # Try to get translated category name, fall back to original name
+        try:
+            translated_category = getText(f"category_{category}", ctx=ctx, lang=lang)
+        except:
+            translated_category = category
+        translated_dict[translated_category] = content
+    
+    # Sort by translated category names
+    translated_dict = dict(sorted(translated_dict.items(), key=lambda item: item[0]))
+    await paginate_dict(ctx, translated_dict, max_chars=800)
 
 if __name__ == "__main__":
     if os.getenv("TESTING"):

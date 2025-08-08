@@ -1,0 +1,8 @@
+__Ruins:__
+- Command: **!!ruin [level]** (ex: !!ruin 10).
+- A ruin is ideal for earning money.
+- Each ruin includes a series of rooms that can lead to: a fight, a chest, a trapped room.
+- Bullies don't regenerate before the end of ruin exploration.
+- During boss fights, the player can swap the fighting Bully whenever they want.
+- The final Boss drops a consumable (an elixir or a snack).
+- The level of the highest Ruin you've beaten determines your **!!payday** gains.

@@ -2,6 +2,7 @@ import discord
 import asyncio
 from discord.ext.commands import Bot, Context, CommandNotFound
 from sqlalchemy.ext.asyncio import AsyncSession
+from utils.language_manager import language_manager_instance
 
 from consumable import AlimentEnum
 from interact_game import ViewChoice, ViewYesNo
@@ -18,6 +19,9 @@ COST_FOOD_VALUE = 10
 
 async def run_snack_machine(ctx: Context, bot:Bot, session: AsyncSession, user: discord.abc.User, player: Player, value:int|None = None) -> None:
     """Gère l'interaction de la Snack Machine : choix d'un bonus et de trois malus."""
+    guild_id = ctx.guild.id if ctx.guild is not None else None
+    lang = language_manager_instance.get_server_language(guild_id)
+    
     # Définition de la liste de stats
     stats = ["strength", "agility", "lethality", "viciousness"]
 
@@ -26,7 +30,7 @@ async def run_snack_machine(ctx: Context, bot:Bot, session: AsyncSession, user: 
     bonus_choice: dict[str, str|None] = {"choix": None}
 
     # Envoi du message pour choisir le bonus
-    message_bonus = await ctx.send(content=getText("snack_bonus_select"),
+    message_bonus = await ctx.send(content=getText("snack_bonus_select", lang=lang),
         view=ViewChoice(
             user=user,
             event=event_bonus,
@@ -40,8 +44,7 @@ async def run_snack_machine(ctx: Context, bot:Bot, session: AsyncSession, user: 
         await asyncio.wait_for(event_bonus.wait(), timeout=CHOICE_TIMEOUT)
     except asyncio.TimeoutError:
         await message_bonus.delete()
-        await ctx.send(getText("snack_bonus_timeout"))
-        # await ctx.send("Timeout lors du choix du bonus. Veuillez réessayer.")
+        await ctx.send(getText("snack_bonus_timeout", lang=lang))
         return
 
     bonus_stat = bonus_choice["choix"]
@@ -53,7 +56,7 @@ async def run_snack_machine(ctx: Context, bot:Bot, session: AsyncSession, user: 
     
     event_malus = asyncio.Event()
     malus_choice: dict[str, str|None]  = {"choix": None}
-    message_malus = await ctx.send(content=getText("snack_malus_select"),
+    message_malus = await ctx.send(content=getText("snack_malus_select", lang=lang),
         view=ViewChoice(
             user=user,
             event=event_malus,
@@ -66,8 +69,7 @@ async def run_snack_machine(ctx: Context, bot:Bot, session: AsyncSession, user: 
         await asyncio.wait_for(event_malus.wait(), timeout=CHOICE_TIMEOUT)
     except asyncio.TimeoutError:
         await message_malus.delete()
-        await ctx.send(getText("snack_malus_timeout"))
-        # await ctx.send("Timeout lors du choix d'un malus. Veuillez réessayer.")
+        await ctx.send(getText("snack_malus_timeout", lang=lang))
         return
 
     malus_stat = malus_choice["choix"]
@@ -83,7 +85,7 @@ async def run_snack_machine(ctx: Context, bot:Bot, session: AsyncSession, user: 
 
     # --- 3. Récupération ou demande de la valeur du consommable ---
     if value is None:
-        await ctx.send(getText("conso_value_prompt").format(user=user.mention))
+        await ctx.send(getText("conso_value_prompt", lang=lang).format(user=user.mention))
         try:
             reply_msg = await bot.wait_for(
                 "message",
@@ -91,7 +93,7 @@ async def run_snack_machine(ctx: Context, bot:Bot, session: AsyncSession, user: 
                 check=lambda m: m.author == user and m.channel == ctx.channel
             )
         except asyncio.TimeoutError:
-            await ctx.send(getText("conso_level_timeout"))
+            await ctx.send(getText("conso_level_timeout", lang=lang))
             return
 
         try:
@@ -99,7 +101,7 @@ async def run_snack_machine(ctx: Context, bot:Bot, session: AsyncSession, user: 
             if value <= 0:
                 raise ValueError
         except ValueError:
-            await reply_msg.reply(getText("conso_invalid_value"))
+            await reply_msg.reply(getText("conso_invalid_value", lang=lang))
             return
 
     # --- 4. Création du consommable ---
@@ -111,16 +113,14 @@ async def run_snack_machine(ctx: Context, bot:Bot, session: AsyncSession, user: 
             break
 
     if consumable_created is None:
-        await ctx.send(getText("snack_conso_not_find"))
-        # await ctx.send("Aucun consommable correspondant n'a été trouvé pour ces choix.")
+        await ctx.send(getText("snack_conso_not_find", lang=lang))
         return
     
     event_confirm = asyncio.Event()
     var_confirm: dict[str, bool] = {"choix": False}
     price : int = value * COST_FOOD_VALUE
     message_confirm = await ctx.send(
-        content=getText("conso_purchase_confirmation").format(name=consumable_created.name, value=consumable_created.value, price=price, money_emoji=money.MONEY_EMOJI, effect=consumable_created.get_effect()),
-        # f"Voulez vous achetez : **{consumable_created.name}[{consumable_created.value}]** pour {price}\nEffet: {consumable_created.get_effect()}", 
+        content=getText("conso_purchase_confirmation", lang=lang).format(name=consumable_created.name, value=consumable_created.value, price=price, money_emoji=money.MONEY_EMOJI, effect=consumable_created.get_effect(lang=lang)),
         view=ViewYesNo(user=user, event=event_confirm, variable_pointer=var_confirm)
     )
     try:
@@ -128,20 +128,18 @@ async def run_snack_machine(ctx: Context, bot:Bot, session: AsyncSession, user: 
         accept:bool = var_confirm["choix"]
     except asyncio.exceptions.TimeoutError as e:
         return
-    # await message_confirm.delete()
+    
     if not accept : return
 
     if(money.get_money_user(player) < price):
-        await message_confirm.edit(content=getText("conso_not_enough_money").format(money_emoji=money.MONEY_EMOJI), view=None)
-        # await message_confirm.edit(content=f"You don't have enough {money.MONEY_EMOJI}", view=None)
+        await message_confirm.edit(content=getText("conso_not_enough_money", lang=lang).format(money_emoji=money.MONEY_EMOJI), view=None)
         return
 
     
     money.give_money(player, - price)
     player.consumables.append(consumable_created)
     await message_confirm.edit(
-            content=getText("conso_purchase_success").format(name=consumable_created.name, value=consumable_created.value, price=price, money_emoji=money.MONEY_EMOJI),
-            # content=f"Vous avez achetez  **{consumable_created.name}[{consumable_created.value}]** pour {price} {money.MONEY_EMOJI} !",
+            content=getText("conso_purchase_success", lang=lang).format(name=consumable_created.name, value=consumable_created.value, price=price, money_emoji=money.MONEY_EMOJI),
             view=None)
     await session.commit()
 
@@ -154,14 +152,16 @@ COST_LVL_RARITY:dict[Rarity, int] = {Rarity.TOXIC: 275,
 
 async def run_water_fountain(ctx: Context, bot: Bot, session: AsyncSession, user: discord.abc.User, player: Player, value: int | None = None) -> None:
     """Gère l'achat d'un consommable Water XP dans la Water Fountain."""
+    guild_id = ctx.guild.id if ctx.guild is not None else None
+    lang = language_manager_instance.get_server_language(guild_id)
+    
     # --- 1. Sélection de la rareté ---
     rarities = ["Toxic", "Monster", "Devastator", "Sublime"]
     event_rarity = asyncio.Event()
     rarity_choice: dict[str, str | None] = {"choix": None}
 
     message_rarity = await ctx.send(
-        content=getText("water_rarity_select"),
-        # "Select the **rarity** of the Water XP:",
+        content=getText("water_rarity_select", lang=lang),
         view=ViewChoice(
             user=user,
             event=event_rarity,
@@ -175,19 +175,18 @@ async def run_water_fountain(ctx: Context, bot: Bot, session: AsyncSession, user
         await asyncio.wait_for(event_rarity.wait(), timeout=CHOICE_TIMEOUT)
     except asyncio.TimeoutError:
         await message_rarity.delete()
-        await ctx.send(getText("water_rarity_timeout"))
-        # await ctx.send("Timeout lors du choix de la rareté. Veuillez réessayer.")
+        await ctx.send(getText("water_rarity_timeout", lang=lang))
         return
 
     rarity_name = rarity_choice["choix"]
-    await message_rarity.edit(content=getText("water_rarity_selected").format(rarity_name=rarity_name))
+    await message_rarity.edit(content=getText("water_rarity_selected", lang=lang).format(rarity_name=rarity_name))
     if rarity_name is None:
         return
     rarity = Rarity[rarity_name.upper()]  # Conversion en énumération
 
     # --- 2. Sélection de la valeur du consommable ---
     if value is None:
-        message_request = await ctx.send(getText("conso_value_prompt").format(user=user.mention))
+        message_request = await ctx.send(getText("conso_value_prompt", lang=lang).format(user=user.mention))
         
         try:
             reply_msg = await bot.wait_for(
@@ -197,7 +196,7 @@ async def run_water_fountain(ctx: Context, bot: Bot, session: AsyncSession, user
             )
         except asyncio.TimeoutError:
             await message_request.delete()
-            await ctx.send(getText("conso_level_timeout"))
+            await ctx.send(getText("conso_level_timeout", lang=lang))
             return
 
         try:
@@ -205,14 +204,13 @@ async def run_water_fountain(ctx: Context, bot: Bot, session: AsyncSession, user
             if value <= 0:
                 raise ValueError
         except ValueError:
-            await reply_msg.reply(getText("conso_invalid_value"))
+            await reply_msg.reply(getText("conso_invalid_value", lang=lang))
             return
 
         await message_request.delete()
 
     # --- 3. Création du consommable ---
-    water_conso = ConsumableWaterLvl(getText("water_name").format(rarity=rarity_name, value=value), value, rarity)
-    # water_conso = ConsumableWaterLvl(f"Water {rarity_name}", value, rarity)
+    water_conso = ConsumableWaterLvl(getText("water_name", lang=lang).format(rarity=rarity_name, value=value), value, rarity)
 
     # --- 4. Confirmation de l'achat ---
     price = value * COST_LVL_RARITY[rarity]
@@ -220,7 +218,7 @@ async def run_water_fountain(ctx: Context, bot: Bot, session: AsyncSession, user
     var_confirm: dict[str, bool] = {"choix": False}
 
     message_confirm = await ctx.send(
-        content=getText("conso_purchase_confirmation").format(name=water_conso.name, value=water_conso.val, price=price, money_emoji=money.MONEY_EMOJI, effect=water_conso.get_effect()),
+        content=getText("conso_purchase_confirmation", lang=lang).format(name=water_conso.name, value=water_conso.val, price=price, money_emoji=money.MONEY_EMOJI, effect=water_conso.get_effect(lang=lang)),
         view=ViewYesNo(user=user, event=event_confirm, variable_pointer=var_confirm)
     )
 
@@ -235,12 +233,12 @@ async def run_water_fountain(ctx: Context, bot: Bot, session: AsyncSession, user
 
     # --- 5. Vérification et achat ---
     if money.get_money_user(player) < price:
-        await message_confirm.edit(content=getText("conso_not_enough_money").format(money_emoji=money.MONEY_EMOJI), view=None)
+        await message_confirm.edit(content=getText("conso_not_enough_money", lang=lang).format(money_emoji=money.MONEY_EMOJI), view=None)
         return
 
     money.give_money(player, -price)
     player.consumables.append(water_conso)
-    await message_confirm.edit(content=getText("conso_purchase_success").format(name=water_conso.name, value=water_conso.val, price=price, money_emoji=money.MONEY_EMOJI)
+    await message_confirm.edit(content=getText("conso_purchase_success", lang=lang).format(name=water_conso.name, value=water_conso.val, price=price, money_emoji=money.MONEY_EMOJI)
                                , view=None)
     await session.commit()
 

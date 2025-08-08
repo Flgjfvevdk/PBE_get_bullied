@@ -18,6 +18,7 @@ from dataclasses import dataclass, field, KW_ONLY
 
 from typing import Dict
 from all_texts import getText
+from utils.language_manager import language_manager_instance
 
 CHOICE_TIMEOUT = 20
 RARITY_DROP_CHANCES = [0, 35, 45, 15, 5, 0] #Mettre 0 en proba d'avoir unique
@@ -55,7 +56,7 @@ def loot_bully(level:int) -> Bully:
 
 
 async def shop_lootbox(ctx: Context, user: discord.abc.User):
-    text = getText("lootbox_select")
+    text = getText("lootbox_select", ctx=ctx)
     event = asyncio.Event()
     var:Dict[str, int | None] = {"choix" : None}
     level_choix = [1, 5, 10, 20, 30, 40, 50]
@@ -77,40 +78,40 @@ async def shop_lootbox(ctx: Context, user: discord.abc.User):
         await shop_lb_msg.delete()
 
 async def open_lootbox(ctx: Context, user: discord.abc.User, level:int):
+    guild_id = ctx.guild.id if ctx.guild is not None else None
+    lang = language_manager_instance.get_server_language(guild_id)
+
     lock = PlayerLock(user.id)
     if not lock.check():
-        await ctx.reply(getText("already_in_action"))
+        await ctx.reply(getText("already_in_action", lang=lang))
         return
     with lock:
         async with database.new_session() as session:
             player = await session.get(Player, user.id)
 
             if player is None:
-                await ctx.reply(getText("join"))
+                await ctx.reply(getText("join", lang=lang))
                 return
             
             max_dungeon_lvl:int = player.max_dungeon
             if level > max_dungeon_lvl and level > 1:
-                await ctx.send(getText("lootbox_require_dungeon").format(user = user.name, level=level))
+                await ctx.send(getText("lootbox_require_dungeon", lang=lang).format(user = user.name, level=level))
                 return
 
             cout = get_cout(level=level)
             if(money.get_money_user(player) < cout):
-                await ctx.send(getText("lootbox_not_enough_money").format(user = user.name, money_emoji = money.MONEY_EMOJI, cout = cout))
-                # await ctx.send(f"{user.name}, you don't have enough {money.MONEY_EMOJI} for this box [cost: {cout}{money.MONEY_EMOJI}]")
+                await ctx.send(getText("lootbox_not_enough_money", lang=lang).format(user = user.name, money_emoji = money.MONEY_EMOJI, cout = cout))
                 return
 
             if(interact_game.nb_bully_in_team(player) >= interact_game.BULLY_NUMBER_MAX):
-                await ctx.send(getText("max_bullies_reached").format(user = user.name, max_bullies = interact_game.BULLY_NUMBER_MAX))
-                # await ctx.channel.send(f"{user.name}, you can't have more than {interact_game.BULLY_NUMBER_MAX} bullies at the same time")
+                await ctx.send(getText("max_bullies_reached", lang=lang).format(user = user.name, max_bullies = interact_game.BULLY_NUMBER_MAX))
                 return
             
             money.give_money(player, - cout)
             b:Bully = loot_bully(level)
             player.bullies.append(b)
-            text_ajout_buff = getText("lootbox_buff").format(buff_tag=b.buff_fight_tag) if b.buff_fight_tag != "NoBuff" else ""
-            text_lootbox = bully.mise_en_forme_str(getText("lootbox_purchase_success").format(user = user.name, bully = b.name, rarity = b.rarity.name) + text_ajout_buff)
-            # text_lootbox = bully.mise_en_forme_str(f"{user.name} has purchased a lootbox and got ... {b.name} a {b.rarity.name}!")
+            text_ajout_buff = getText("lootbox_buff", lang=lang).format(buff_tag=b.buff_fight_tag) if b.buff_fight_tag != "NoBuff" else ""
+            text_lootbox = bully.mise_en_forme_str(getText("lootbox_purchase_success", lang=lang).format(user = user.name, bully = b.name, rarity = b.rarity.name) + text_ajout_buff)
             await ctx.channel.send(text_lootbox)
             await session.commit()
     

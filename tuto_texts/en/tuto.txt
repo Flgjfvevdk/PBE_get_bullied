@@ -1,0 +1,14 @@
+Get Bullied is a text-based game where you recruit Bullies to fight, explore dungeons, defeat bosses, face other players and level up.
+
+__Bullies:__
+- Are your fighters. Each has stats (Strength, Agility, Lethality, Viciousness), a level (lvl) and a rarity (NOBODY, TOXIC, MONSTER, DEVASTATOR, SUBLIME).
+- Fight to the death in duels, team battles, or in dungeons and ruins.
+- Gain experience, level up, can die, resurrect, and change stats.
+
+__How to start:__
+1. Use **!!join** to join the game.
+2. Invite friends with **!!invite @user** (sponsorship reward).
+3. Recruit your first Bullies with **!!hire** or **!!hire_all**.
+4. Check your Bullies with **!!club**.
+5. To see all tutorials, check **!!tuto_all**.
+6. To see all commands, check **!!help**.

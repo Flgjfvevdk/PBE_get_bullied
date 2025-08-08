@@ -1,0 +1,19 @@
+__Fights:__
+- Death duel: **!!challenge @opponent**
+- Friendly duel: **!!fun_challenge @opponent**
+- Friendly team combat: **!!team_challenge @opponent**
+- Fights follow a pattern where your Bullies attack in turns.
+- Statistics define the probability of activating an effect to gain advantage during combat
+
+__Stats:__
+- Strength: Compared to opponent's to block an attack.
+- Agility: Compared to opponent's to attempt to steal a turn.
+- Lethality: Compared to opponent's Strength and Lethality to deal extra damage.
+- Viciousness: Compared to opponent's to attempt to decrease their best stat with each attack.
+
+__Comparison:__
+- When we say a statistic is compared, it means we have a probability of activating an effect that depends on the ratio between 2 statistics.
+- Having a statistic barely better than the one it's compared to greatly increases the chances of winning a comparison.
+
+__💥 Tip:__
+- To win a fight, it's better to choose a Bully that has the most different statistics above those of the opponent.

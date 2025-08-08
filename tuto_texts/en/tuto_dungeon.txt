@@ -1,0 +1,8 @@
+__Dungeons:__
+- Command: **!!dungeon [level]**.
+- A dungeon is ideal for gaining experience.
+- Each dungeon includes a series of fights.
+- Bullies don't regenerate before the end of the dungeon.
+- Tier Dungeons (levels 10, 20, 30, 40, 50) are boss fights and must be defeated to reach the next tier.
+- During boss fights, the player can swap the fighting Bully whenever they want.
+- Defeating a dungeon multiplies the experience received by Bullies during the dungeon.

@@ -1,9 +1,0 @@
-__Arène :__
-- Chaque serveur possède sa propre arène (**!!arene**).
-- Les 3 équipes les plus puissantes de l'arène sont enregistrés et peuvent être affronté par d'autres joueurs.
-- Tant que votre équipe est dans l'arène, 
-- Le Maître de l’Arène bénéficie d’un bonus de revenu à chaque **!!payday**.
-
-__Payday :__
-- Commande : **!!payday**.
-- Génère de la monnaie en fonction de la Ruine la plus élevée que vous avez conquise ainsi que de votre position dans l’Arène du serveur.

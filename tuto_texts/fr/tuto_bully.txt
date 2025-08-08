@@ -1,7 +1,7 @@
 __Les Bullies :__
 - Consultez vos Bullies avec **!!club**.
 - Stockez-les en réserve avec **!!reserve** (max 10).
-- Chaque Bully possède une rareté (voir **!!tuto_rarity**).
+- Chaque Bully possède une rareté (NOBODY, TOXIC, MONSTER, DEVASTATOR, SUBLIME) (voir **!!tuto_rarity**).
 - Le niveau d'un Bully (lvl) augmente lorsqu'il cumule autant d'expérience que son niveau.
 - Les Bullies ont des stats (Strength, Agility, Lethality, Viciousness) qui augmente quand ils gagnent en niveau.
 

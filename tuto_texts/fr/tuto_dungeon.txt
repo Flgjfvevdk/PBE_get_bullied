@@ -6,4 +6,3 @@ __Les Donjons :__
 - Les Donjons de pallier (niveaux 10, 20, 30, 40, 50) sont des combats de boss et doivent être vaincus pour atteindre le palier supérieur.
 - Pendant les combat contre un boss, le joueur peut échanger le Bully qui se bat quand il veut. 
 - Vaincre donjon multiplie l'expérience reçu par les Bullies pendant le donjon.
-

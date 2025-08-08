@@ -1,4 +1,4 @@
-Get Bullied est un jeu textuel où vous recrutez des Bullies pour combattre, explorer des donjons, affronter d'autres joueurs et grimper en niveau. 
+Get Bullied est un jeu textuel où vous recrutez des Bullies pour combattre, explorer des donjons, vaincre des boss, affronter d'autres joueurs et grimper en niveau. 
 
 __Les Bullies :__
 - Sont vos combattants. Chacun possède des stats (Strength, Agility, Lethality, Viciousness), un niveau (lvl) ainsi qu'une rareté (NOBODY, TOXIC, MONSTER, DEVASTATOR, SUBLIME).

@@ -1,0 +1,23 @@
+__Currency:__
+- Earn money easily: **!!payday**
+- To display your total money: **!!bank**
+- To recruit bullies for free: **!!hire** or **!!hire_all**
+
+__Shop:__
+- The Shop is common to all server players.
+- Check the shop with **!!shop**. The Shop resets every 10 minutes.
+- Rarity probabilities:
+    - Toxic: 30%
+    - Monster: 40%
+    - Devastator: 21%
+    - Sublime: 9%
+
+__Lootbox:__
+- Buy a lootbox with **!!lootbox**.
+- Level required: having defeated a dungeon of the lootbox level.
+- Rarity probabilities:
+    - Toxic: 35%
+    - Monster: 45%
+    - Devastator: 15%
+    - Sublime: 5%
+- Can contain Bullies with specific buffs.

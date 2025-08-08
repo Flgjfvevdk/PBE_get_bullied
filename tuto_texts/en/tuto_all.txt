@@ -1,0 +1,13 @@
+__Tutorials:__
+- General tutorial: **!!tuto**
+- Tutorial for fighters (Bully): **!!tuto_bully**
+- Combat tutorial: **!!tuto_fight**
+- Tutorial explaining rarities: **!!tuto_rarity**
+- Tutorial economy: **!!tuto_economy**
+- Tutorial on buying fighters (Bullies): **!!tuto_shop**
+- Tutorial for dungeons: **!!tuto_dungeon**
+- Tutorial for ruins: **!!tuto_ruin**
+- Tutorial on various consumables: **!!tuto_conso**
+- Tutorial showing effects of all combat buffs: **!!list_buffs**
+
+To see all commands: **!!help**

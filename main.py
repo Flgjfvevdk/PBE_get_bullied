@@ -27,7 +27,6 @@ import utils.database as database
 from player_info import Player
 import arena_system
 from arena_system import Arena
-import tuto_text
 import lootbox
 import consumable
 import trades
@@ -203,7 +202,7 @@ async def bank(ctx: Context):
 @bot.command(aliases=['patch', 'update'])
 async def patchnote(ctx: Context):
     """Nouvelle mise à jour récente"""
-    await ctx.channel.send(tuto_text.patchnote)
+    await ctx.channel.send(getTuto("patchnote", ctx=ctx))
 
 @bot.command(aliases=['leader', 'rank'])
 @decorators.categories("Game")

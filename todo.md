@@ -9,3 +9,4 @@ Liste des choses à faire prochainement:
     - [x] Pour stocker les items
 - [x] Créer une classe de combattants pour simplifier les fonctions.
 - [ ] Conteneuriser avec Docker.
+- [ ] Mettre cette liste à jour.

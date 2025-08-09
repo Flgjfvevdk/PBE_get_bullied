@@ -1,4 +1,0 @@
-f_name Pedrolito
-l_name Diaz
-strength 6
-agility 3

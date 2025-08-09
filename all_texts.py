@@ -283,6 +283,7 @@ texts = {
         "help_snack_machine": "Pour acheter un consommable snack (modifie les stats)",
         "help_water_fountain": "Pour acheter un consommable eau XP",
         "help_custom_help": "Affiche l'aide des commandes par catégorie",
+        "help_set_server_language": "Pour définir la langue du serveur (admin uniquement)"
     },
     "en":{
         "join":"Please join the game first ! (!!join)",
@@ -559,6 +560,7 @@ texts = {
         "help_snack_machine": "Buy a snack consumable (modifies stats)",
         "help_water_fountain": "Buy a water XP consumable",
         "help_custom_help": "Display command help by category",
+        "help_set_server_language": "Set the server language (admin only)"
     }
 }
 

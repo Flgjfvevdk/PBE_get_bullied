@@ -49,6 +49,7 @@ from all_texts import getText
 
 
 TOKEN = getenv("DISCORD_TOKEN")
+command_prefix = getenv("COMMAND_PREFIX")
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -61,7 +62,7 @@ class GetBulliedBot(Bot):
     def session(self) -> AsyncSession:
         return database.new_session()
 
-bot = GetBulliedBot(command_prefix = "$$", intents=intents)
+bot = GetBulliedBot(command_prefix = command_prefix, intents=intents)
 
 @bot.event
 async def on_ready():
@@ -109,7 +110,7 @@ async def on_guild_join(guild: discord.Guild):
     embed.set_footer(text="Server Join Notification")
     
     # Prepare the command for easy copy-paste
-    prepared_command = f"$$admin_add_server_to_list {guild.id}"
+    prepared_command = f"{command_prefix}admin_add_server_to_list {guild.id}"
     command_text = f"**To add this server to the game:**\n```{prepared_command}```"
     
     # Send notification to all admins

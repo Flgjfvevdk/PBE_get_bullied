@@ -172,3 +172,4 @@ game_data/
 **/*.png
 config/
 test/
+discord_servers.json

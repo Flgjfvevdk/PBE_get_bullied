@@ -212,7 +212,6 @@ async def invite_join(ctx: Context, parrain:Player, user:discord.Member|discord.
                 await ctx.reply(getText("already_joined_game", lang=lang))
                 return            
 
-
 async def make_bot_join(bot_user : discord.ClientUser, session: AsyncSession) -> Player|None:
     bot_player = Player(0)
     bot_player.id = bot_user.id
@@ -222,7 +221,6 @@ async def make_bot_join(bot_user : discord.ClientUser, session: AsyncSession) ->
     except IntegrityError:
         return
     return bot_player
-
 
 async def add_random_bully_to_player(ctx: Context, player: Player, name_brute: str, channel_cible=None, talkative=True) -> None:
     name_bully:str = name_brute
@@ -246,7 +244,6 @@ async def add_bully_to_player(ctx: Context, player: Player, b: Bully, channel_ci
     player.bullies.append(b)
 
     await channel_cible.send(getText("new_bully_msg", lang=lang).format(bully=b.name))
-
 
 async def print_bullies(ctx: Context, player: Player, compact_print=False, print_images=False, channel_cible=None) -> None:
     #Par défaut, le channel d'envoie est le channel du contexte
@@ -361,7 +358,6 @@ def str_fighting_bully(fighting_bully:list[FightingBully], print_images=False, l
     else :
         files = None
     return (text, files)
-
 
 async def select_bully(ctx: Context, user: discord.abc.User, player: Player, channel_cible=None, timeout = CHOICE_TIMEOUT, from_team=True) -> Bully:
     '''Il faut try catch cette méthode car elle peut raise une exception en cas de timeout !!!'''
@@ -500,7 +496,47 @@ async def suicide_bully(ctx: Context, user: discord.abc.User, player: Player, bo
         await message_choose_suicide.edit(content=getText("no_suicide", lang=lang).format(user=user.name))
     finally:
         await message_bullies.delete()
-   
+
+async def set_lang(ctx:Context):
+    """Allows a server admin to change the bot's language for the server."""
+    if ctx.guild is None:
+        return
+
+    event = asyncio.Event()
+    var: Dict[str, str | None] = {"choix": None}
+    
+    lang_options = ["en", "fr"]
+    lang_names = ["English", "Français"]
+
+    view = ViewChoice(
+        user=ctx.author,
+        event=event,
+        list_choix=lang_options,
+        list_choix_name=lang_names,
+        variable_pointer=var
+    )
+
+    message = await ctx.send(getText("lang_select", ctx=ctx), view=view)
+
+    try:
+        await asyncio.wait_for(event.wait(), timeout=CHOICE_TIMEOUT)
+        
+        chosen_lang = var["choix"]
+        if chosen_lang:
+            try:
+                language_manager_instance.set_server_language(ctx.guild.id, chosen_lang)
+                # Get confirmation text in the newly set language
+                new_lang_text = getText("lang_set", ctx.guild.id).format(lang=chosen_lang)
+                await message.edit(content=new_lang_text, view=None)
+            except ValueError as e:
+                await message.edit(content=str(e), view=None)
+        else: # Cancelled
+            await message.edit(content=getText("lang_cancelled", ctx=ctx), view=None)
+
+    except asyncio.TimeoutError:
+        await message.edit(content=getText("lang_timed_out", ctx=ctx), view=None)
+
+
 def generate_name() -> str:
     prenom = generate_name_tab.NAME_GENERATOR.generate_name()
     return prenom
@@ -517,9 +553,7 @@ async def increase_all_lvl(ctx: Context, player: Player, nb_level:int = 1,  chan
 
     await channel_cible.send("done")
 
-
 def nb_bully_in_team(player: Player) -> int:
     return len(player.get_equipe())
 
 
-    

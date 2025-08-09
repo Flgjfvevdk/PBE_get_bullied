@@ -224,6 +224,13 @@ texts = {
         "tournament_recap_fight": "{user1} VS {user2} : {winner} a gagné",
         "tournament_winner": "{user} est le vainqueur du tournoi avec un score de {score}.",
         "tournament_player_score": "{user} : {score} points",
+        
+        # language selection
+        "not_admin": "You are not an admin of this discord server.",
+        "lang_select": "Sélectionnez votre langue pour le serveur.",
+        "lang_set": "Langue du serveur définie sur {lang}.",
+        "lang_cancelled": "Sélection de la langue annulée.",
+        "lang_timed_out": "Timeout, sélection de la langue annulée.",
 
         # Category translations
         "category_Game": "Jeu",
@@ -493,6 +500,13 @@ texts = {
         "tournament_recap_fight": "{user1} VS {user2} : {winner} won",
         "tournament_winner": "{user} is the winner or the Sunday tournament with a score of {score}.",
         "tournament_player_score": "{user} : {score} points",
+
+        # language selection
+        "not_admin": "You are not an admin of this discord server.",
+        "lang_select": "Select your language for the server.",
+        "lang_set": "Server language set to {lang}.",
+        "lang_cancelled": "Language selection cancelled.",
+        "lang_timed_out": "Timeout, language selection cancelled.",
 
         # Category translations
         "category_Game": "Game",

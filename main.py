@@ -263,7 +263,7 @@ async def sacrifice(ctx: Context):
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #Les tutos : ___________________________________________________________
-@bot.command()
+@bot.command(aliases=['tutorial','tutoriel','Tutorial','Tutoriel', 'Tuto'])
 @decorators.categories("Tuto")
 async def tuto(ctx: Context, tuto_name:str=""):
     """Affiche un tutoriel général. Faites le si vous êtes perdu !"""
@@ -783,11 +783,25 @@ async def water_fountain(ctx: Context, level: int | None = None):
 
 # //////////////////////////////////////////////////////////////////////////////////////////////////////
 
+@bot.command(aliases=['set_lang', 'lang'])
+@decorators.categories("Game")
+async def set_server_language(ctx:Context):
+    """Pour changer la langue du serveur. Utilisé par les admins du serveur"""
+    if ctx.guild is None:
+        await ctx.send("This command can only be used in a server.")
+        return
+
+    if isinstance(ctx.author, discord.Member) and ctx.author.guild_permissions.administrator:
+        await interact_game.set_lang(ctx=ctx)
+    else:
+        await ctx.send(getText("not_admin", ctx=ctx))
+
+
 #Command d'admin _____________________________________________________________________________________________________
 @bot.command()
 @decorators.is_admin()
 @decorators.categories("Admin")
-async def admin_give(ctx: Context,user: discord.User, name: str, lvl:int, rarity:str , strength: float, agility: float, lethality: float, viciousness: float, path_image: str = "", seed_str:str = "", max_pv:int = bully.BULLY_MAX_BASE_HP, buff_tag:str = "NoBuff"):
+async def admin_give(ctx: Context, user: discord.User, name: str, lvl:int, rarity:str , strength: float, agility: float, lethality: float, viciousness: float, path_image: str = "", seed_str:str = "", max_pv:int = bully.BULLY_MAX_BASE_HP, buff_tag:str = "NoBuff"):
     stats = bully.Stats(strength, agility, lethality, viciousness)
     
     b = bully.Bully(name=name, rarity= bully.Rarity[rarity], stats=stats)

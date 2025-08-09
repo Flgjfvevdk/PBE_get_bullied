@@ -37,6 +37,7 @@ For the moment, no configuration is available.
 - [ ] Quand les 2 meurts en m^me temps, J1 gagne toujours ?
 - [ ] update les tutos et tuto arènes.
 - [ ] arena prix entré qui change en fonction du level moyen (avec un minimum à 100)
+- [ ] Truly need to be adapted
 
 ____ Bonus ____
 - [ ] faire un donjon spécial dnd (beholder, hibours, tiamat ... ?)
